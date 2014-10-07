@@ -3,8 +3,8 @@ FABlin Firmware
 ==========================
 FABtotum Marlin Derivate.
 
-This is a Marlin Derivate Firmware originally created by Erik Zalm (https://github.com/ErikZalm/Marlin)
-The changes made are focused on multipurpose personal fabrication and hardware characteristics of the FABtotum Personal Fabricator. 
+This is a Marlin Derivate Firmware. Marlin was originally created by Erik Zalm (https://github.com/ErikZalm/Marlin)
+The changes made are focused on multipurpose personal fabrication and hardware characteristics of the FABtotum Personal Fabricator such as 3D/4 Axis milling, 3D scanning, Touch-probing and the Totumduino Board I/Os.
 
 Supported G-codes:
 -------------------
