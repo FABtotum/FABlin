@@ -182,6 +182,8 @@ void prepare_move();
 void kill();
 void Stop();
 
+void kill_by_door();
+
 void set_amb_color(unsigned int red,unsigned int green,unsigned int blue);
 void store_last_amb_color();
 void restore_last_amb_color();

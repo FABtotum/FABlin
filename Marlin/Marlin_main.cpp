@@ -3601,7 +3601,7 @@ void process_commands()
     case 730:   // M730 - READ LAST ERROR CODE
     {
       
-      RPI_ERROR_ACK_OFF();
+      //RPI_ERROR_ACK_OFF();
       SERIAL_PROTOCOL("ERROR ");
       SERIAL_PROTOCOL(": ");
       SERIAL_PROTOCOLLN(ERROR_CODE);
@@ -4449,7 +4449,7 @@ void manage_inactivity()
   
  if ((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill)
     {
-     kill();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled
+     kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled
     }
     
  if ((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING) && (READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
@@ -4659,6 +4659,40 @@ char I2C_read(byte i2c_register)
     
 }
 
+void kill_by_door()
+{
+  store_last_amb_color();
+  MILL_MOTOR_OFF();
+  SERVO1_OFF();                   //disable milling motor
+  rpm=0;
+  
+  //cli(); // Stop interrupts
+  disable_heater();
+
+  disable_x();
+  disable_y();
+  disable_z();
+  disable_e0();
+  disable_e1();
+  disable_e2();
+  
+  set_amb_color(MAX_PWM,0,0);
+  
+  triggered_kill=true;
+  Stopped = true;
+
+#if defined(PS_ON_PIN) && PS_ON_PIN > -1
+  pinMode(PS_ON_PIN,INPUT);
+#endif
+  SERIAL_ERROR_START;
+  SERIAL_ERRORLNPGM(MSG_ERR_KILLED);
+  LCD_ALERTMESSAGEPGM(MSG_KILLED);
+  suicide();
+  //while(1) { /* Intentionally left empty */ } // Wait for reset
+  
+  RPI_ERROR_ACK_ON();
+  ERROR_CODE=ERROR_DOOR_OPEN;
+}
 
 void kill()
 {

@@ -1,0 +1,10 @@
+Revision history:
+
+- Rev 1.0.003 (22/09/2014): 	changed M730 behavior, now command does not clear error ack signal (only M999 clear the error ack signal)
+				changed displayed error after DOOR opening during movements (changed to "102" error code instead of general kill error code "100")
+
+- Rev 1.0.002 (26/09/2014): 	changed Z axis speed for G27 command (6 times faster)
+				changed probing point for z for homing z (from bottom left to center-center)
+				changed maximum probing height is 1mm closer than factory stored zprobe_offset (safer to avoid damage after probe malfunction)
+
+- Rev 1.0.001 (03/09/2014): 	Initial revision based upon Marlin firmware for ATMega controllers
