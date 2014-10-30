@@ -226,6 +226,7 @@
 // M766 - read FABtotum Personal Fabricator Firmware Build Date and Time
 // M767 - read FABtotum Personal Fabricator Firmware Update Author
 
+// M779 - force Head product ID reading (for testing purpose only)
 // M780 - read Head Product Name
 // M781 - read Head Vendor Name
 // M782 - read Head product ID
@@ -458,6 +459,8 @@ bool i2c_timeout=false;
 
 bool zeroed_far_from_home_x=true;
 bool zeroed_far_from_home_y=true;
+
+float safe_probing_offset=1;        //it will probe until the (probe length - safe_probing_offset) is reached
 
 //===========================================================================
 //=============================Routines======================================
@@ -1177,7 +1180,7 @@ static void run_fast_z_probe() {
 
     // move down until you find the bed
     //float zPosition = -10;
-    float zPosition = zprobe_zoffset-1;
+    float zPosition = zprobe_zoffset-safe_probing_offset;
     plan_buffer_line(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
 
@@ -3906,6 +3909,19 @@ void process_commands()
       }
       break;
       
+    case 779 :  // M779 - force head ID reading after reset /for testing purpose only
+      {
+         Read_Head_Info();
+
+        _delay_ms(50);
+        BEEP_OFF()
+        _delay_ms(30);
+        BEEP_ON()
+        _delay_ms(50);
+        BEEP_OFF()
+      }
+      break;
+     
     case 782 :  // M782 - read Head product ID
       {
          SERIAL_PROTOCOL("Head Product ID: ");
@@ -3914,6 +3930,7 @@ void process_commands()
       }
       break;
       
+    
     case 784 :  // M784 - read Head Serial ID
       {
         String String_Head = String(SERIAL_HEAD_6,HEX);
