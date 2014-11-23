@@ -1935,13 +1935,33 @@ void process_commands()
             
             //engage_z_probe(); // Engage Z Servo endstop if available
 
+
+            float feedRateUp = homing_feedrate[Z_AXIS];
+            float feedRateDown = homing_feedrate[Z_AXIS];
+            
+            if (code_seen('U')) {
+                // UP Value Feed Rate
+                feedRateUp = code_value();
+            }
+          
+            if (code_seen('D')) {
+              // Down Value (Bed Retract) Feed Rate
+              feedRateDown = code_value();
+            }
+            
+
+
             st_synchronize();
             // TODO: make sure the bed_level_rotation_matrix is identity or the planner will get set incorectly
             setup_for_endstop_move();
 
-            feedrate = homing_feedrate[Z_AXIS];
+            feedrate = feedRateUp; //homing_feedrate[Z_AXIS];
           
-            run_fast_z_probe();
+            SERIAL_PROTOCOLPGM(" Feedrate: ");
+            SERIAL_PROTOCOL(feedrate);
+            SERIAL_PROTOCOLPGM(" ");
+          
+            run_fast_z_probe(feedrate);
             SERIAL_PROTOCOLPGM(MSG_BED);
             SERIAL_PROTOCOLPGM(" X: ");
             SERIAL_PROTOCOL(current_position[X_AXIS]);
@@ -1953,6 +1973,7 @@ void process_commands()
 
             clean_up_after_endstop_move();
 
+            feedrate = homing_feedrate[Z_AXIS];
             //retract_z_probe(); // Retract Z Servo endstop if available
           }
         }
