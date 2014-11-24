@@ -203,6 +203,7 @@
 // M729 - RASPBERRY Sleep                    //wait for the complete shutdown of raspberryPI 
 // M730 - Read last error code
 // M731 - Disable kill on Door Open
+// M732 - Enable or disable the permanent door security switch (M732 S0 -> disable (unsafe), M732 S1 -> enable (safe))
 
 // M740 - read WIRE_END sensor
 // M741 - read DOOR_OPEN sensor
@@ -427,6 +428,7 @@ unsigned int BlueSoftPwm_old;
 
 bool triggered_kill=false;
 bool enable_door_kill=true;
+bool enable_permanent_door_kill=true;
 bool rpi_recovery_flag=false;
 
 float rpm = 0;
@@ -3621,6 +3623,38 @@ void process_commands()
     }
     break;
     
+    case 732:   // M732 - setting of permanent door kill 
+    {
+      int value;
+      if (code_seen('S'))
+      {
+        value = code_value();
+        if(value>=1)
+        {
+          enable_permanent_door_kill=true;
+        }
+        else
+        {
+          enable_permanent_door_kill=false;
+        }
+      }
+      else
+      {
+          SERIAL_PROTOCOL("DOOR KILL ENABLED: ");
+          if(enable_permanent_door_kill)
+          {
+            SERIAL_PROTOCOLLN("TRUE");
+          }
+          else
+          {
+            SERIAL_PROTOCOLLN("FALSE");
+          }
+      }
+      triggered_kill=false;
+      Stopped = false;
+    }
+    break;
+    
     case 3: // M3 S[RPM] SPINDLE ON - Clockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
       {
         int servo_index = 0;
@@ -4464,7 +4498,7 @@ void manage_inactivity()
   #endif
   check_axes_activity();
   
- if ((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill)
+ if (((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)
     {
      kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled
     }
