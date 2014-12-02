@@ -383,6 +383,6 @@ extern unsigned int general_assembly_version;
 
 #define I2C_MAX_TIMEOUT 1000
 
-
+#define AVG_MEASURED_Z_MAX     1
 
 #endif
