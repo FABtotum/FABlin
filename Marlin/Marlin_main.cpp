@@ -1174,9 +1174,9 @@ static void run_z_probe() {
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
 }
 
-static void run_fast_z_probe() {
+static void run_fast_z_probe(float feedrateProbing) {
     plan_bed_level_matrix.set_to_identity();
-    feedrate = homing_feedrate[Z_AXIS];
+    feedrate = feedrateProbing; //homing_feedrate[Z_AXIS];
 
     // move down until you find the bed
     //float zPosition = -10;
@@ -1352,22 +1352,35 @@ static void homeaxis(int axis) {
     feedrate = homing_feedrate[axis];
     
     if(home_Z_reverse && axis==Z_AXIS)              //speedup G27 (reversed Z homing)
-    {feedrate = homing_feedrate[axis]*6;}
+    { // Movement of Z downwards to endstops...
+	feedrate = homing_feedrate[axis]*6;
+    }
     
     plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
+    if (!home_Z_reverse && axis==Z_AXIS) set_amb_color_fading(true,false,false,200);
 
     current_position[axis] = 0;
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
     destination[axis] = -home_retract_mm(axis) * axis_home_dir;
     plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
+    if (!home_Z_reverse && axis==Z_AXIS) {
+      set_amb_color_fading(false,true,false,200);
+      retract_z_probe();
+      engage_z_probe();
+    }
 
     destination[axis] = 2*home_retract_mm(axis) * axis_home_dir;
 #ifdef DELTA
     feedrate = homing_feedrate[axis]/10;
 #else
     feedrate = homing_feedrate[axis]/2 ;
+
+    if (!home_Z_reverse && axis==Z_AXIS) {
+    feedrate = homing_feedrate[axis]/10 ;
+    }
+
 #endif
     plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
@@ -1526,7 +1539,7 @@ void process_commands()
   #endif //ENABLE_AUTO_BED_LEVELING
   
         store_last_amb_color();
-        set_amb_color_fading(false,true,false,200);
+        set_amb_color_fading(false,false,true,200);
         
         
         saved_feedrate = feedrate;
