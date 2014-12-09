@@ -203,6 +203,7 @@
 // M729 - RASPBERRY Sleep                    //wait for the complete shutdown of raspberryPI 
 // M730 - Read last error code
 // M731 - Disable kill on Door Open
+// M732 - Enable or disable the permanent door security switch (M732 S0 -> disable (unsafe), M732 S1 -> enable (safe))
 
 // M740 - read WIRE_END sensor
 // M741 - read DOOR_OPEN sensor
@@ -427,6 +428,7 @@ unsigned int BlueSoftPwm_old;
 
 bool triggered_kill=false;
 bool enable_door_kill=true;
+bool enable_permanent_door_kill=true;
 bool rpi_recovery_flag=false;
 
 float rpm = 0;
@@ -1115,13 +1117,9 @@ static void set_bed_level_equation_3pts(float z_at_pt_1, float z_at_pt_2, float 
 
     plan_bed_level_matrix.set_to_identity();
 
-    /*vector_3 pt1 = vector_3(ABL_PROBE_PT_1_X, ABL_PROBE_PT_1_Y, z_at_pt_1);
+    vector_3 pt1 = vector_3(ABL_PROBE_PT_1_X, ABL_PROBE_PT_1_Y, z_at_pt_1);
     vector_3 pt2 = vector_3(ABL_PROBE_PT_2_X, ABL_PROBE_PT_2_Y, z_at_pt_2);
-    vector_3 pt3 = vector_3(ABL_PROBE_PT_3_X, ABL_PROBE_PT_3_Y, z_at_pt_3);*/
-    
-    vector_3 pt1 = vector_3(21, 64, z_at_pt_1);
-    vector_3 pt2 = vector_3(177, 94, z_at_pt_2);
-    vector_3 pt3 = vector_3(37, 182, z_at_pt_3);
+    vector_3 pt3 = vector_3(ABL_PROBE_PT_3_X, ABL_PROBE_PT_3_Y, z_at_pt_3);
 
     vector_3 from_2_to_1 = (pt1 - pt2).get_normal();
     vector_3 from_2_to_3 = (pt3 - pt2).get_normal();
@@ -1268,16 +1266,19 @@ static void retract_z_probe() {
 }
 
 /// Probe bed height at position (x,y), returns the measured z value
-static float probe_pt(float x, float y, float z_before) {
+static float probe_pt(float x, float y, float z_before, bool engage_z_flag) {
   // move to right place
   do_blocking_move_to(current_position[X_AXIS], current_position[Y_AXIS], z_before);
-  do_blocking_move_to(x - X_PROBE_OFFSET_FROM_EXTRUDER, y - Y_PROBE_OFFSET_FROM_EXTRUDER, current_position[Z_AXIS]);
-  //do_blocking_move_to(x - 18.5, y - 62, current_position[Z_AXIS]);
+  //do_blocking_move_to(x - X_PROBE_OFFSET_FROM_EXTRUDER, y - Y_PROBE_OFFSET_FROM_EXTRUDER, current_position[Z_AXIS]);
+  do_blocking_move_to(x + X_PROBE_OFFSET_FROM_EXTRUDER, y + Y_PROBE_OFFSET_FROM_EXTRUDER, current_position[Z_AXIS]);
 
-  engage_z_probe();   // Engage Z Servo endstop if available
+  if(engage_z_flag)
+    {
+      engage_z_probe();   // Engage Z Servo endstop if available
+    }
   run_z_probe();
   float measured_z = current_position[Z_AXIS];
-  retract_z_probe();
+  //retract_z_probe();
 
   SERIAL_PROTOCOLPGM(MSG_BED);
   SERIAL_PROTOCOLPGM(" x: ");
@@ -1291,13 +1292,17 @@ static float probe_pt(float x, float y, float z_before) {
 }
 
 /// Probe bed height at position (x,y), returns the measured z value
-static float probe_pt_no_engz(float x, float y, float z_before) {
+static float probe_pt_no_engz(float x, float y, float z_before, bool engage_z_flag) {
   // move to right place
   do_blocking_move_to(current_position[X_AXIS], current_position[Y_AXIS], z_before);
-  do_blocking_move_to(x - X_PROBE_OFFSET_FROM_EXTRUDER, y - Y_PROBE_OFFSET_FROM_EXTRUDER, current_position[Z_AXIS]);
-  //do_blocking_move_to(x - 18.5, y - 62, current_position[Z_AXIS]);
-
-  engage_z_probe();   // Engage Z Servo endstop if available
+  //do_blocking_move_to(x - X_PROBE_OFFSET_FROM_EXTRUDER, y - Y_PROBE_OFFSET_FROM_EXTRUDER, current_position[Z_AXIS]);
+  do_blocking_move_to(x + X_PROBE_OFFSET_FROM_EXTRUDER, y + Y_PROBE_OFFSET_FROM_EXTRUDER, current_position[Z_AXIS]);
+  
+  if(engage_z_flag)
+    {
+      engage_z_probe();   // Engage Z Servo endstop if available
+    }
+    
   run_z_probe();
   float measured_z = current_position[Z_AXIS];
   //retract_z_probe();
@@ -1828,6 +1833,7 @@ void process_commands()
         
             int probePointCounter = 0;
             bool zig = true;
+            bool engage_z_flag=true;
 
             for (int yProbe=FRONT_PROBE_BED_POSITION; yProbe <= BACK_PROBE_BED_POSITION; yProbe += yGridSpacing)
             {
@@ -1853,7 +1859,7 @@ void process_commands()
                 {
                   // raise before probing
                   z_before = Z_RAISE_BEFORE_PROBING;
-                  //engage_z_probe();   // Engage Z Servo endstop if available
+                  
                 } else
                 {
                   // raise extruder
@@ -1864,11 +1870,16 @@ void process_commands()
                     {
                       break;
                     }
-                
-                float measured_z = probe_pt_no_engz(xProbe, yProbe, z_before);
-                //float measured_z = probe_pt(xProbe, yProbe, z_before);
+                float measured_z=0;
+                    
+                for(int avg_measured_z=0; avg_measured_z<AVG_MEASURED_Z_MAX;avg_measured_z++)
+                    {
+                    measured_z = probe_pt_no_engz(xProbe, yProbe, z_before,engage_z_flag)+measured_z;
+                    engage_z_flag=false;
+                    }
+                    
 
-                eqnBVector[probePointCounter] = measured_z;
+                eqnBVector[probePointCounter] = measured_z/AVG_MEASURED_Z_MAX;
 
                 eqnAMatrix[probePointCounter + 0*AUTO_BED_LEVELING_GRID_POINTS*AUTO_BED_LEVELING_GRID_POINTS] = xProbe;
                 eqnAMatrix[probePointCounter + 1*AUTO_BED_LEVELING_GRID_POINTS*AUTO_BED_LEVELING_GRID_POINTS] = yProbe;
@@ -1890,11 +1901,12 @@ void process_commands()
             double *plane_equation_coefficients = qr_solve(AUTO_BED_LEVELING_GRID_POINTS*AUTO_BED_LEVELING_GRID_POINTS, 3, eqnAMatrix, eqnBVector);
 
             SERIAL_PROTOCOLPGM("Eqn coefficients: a: ");
-            SERIAL_PROTOCOL(plane_equation_coefficients[0]);
+            SERIAL_PROTOCOL_F(plane_equation_coefficients[0],6);
             SERIAL_PROTOCOLPGM(" b: ");
-            SERIAL_PROTOCOL(plane_equation_coefficients[1]);
+            SERIAL_PROTOCOL_F(plane_equation_coefficients[1],6);
             SERIAL_PROTOCOLPGM(" d: ");
-            SERIAL_PROTOCOLLN(plane_equation_coefficients[2]);
+            SERIAL_PROTOCOL_F(plane_equation_coefficients[2],6);
+            SERIAL_PROTOCOLLN("");
 
 
             set_bed_level_equation_lsq(plane_equation_coefficients);
@@ -1905,15 +1917,21 @@ void process_commands()
 
             // Probe at 3 arbitrary points
             // probe 1
-            float z_at_pt_1 = probe_pt(ABL_PROBE_PT_1_X, ABL_PROBE_PT_1_Y, Z_RAISE_BEFORE_PROBING);
-
+            bool engage_z_flag=true;
+            float z_at_pt_1 = probe_pt(ABL_PROBE_PT_1_X, ABL_PROBE_PT_1_Y, Z_RAISE_BEFORE_PROBING,engage_z_flag);
+            engage_z_flag=false;
             // probe 2
-            float z_at_pt_2 = probe_pt(ABL_PROBE_PT_2_X, ABL_PROBE_PT_2_Y, current_position[Z_AXIS] + Z_RAISE_BETWEEN_PROBINGS);
+            float z_at_pt_2 = probe_pt(ABL_PROBE_PT_2_X, ABL_PROBE_PT_2_Y, current_position[Z_AXIS] + Z_RAISE_BETWEEN_PROBINGS,engage_z_flag);
 
             // probe 3
-            float z_at_pt_3 = probe_pt(ABL_PROBE_PT_3_X, ABL_PROBE_PT_3_Y, current_position[Z_AXIS] + Z_RAISE_BETWEEN_PROBINGS);
+            float z_at_pt_3 = probe_pt(ABL_PROBE_PT_3_X, ABL_PROBE_PT_3_Y, current_position[Z_AXIS] + Z_RAISE_BETWEEN_PROBINGS,engage_z_flag);
 
             clean_up_after_endstop_move();
+            plan_buffer_line(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS]+2, current_position[E_AXIS], 5, active_extruder);
+            st_synchronize();
+            retract_z_probe();
+            plan_buffer_line(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS], 5, active_extruder);
+            st_synchronize();
 
             set_bed_level_equation_3pts(z_at_pt_1, z_at_pt_2, z_at_pt_3);
 
@@ -3655,6 +3673,38 @@ void process_commands()
     }
     break;
     
+    case 732:   // M732 - setting of permanent door kill 
+    {
+      int value;
+      if (code_seen('S'))
+      {
+        value = code_value();
+        if(value>=1)
+        {
+          enable_permanent_door_kill=true;
+        }
+        else
+        {
+          enable_permanent_door_kill=false;
+        }
+      }
+      else
+      {
+          SERIAL_PROTOCOL("DOOR KILL ENABLED: ");
+          if(enable_permanent_door_kill)
+          {
+            SERIAL_PROTOCOLLN("TRUE");
+          }
+          else
+          {
+            SERIAL_PROTOCOLLN("FALSE");
+          }
+      }
+      triggered_kill=false;
+      Stopped = false;
+    }
+    break;
+    
     case 3: // M3 S[RPM] SPINDLE ON - Clockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
       {
         int servo_index = 0;
@@ -4498,7 +4548,7 @@ void manage_inactivity()
   #endif
   check_axes_activity();
   
- if ((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill)
+ if (((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)
     {
      kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled
     }

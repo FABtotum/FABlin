@@ -15,7 +15,7 @@
 // User-specified version info of this build to display in [Pronterface, etc] terminal window during
 // startup. Implementation of an idea by Prof Braino to inform user that any changes made to this
 // build by the user have been successfully uploaded into firmware.
-#define STRING_BUILD_VERSION  "V 1.0.004"
+#define STRING_BUILD_VERSION  "V 1.0.006"
 #define STRING_BUILD_DATE __DATE__ " " __TIME__ // build date and time
 #define STRING_CONFIG_H_AUTHOR "Andrea Celani, FABtotum Personal Fabricator" // Who made the changes.
 
@@ -363,10 +363,16 @@ const bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of
   #ifdef AUTO_BED_LEVELING_GRID
 
     // set the rectangle in which to probe
-    #define LEFT_PROBE_BED_POSITION -14
-    #define RIGHT_PROBE_BED_POSITION 155
-    #define BACK_PROBE_BED_POSITION 95
-    #define FRONT_PROBE_BED_POSITION -58
+//    #define LEFT_PROBE_BED_POSITION -14
+//    #define RIGHT_PROBE_BED_POSITION 155
+//    #define BACK_PROBE_BED_POSITION 95
+//    #define FRONT_PROBE_BED_POSITION -58
+    
+    // set the rectangle in which to probe
+    #define LEFT_PROBE_BED_POSITION 20
+    #define RIGHT_PROBE_BED_POSITION 198
+    #define BACK_PROBE_BED_POSITION 233
+    #define FRONT_PROBE_BED_POSITION 65
 
      // set the number of grid points per dimension
      // I wouldn't see a reason to go above 3 (=9 probing points on the bed)
@@ -377,12 +383,12 @@ const bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of
     // with no grid, just probe 3 arbitrary points.  A simple cross-product
     // is used to esimate the plane of the print bed
 
-      #define ABL_PROBE_PT_1_X -16
-      #define ABL_PROBE_PT_1_Y -60
-      #define ABL_PROBE_PT_2_X 140
-      #define ABL_PROBE_PT_2_Y -30
-      #define ABL_PROBE_PT_3_X 0
-      #define ABL_PROBE_PT_3_Y 58
+      #define ABL_PROBE_PT_1_X 20
+      #define ABL_PROBE_PT_1_Y 65
+      #define ABL_PROBE_PT_2_X 198
+      #define ABL_PROBE_PT_2_Y 117
+      #define ABL_PROBE_PT_3_X 107
+      #define ABL_PROBE_PT_3_Y 233
 
   #endif // AUTO_BED_LEVELING_GRID
 
