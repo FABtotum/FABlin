@@ -190,6 +190,7 @@
 // M711 - write and store in eeprom calibrated zprobe extended angle
 // M712 - write and store in eeprom calibrated zprobe retacted angle
 // M713 - autocalibration of z-probe length and store in eeprom
+// M714 - alternate the X axis endstop (M714 S0 use standard X axis endstop, M714 S1 use X axis max endstop)
 
 // M720 - 24VDC head power ON
 // M721 - 24VDC head power OFF
@@ -444,6 +445,8 @@ bool fading_started=false;
 bool z_probe_activation=true;
 
 bool home_Z_reverse=false;
+
+bool x_axis_endstop_sel=false;
 
 byte SERIAL_HEAD_0=0;
 byte SERIAL_HEAD_1=0;
@@ -1084,6 +1087,7 @@ static void axis_is_at_home(int axis) {
   max_pos[axis] =          base_max_pos(axis) + add_homeing[axis];
   
   if(axis==Z_AXIS && home_Z_reverse){current_position[axis] = (Z_MAX_POS+Z_PROBE_OFFSET_FROM_EXTRUDER);}
+  if(axis==X_AXIS && x_axis_endstop_sel){current_position[axis] = (X_MAX_POS);}
 }
 
 #ifdef ENABLE_AUTO_BED_LEVELING
@@ -1331,6 +1335,10 @@ static void homeaxis(int axis) {
     
     if(home_Z_reverse && axis==Z_AXIS)
     {axis_home_dir =axis_home_dir *-1;}
+    
+    if(x_axis_endstop_sel && axis==X_AXIS)
+    {axis_home_dir =axis_home_dir *-1;}
+    
 #ifdef DUAL_X_CARRIAGE
     if (axis == X_AXIS)
       axis_home_dir = x_home_dir(active_extruder);
@@ -3515,6 +3523,36 @@ void process_commands()
       break;
     }
     
+    case 714: // M714 - alternate the X axis endstop (M714 S0 use standard X axis endstop, M714 S1 use X axis max endstop)
+    {
+      int value;
+      if (code_seen('S'))
+      {
+        value = code_value();
+        if(value==0)
+        {
+          x_axis_endstop_sel = false;
+        }
+        else
+        {
+          x_axis_endstop_sel = true;
+        }
+      }
+      else
+      {
+          SERIAL_PROTOCOL("X axis now use: ");
+          if(x_axis_endstop_sel)
+          {
+            SERIAL_PROTOCOLLN("Max endstop");
+          }
+          else
+          {
+            SERIAL_PROTOCOLLN("Min endstop");
+          }
+      }
+      break;
+    }
+    
     case 720:// M720 - 24VDC head power ON
     {
       int servo_index = 0;
@@ -4554,7 +4592,7 @@ void manage_secure_endstop()
   {
     zeroed_far_from_home_y=true;
     kill();}
-  if((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING)&&!READ(X_ENABLE_PIN) && !(RPI_ERROR_STATUS()))
+  if((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING)&&!READ(X_ENABLE_PIN) && !(RPI_ERROR_STATUS()) && !x_axis_endstop_sel)
   {zeroed_far_from_home_x=true;
   kill();}
 //  if(READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)

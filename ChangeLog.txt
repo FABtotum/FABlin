@@ -1,6 +1,13 @@
 Revision history
 ================
 
+Rev 1.0.007 (26/01/2015)
+-----------------------
+- review of Autobed leveling procedure. Fixing of probed points' X and Y coordinates signs
+- added M-code M714 to select the homing X switch (max or min) to allow machine operation even with X min swicth fail (M714 S0->select X min switch, M714 S1->select X max switch)
+- Improved reactivity on Stop command for a failure
+- changed displayed error after endstop hit (changed to "106" error code for Xmax,"107" for Xmin,"108" for Ymax, "109" for Ymin, instead of general kill error code "100")
+
 Rev 1.0.006 (02/12/2014)
 -----------------------
 - review of Autobed leveling procedure. Fixing of probed points' X and 
