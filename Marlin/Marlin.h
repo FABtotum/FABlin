@@ -369,6 +369,10 @@ extern unsigned int general_assembly_version;
 #define ERROR_MIN_TEMP    103
 #define ERROR_MAX_TEMP    104
 #define ERROR_MAX_BED_TEMP  105
+#define ERROR_X_MAX_ENDSTOP      106
+#define ERROR_X_MIN_ENDSTOP      107
+#define ERROR_Y_MAX_ENDSTOP      108
+#define ERROR_Y_MIN_ENDSTOP      109
 
 //Head Serial ID
 #define SERIAL_ID_ADDR          80//(0x50)

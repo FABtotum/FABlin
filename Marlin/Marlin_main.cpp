@@ -1398,6 +1398,13 @@ static void homeaxis(int axis) {
     feedrate = 0.0;
     endstops_hit_on_purpose();
     axis_known_position[axis] = true;
+    if(x_axis_endstop_sel && axis==X_AXIS)
+      {
+        plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
+        enable_endstops(false);
+        do_blocking_move_relative(-1,0,0);
+        enable_endstops(true);
+      }
 
     // Retract Servo endstop if enabled
     #ifdef SERVO_ENDSTOPS
@@ -4820,6 +4827,7 @@ void kill()
   
   triggered_kill=true;
   Stopped = true;
+  quickStop();
 
 #if defined(PS_ON_PIN) && PS_ON_PIN > -1
   pinMode(PS_ON_PIN,INPUT);
@@ -4832,6 +4840,11 @@ void kill()
   
   RPI_ERROR_ACK_ON();
   ERROR_CODE=ERROR_KILLED;
+  if(READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING){ERROR_CODE=ERROR_Y_MAX_ENDSTOP;}
+  if(READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING){ERROR_CODE=ERROR_Y_MIN_ENDSTOP;}
+  if(READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING){ERROR_CODE=ERROR_X_MIN_ENDSTOP;}
+  if(READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING){ERROR_CODE=ERROR_X_MAX_ENDSTOP;}
+  
 }
 
 void Stop()
