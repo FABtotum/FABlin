@@ -82,8 +82,13 @@ static bool old_y_min_endstop=false;
 static bool old_y_max_endstop=false;
 static bool old_z_min_endstop=false;
 static bool old_z_max_endstop=false;
+static bool old_external_z_endstop=false;
 
 static bool check_endstops = true;
+
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+static bool check_external_z_endstops = true;
+#endif
 
 volatile long count_position[NUM_AXIS] = { 0, 0, 0, 0};
 volatile signed char count_direction[NUM_AXIS] = { 1, 1, 1, 1};
@@ -93,6 +98,10 @@ volatile signed char count_direction[NUM_AXIS] = { 1, 1, 1, 1};
 //===========================================================================
 
 #define CHECK_ENDSTOPS  if(check_endstops)
+
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+#define CHECK_EXTERNAL_Z_ENDSTOPS  if(check_external_z_endstops)
+#endif
 
 // intRes = intIn1 * intIn2 >> 16
 // uses:
@@ -216,6 +225,14 @@ void enable_endstops(bool check)
 {
   check_endstops = check;
 }
+
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+void enable_external_z_endstop(bool check)
+{
+  check_external_z_endstops = check;
+}
+#endif
+
 
 //         __________________________
 //        /|                        |\     _________________         ^
@@ -504,6 +521,19 @@ ISR(TIMER1_COMPA_vect)
           old_z_min_endstop = z_min_endstop;
         #endif
       }
+
+       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
+      CHECK_EXTERNAL_Z_ENDSTOPS
+      {
+         bool external_endstop=(READ(EXTERNAL_ENDSTOP_Z_PROBING_PIN) != EXTERNAL_Z_ENDSTOP_INVERTING);
+          if(external_endstop && old_external_z_endstop && (current_block->steps_z > 0)) {
+            endstops_trigsteps[Z_AXIS] = count_position[Z_AXIS];
+            endstop_z_hit=true;
+            step_events_completed = current_block->step_event_count;
+          }
+          old_external_z_endstop = external_endstop;
+      #endif
+     }
     }
     else { // +direction
       WRITE(Z_DIR_PIN,!INVERT_Z_DIR);

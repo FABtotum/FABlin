@@ -1192,6 +1192,24 @@ static void run_fast_z_probe() {
 
 }
 
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+static void run_fast_external_z_endstop() {
+    plan_bed_level_matrix.set_to_identity();
+    feedrate = homing_feedrate[Z_AXIS];
+
+    // move down until you find the bed
+    float zPosition = -10;
+    plan_buffer_line(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS], feedrate/60, active_extruder);
+    st_synchronize();
+
+    // we have to let the planner know where we are right now as it is not where we said to go.
+    zPosition = st_get_position_mm(Z_AXIS);
+    plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS]);
+
+}
+#endif
+
+
 static void do_blocking_move_to(float x, float y, float z) {
     float oldFeedRate = feedrate;
 
@@ -1219,9 +1237,26 @@ static void setup_for_endstop_move() {
     enable_endstops(true);
 }
 
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+static void setup_for_external_z_endstop_move() {
+    saved_feedrate = feedrate;
+    saved_feedmultiply = feedmultiply;
+    feedmultiply = 100;
+    previous_millis_cmd = millis();
+
+    // enabling endstops acts as a safety in case the a z probe was incorrectly engaged or z_min is actually reached
+    enable_endstops(true);
+    enable_external_z_endstop(true);
+}
+#endif
+
 static void clean_up_after_endstop_move() {
 #ifdef ENDSTOPS_ONLY_FOR_HOMING
     enable_endstops(false);
+#endif
+
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+    enable_external_z_endstop(false);
 #endif
 
     feedrate = saved_feedrate;
@@ -1991,6 +2026,32 @@ void process_commands()
         }
         break;
 #endif // ENABLE_AUTO_BED_LEVELING
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+    case 38: // G38 endstop based z probe
+        {
+          if(!Stopped){
+            
+            st_synchronize();
+            
+            setup_for_external_z_endstop_move();
+
+            feedrate = homing_feedrate[Z_AXIS];
+          
+            run_fast_external_z_endstop();
+            SERIAL_PROTOCOLPGM(MSG_BED);
+            SERIAL_PROTOCOLPGM(" X: ");
+            SERIAL_PROTOCOL(current_position[X_AXIS]);
+            SERIAL_PROTOCOLPGM(" Y: ");
+            SERIAL_PROTOCOL(current_position[Y_AXIS]);
+            SERIAL_PROTOCOLPGM(" Z: ");
+            SERIAL_PROTOCOL(current_position[Z_AXIS]);
+            SERIAL_PROTOCOLPGM("\n");
+
+            clean_up_after_endstop_move();
+          }
+        }
+        break;        
+#endif //ENDSTOP_Z_PROBING
     case 90: // G90
       relative_mode = false;
       break;
