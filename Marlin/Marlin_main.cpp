@@ -1199,7 +1199,9 @@ static void run_fast_z_probe() {
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
 static void run_fast_external_z_endstop() {
     plan_bed_level_matrix.set_to_identity();
-    feedrate = homing_feedrate[Z_AXIS];
+    
+    // This function expects the feedrate to have been set externally.
+    //feedrate = homing_feedrate[Z_AXIS];
 
     // move down until you find the bed
     float zPosition = -10;
@@ -2040,8 +2042,15 @@ void process_commands()
             st_synchronize();
             
             setup_for_external_z_endstop_move();
-
-            feedrate = homing_feedrate[Z_AXIS];
+ 
+	    if (code_seen('S')) {
+	      feedrate = code_value();
+	      
+	      if(feedrate > 200 ) // ignore the user, greater than 200 for probing is considered to be dangerous (the tool will crash badly)
+		feedrate = 200;
+	    }
+	    else
+	      feedrate = homing_feedrate[Z_AXIS];
           
             run_fast_external_z_endstop();
             SERIAL_PROTOCOLPGM(MSG_BED);
