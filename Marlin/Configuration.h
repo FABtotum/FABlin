@@ -337,6 +337,15 @@ const bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of
 #define X_MAX_LENGTH (X_MAX_POS - X_MIN_POS)
 #define Y_MAX_LENGTH (Y_MAX_POS - Y_MIN_POS)
 #define Z_MAX_LENGTH (Z_MAX_POS - Z_MIN_POS)
+
+//= Z PROBING via endstop (e.g. electrical continuity between mill and PCB)==
+
+#define EXTERNAL_ENDSTOP_Z_PROBING
+
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+ #define EXTERNAL_ENDSTOP_Z_PROBING_PIN 71
+ #define EXTERNAL_Z_ENDSTOP_INVERTING true
+#endif
 //============================= Bed Auto Leveling ===========================
 
 #define ENABLE_AUTO_BED_LEVELING // Delete the comment to enable (remove // at the start of the line)

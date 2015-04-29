@@ -432,6 +432,10 @@ bool enable_door_kill=true;
 bool enable_permanent_door_kill=true;
 bool rpi_recovery_flag=false;
 
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+bool enable_secure_switch_zprobe=false;
+#endif
+
 float rpm = 0;
 
 unsigned int fading_speed=200;
@@ -1192,6 +1196,26 @@ static void run_fast_z_probe() {
 
 }
 
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+static void run_fast_external_z_endstop() {
+    plan_bed_level_matrix.set_to_identity();
+    
+    // This function expects the feedrate to have been set externally.
+    //feedrate = homing_feedrate[Z_AXIS];
+
+    // move down until you find the bed
+    float zPosition = -10;
+    plan_buffer_line(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS], feedrate/60, active_extruder);
+    st_synchronize();
+
+    // we have to let the planner know where we are right now as it is not where we said to go.
+    zPosition = st_get_position_mm(Z_AXIS);
+    plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS]);
+
+}
+#endif
+
+
 static void do_blocking_move_to(float x, float y, float z) {
     float oldFeedRate = feedrate;
 
@@ -1219,9 +1243,26 @@ static void setup_for_endstop_move() {
     enable_endstops(true);
 }
 
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+static void setup_for_external_z_endstop_move() {
+    saved_feedrate = feedrate;
+    saved_feedmultiply = feedmultiply;
+    feedmultiply = 100;
+    previous_millis_cmd = millis();
+
+    // enabling endstops acts as a safety in case the a z probe was incorrectly engaged or z_min is actually reached
+    enable_endstops(true);
+    enable_external_z_endstop(true);
+}
+#endif
+
 static void clean_up_after_endstop_move() {
 #ifdef ENDSTOPS_ONLY_FOR_HOMING
     enable_endstops(false);
+#endif
+
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+    enable_external_z_endstop(false);
 #endif
 
     feedrate = saved_feedrate;
@@ -1991,6 +2032,41 @@ void process_commands()
         }
         break;
 #endif // ENABLE_AUTO_BED_LEVELING
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+    case 38: // G38 endstop based z probe
+	     // Same behaviour as G30 but with an endstop external z probe connected as described in M746
+	     // It does nothing unless the probe is enabled first with M746 S1
+        {
+          if(!Stopped && enable_secure_switch_zprobe){
+            
+            st_synchronize();
+            
+            setup_for_external_z_endstop_move();
+ 
+	    if (code_seen('S')) {
+	      feedrate = code_value();
+	      
+	      if(feedrate > 200 ) // ignore the user, greater than 200 for probing is considered to be dangerous (the tool will crash badly)
+		feedrate = 200;
+	    }
+	    else
+	      feedrate = homing_feedrate[Z_AXIS];
+          
+            run_fast_external_z_endstop();
+            SERIAL_PROTOCOLPGM(MSG_BED);
+            SERIAL_PROTOCOLPGM(" X: ");
+            SERIAL_PROTOCOL(current_position[X_AXIS]);
+            SERIAL_PROTOCOLPGM(" Y: ");
+            SERIAL_PROTOCOL(current_position[Y_AXIS]);
+            SERIAL_PROTOCOLPGM(" Z: ");
+            SERIAL_PROTOCOL(current_position[Z_AXIS]);
+            SERIAL_PROTOCOLPGM("\n");
+
+            clean_up_after_endstop_move();
+          }
+        }
+        break;        
+#endif //ENDSTOP_Z_PROBING
     case 90: // G90
       relative_mode = false;
       break;
@@ -3893,6 +3969,55 @@ void process_commands()
         {SERIAL_PROTOCOLLN(MSG_ENDSTOP_OPEN);}
       }
       break;
+
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+    case 746:   // M746 - setting of an endstop sensor, to be used as an external endstop zprobe.
+		//
+		// The actual pin is provided by EXTERNAL_ENDSTOP_Z_PROBING_PIN macro, which defaults to pin 71 
+		// (in totumduino's silk screen "Secure_sw", see also M743).
+		//
+		// M746 S1 to enable this functionality.
+		// M746 S0 to disable this functionality.
+		// M746 to see the status of this functionality.
+		//
+		// If enabled you need to keep an external zprobe connected to this totumduino connector that makes the endstop read "open" in normal state or
+		// you will have undesirable behaviour (only during the time a Z probe is done, so during homing, G30 and G38).
+		//
+		// A possible probe is an electrical continuity probe between a copper cad (for making PCBs) and the mill (that in the hybrid head is to GND), like this:
+		// 
+		// |  | (secure_sw)
+		// |  \------------------------------+----- attach this to copper clad (via a metal washer to which the wire is soldered?)
+		// \-----------------------/\/\/\/---|
+		//                         1 kOhm
+    {
+      int value;
+      if (code_seen('S'))
+      {
+        value = code_value();
+        if(value>=1)
+        {
+          enable_secure_switch_zprobe=true;
+        }
+        else
+        {
+          enable_secure_switch_zprobe=false;
+        }
+      }
+      else
+      {
+          SERIAL_PROTOCOL("SECURE_SW Z PROBE ENABLED: ");
+          if(enable_secure_switch_zprobe)
+          {
+            SERIAL_PROTOCOLLN("TRUE");
+          }
+          else
+          {
+            SERIAL_PROTOCOLLN("FALSE");
+          }
+      }
+    }
+    break;
+#endif      
       
     case 750: // M750 - read PRESSURE sensor (ANALOG 0-1023)
       {
