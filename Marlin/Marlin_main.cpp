@@ -4683,15 +4683,15 @@ void manage_inactivity()
       handle_status_leds();
   #endif
   check_axes_activity();
-  
+
  if (((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)
     {
      kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled
     }
-    
+
  if ((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING) && (READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
     {
-    rpi_recovery_flag=true;   
+    rpi_recovery_flag=true;
     RPI_RECOVERY_ON();          //check if user is going to recover Raspberry OS
     stop_fading();
     set_amb_color(0,0,255);
@@ -4704,17 +4704,30 @@ void manage_inactivity()
        rpi_recovery_flag=false;
        }
      }
-     
+
+ if ((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING) && (READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING))
+    { // the user pressed both Y-Endstops at the same time (or a hardware switch that enables them at the same time)
+      RPI_ERROR_ACK_ON();
+      ERROR_CODE=ERROR_Y_BOTH_TRIGGERED;
+    }
+
+ if ((READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING) && (READ(Z_MIN_PIN)^Z_MIN_ENDSTOP_INVERTING))
+    { // the user pressed both Z-Endstops at the same time (or a hardware switch that enables them at the same time)
+      RPI_ERROR_ACK_ON();
+      ERROR_CODE=ERROR_Z_BOTH_TRIGGERED;
+    }
+
+
  if (!READ(DOOR_OPEN_PIN) && !enable_door_kill)
     {
      enable_door_kill=true;                    // REARM the killing process if the user closes the front door
     }
-    
- 
- manage_secure_endstop();   
+
+
+ manage_secure_endstop();
  manage_fab_soft_pwm();                        // manage light
  manage_amb_color_fading();                    // manage ligth fading
-    
+
 }
 
 void manage_secure_endstop()

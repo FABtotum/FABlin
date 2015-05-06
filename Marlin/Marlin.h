@@ -374,6 +374,11 @@ extern unsigned int general_assembly_version;
 #define ERROR_Y_MAX_ENDSTOP      108
 #define ERROR_Y_MIN_ENDSTOP      109
 
+//error codes for FABUI configurable functionalities
+#define ERROR_Y_BOTH_TRIGGERED   120
+#define ERROR_Z_BOTH_TRIGGERED   121
+
+
 //Head Serial ID
 #define SERIAL_ID_ADDR          80//(0x50)
 #define SERIAL_N_FAM_DEV_CODE  0
