@@ -228,8 +228,9 @@
 #define INVERT_Z_STEP_PIN false
 #define INVERT_E_STEP_PIN false
 
-//default stepper release if idle
-#define DEFAULT_STEPPER_DEACTIVE_TIME 60
+//default idle for totumduino
+#define DEFAULT_DEACTIVE_TIME 480 //480 =8 minutes and shutting down everything
+#define DEFAULT_STEPPERS_DEACTIVE_TIME 20 // 20 seconds before disabling steppers
 
 #define DEFAULT_MINIMUMFEEDRATE       0.0     // minimum feedrate
 #define DEFAULT_MINTRAVELFEEDRATE     0.0

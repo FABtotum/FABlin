@@ -288,6 +288,8 @@ float min_pos[3] = { X_MIN_POS, Y_MIN_POS, Z_MIN_POS };
 float max_pos[3] = { X_MAX_POS, Y_MAX_POS, Z_MAX_POS };
 bool axis_known_position[3] = {false, false, false};
 float zprobe_zoffset;
+bool inactivity = true;
+
 
 // Extruder offset
 #if EXTRUDERS > 1
@@ -392,8 +394,8 @@ const int sensitive_pins[] = SENSITIVE_PINS; // Sensitive pin list for M42
 
 //Inactivity shutdown variables
 static unsigned long previous_millis_cmd = 0;
-static unsigned long max_inactive_time = 0;
-static unsigned long stepper_inactive_time = DEFAULT_STEPPER_DEACTIVE_TIME*1000l;
+static unsigned long max_inactive_time = DEFAULT_DEACTIVE_TIME*1000l;
+static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
 
 unsigned long starttime=0;
 unsigned long stoptime=0;
@@ -1522,6 +1524,7 @@ void process_commands()
     {
     case 0: // G0 -> G1
     case 1: // G1
+      //inactivity=false; //re-enable warning for inactivy.
       if(Stopped == false) {
         get_coordinates(); // For X Y Z E F
           #ifdef FWRETRACT
@@ -2293,6 +2296,8 @@ void process_commands()
       if(setTargetedHotend(104)){
         break;
       }
+      fanSpeed=255; //set fan on by default
+      inactivity=false;
       if (code_seen('S')) setTargetHotend(code_value(), tmp_extruder);
 #ifdef DUAL_X_CARRIAGE
       if (dual_x_carriage_mode == DXC_DUPLICATION_MODE && tmp_extruder == 0)
@@ -2301,6 +2306,7 @@ void process_commands()
       setWatch();
       break;
     case 140: // M140 set bed temp
+      inactivity=false;
       if (code_seen('S')) setTargetBed(code_value());
       break;
     case 105 : // M105
@@ -2373,6 +2379,9 @@ void process_commands()
         break;
       }
       LCD_MESSAGEPGM(MSG_HEATING);
+      fanSpeed=255; //fan on by default
+      inactivity=false;
+      
       #ifdef AUTOTEMP
         autotemp_enabled=false;
       #endif
@@ -2460,6 +2469,7 @@ void process_commands()
       }
       break;
     case 190: // M190 - Wait for bed heater to reach target.
+    inactivity=false;
     #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
         LCD_MESSAGEPGM(MSG_BED_HEATING);
         if (code_seen('S')) {
@@ -2595,7 +2605,7 @@ void process_commands()
     case 18: //compatibility
     case 84: // M84
       if(code_seen('S')){
-        stepper_inactive_time = code_value() * 1000;
+        max_inactive_time = code_value() * 1000;
       }
       else
       {
@@ -3794,6 +3804,7 @@ void process_commands()
     
     case 3: // M3 S[RPM] SPINDLE ON - Clockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
       {
+        inactivity=false;
         int servo_index = 0;
         int servo_position = SERVO_SPINDLE_ZERO;
         float rpm_1=0;
@@ -3851,6 +3862,7 @@ void process_commands()
       
    case 4: // M4 S[RPM] SPINDLE ON - CounterClockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
       {
+        inactivity=false;
         int servo_index = 0;
         int servo_position = SERVO_SPINDLE_ZERO;
         float rpm_1=0;
@@ -4617,19 +4629,46 @@ void handle_status_leds(void) {
 
 void manage_inactivity()
 {
-  if( (millis() - previous_millis_cmd) >  max_inactive_time )
-    if(max_inactive_time)
-      kill();
-  if(stepper_inactive_time)  {
-    if( (millis() - previous_millis_cmd) >  stepper_inactive_time )
+  
+  if (max_steppers_inactive_time){
+    if( (millis() - previous_millis_cmd) >  max_steppers_inactive_time){
+        if(blocks_queued() == false) {  
+            //steppers disabled
+            disable_x();
+            disable_y();
+            disable_z();
+            disable_e0();
+            disable_e1();
+            disable_e2();
+        }
+    }
+  }
+  
+  if(max_inactive_time)  {
+    if( (millis() - previous_millis_cmd) >  max_inactive_time )
     {
-      if(blocks_queued() == false) {
-        disable_x();
-        disable_y();
-        disable_z();
-        disable_e0();
-        disable_e1();
-        disable_e2();
+      if(blocks_queued() == false) {          
+        if (inactivity == false){
+ 
+         //steppers disabled
+          disable_x();
+          disable_y();
+          disable_z();
+          disable_e0();
+          disable_e1();
+          disable_e2();
+          
+          // disable heating & motors
+          disable_heater();
+          MILL_MOTOR_OFF();
+          SERVO1_OFF();                   
+          rpm=0;
+            
+          // warning
+          RPI_ERROR_ACK_ON();
+          ERROR_CODE=ERROR_IDLE_SAFETY;       
+          inactivity=true;
+        }
       }
     }
   }
