@@ -440,7 +440,7 @@ bool enable_secure_switch_zprobe=false;
 
 float rpm = 0;
 
-unsigned int fading_speed=200;
+unsigned int fading_speed=100;
 unsigned int led_update_cycles=0;
 bool red_fading=false;
 bool green_fading=false;
@@ -1410,7 +1410,7 @@ static void homeaxis(int axis) {
     
     plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
-    if (!home_Z_reverse && axis==Z_AXIS) set_amb_color_fading(true,false,false,200);
+    if (!home_Z_reverse && axis==Z_AXIS) set_amb_color_fading(true,false,false,100);
 
     current_position[axis] = 0;
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
@@ -1418,7 +1418,7 @@ static void homeaxis(int axis) {
     plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
     if (!home_Z_reverse && axis==Z_AXIS) {
-      set_amb_color_fading(false,true,false,200);
+      set_amb_color_fading(false,true,false,100);
       retract_z_probe();
       engage_z_probe();
     }
@@ -1599,7 +1599,7 @@ void process_commands()
   #endif //ENABLE_AUTO_BED_LEVELING
   
         store_last_amb_color();
-        set_amb_color_fading(false,false,true,200);
+        set_amb_color_fading(false,false,true,100);
         
         
         saved_feedrate = feedrate;
@@ -1841,7 +1841,7 @@ void process_commands()
             #endif
 
             store_last_amb_color();
-            set_amb_color_fading(false,true,false,200);
+            set_amb_color_fading(false,true,false,100);
             
         
             // Prevent user from running a G29 without first homing in X and Y
