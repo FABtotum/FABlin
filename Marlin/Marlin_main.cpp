@@ -1410,7 +1410,7 @@ static void homeaxis(int axis) {
     
     plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
-    if (!home_Z_reverse && axis==Z_AXIS) set_amb_color_fading(true,false,false,100);
+    if (!home_Z_reverse && axis==Z_AXIS) set_amb_color_fading(false,true,false,100);
 
     current_position[axis] = 0;
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
@@ -1425,7 +1425,7 @@ static void homeaxis(int axis) {
 
     destination[axis] = 2*home_retract_mm(axis) * axis_home_dir;
 #ifdef DELTA
-    feedrate = homing_feedrate[axis]/10;
+    feedrate = homing_feedrate[axis]/5;
 #else
     feedrate = homing_feedrate[axis]/2 ;
 
@@ -1599,7 +1599,7 @@ void process_commands()
   #endif //ENABLE_AUTO_BED_LEVELING
   
         store_last_amb_color();
-        set_amb_color_fading(false,false,true,100);
+        set_amb_color_fading(false,true,false,100);
         
         
         saved_feedrate = feedrate;
