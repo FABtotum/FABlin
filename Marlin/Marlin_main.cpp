@@ -4559,36 +4559,36 @@ void manage_inactivity()
   #endif
   check_axes_activity();
   
- if (((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)
-    {
-     kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled
-    }
-    
- if ((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING) && (READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
-    {
+  if (((READ(DOOR_OPEN_PIN) && (!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || !READ(E0_ENABLE_PIN) || (READ(MILL_MOTOR_ON_PIN) && rpm>0))) && enable_door_kill) && enable_permanent_door_kill)
+  {
+    kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled
+  }
+
+  if ((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING) && (READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING)
+  ||  (READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING) && (READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING))
+  {
     rpi_recovery_flag=true;   
     RPI_RECOVERY_ON();          //check if user is going to recover Raspberry OS
     stop_fading();
     set_amb_color(0,0,255);
-     }
- else
-     {
-       if(rpi_recovery_flag)
-       {
-       RPI_RECOVERY_OFF();
-       rpi_recovery_flag=false;
-       }
-     }
-     
- if (!READ(DOOR_OPEN_PIN) && !enable_door_kill)
+  }
+  else
+  {
+    if(rpi_recovery_flag)
     {
-     enable_door_kill=true;                    // REARM the killing process if the user closes the front door
+      RPI_RECOVERY_OFF();
+      rpi_recovery_flag=false;
     }
-    
- 
- manage_secure_endstop();   
- manage_fab_soft_pwm();                        // manage light
- manage_amb_color_fading();                    // manage ligth fading
+  }
+
+  if (!READ(DOOR_OPEN_PIN) && !enable_door_kill)
+  {
+    enable_door_kill=true;                    // REARM the killing process if the user closes the front door
+  }
+
+  manage_secure_endstop();   
+  manage_fab_soft_pwm();                        // manage light
+  manage_amb_color_fading();                    // manage ligth fading
     
 }
 

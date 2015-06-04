@@ -37,7 +37,7 @@
 # from the commandline with "make HARDWARE_MOTHERBOARD=71" for example
 
 # This defined the board you are compiling for (see Configuration.h for the options)
-HARDWARE_MOTHERBOARD ?= 11
+HARDWARE_MOTHERBOARD ?= 25
 
 # Arduino source install directory, and version number
 ARDUINO_INSTALL_DIR  ?= /Applications/Arduino.app/Contents/Resources/Java
