@@ -185,6 +185,11 @@ else ifeq  ($(HARDWARE_MOTHERBOARD),68)
 HARDWARE_VARIANT ?= arduino
 MCU              ?= atmega2560
 
+# TotumDuino
+else ifeq ($(HARDWARE_MOTHERBOARD), 25)
+HARDWARE_VARIANT ?= Gen7
+MCU              ?= atmega1280
+
 endif
 
 # Be sure to regenerate speed_lookuptable.h with create_speed_lookuptable.py
