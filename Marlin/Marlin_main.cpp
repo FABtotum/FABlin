@@ -288,6 +288,8 @@ float min_pos[3] = { X_MIN_POS, Y_MIN_POS, Z_MIN_POS };
 float max_pos[3] = { X_MAX_POS, Y_MAX_POS, Z_MAX_POS };
 bool axis_known_position[3] = {false, false, false};
 float zprobe_zoffset;
+bool inactivity = true;
+
 
 // Extruder offset
 #if EXTRUDERS > 1
@@ -392,8 +394,8 @@ const int sensitive_pins[] = SENSITIVE_PINS; // Sensitive pin list for M42
 
 //Inactivity shutdown variables
 static unsigned long previous_millis_cmd = 0;
-static unsigned long max_inactive_time = 0;
-static unsigned long stepper_inactive_time = DEFAULT_STEPPER_DEACTIVE_TIME*1000l;
+static unsigned long max_inactive_time = DEFAULT_DEACTIVE_TIME*1000l;
+static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
 
 unsigned long starttime=0;
 unsigned long stoptime=0;
@@ -432,9 +434,13 @@ bool enable_door_kill=true;
 bool enable_permanent_door_kill=true;
 bool rpi_recovery_flag=false;
 
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+bool enable_secure_switch_zprobe=false;
+#endif
+
 float rpm = 0;
 
-unsigned int fading_speed=200;
+unsigned int fading_speed=100;
 unsigned int led_update_cycles=0;
 bool red_fading=false;
 bool green_fading=false;
@@ -685,11 +691,9 @@ blue_fading=false;
 slope=true;*/
 
 set_amb_color(0,0,0);
-set_amb_color_fading(true,true,false,200);
-
+set_amb_color_fading(true,true,false,100);
 
 Read_Head_Info();
-
 
 _delay_ms(50);
 BEEP_OFF()
@@ -697,8 +701,6 @@ _delay_ms(30);
 BEEP_ON()
 _delay_ms(50);
 BEEP_OFF()
-
-
 
 }
 
@@ -1176,9 +1178,9 @@ static void run_z_probe() {
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
 }
 
-static void run_fast_z_probe() {
+static void run_fast_z_probe(float feedrateProbing) {
     plan_bed_level_matrix.set_to_identity();
-    feedrate = homing_feedrate[Z_AXIS];
+    feedrate = feedrateProbing; //homing_feedrate[Z_AXIS];
 
     // move down until you find the bed
     //float zPosition = -10;
@@ -1191,6 +1193,26 @@ static void run_fast_z_probe() {
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS]);
 
 }
+
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+static void run_fast_external_z_endstop() {
+    plan_bed_level_matrix.set_to_identity();
+    
+    // This function expects the feedrate to have been set externally.
+    //feedrate = homing_feedrate[Z_AXIS];
+
+    // move down until you find the bed
+    float zPosition = -10;
+    plan_buffer_line(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS], feedrate/60, active_extruder);
+    st_synchronize();
+
+    // we have to let the planner know where we are right now as it is not where we said to go.
+    zPosition = st_get_position_mm(Z_AXIS);
+    plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS]);
+
+}
+#endif
+
 
 static void do_blocking_move_to(float x, float y, float z) {
     float oldFeedRate = feedrate;
@@ -1219,9 +1241,26 @@ static void setup_for_endstop_move() {
     enable_endstops(true);
 }
 
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+static void setup_for_external_z_endstop_move() {
+    saved_feedrate = feedrate;
+    saved_feedmultiply = feedmultiply;
+    feedmultiply = 100;
+    previous_millis_cmd = millis();
+
+    // enabling endstops acts as a safety in case the a z probe was incorrectly engaged or z_min is actually reached
+    enable_endstops(true);
+    enable_external_z_endstop(true);
+}
+#endif
+
 static void clean_up_after_endstop_move() {
 #ifdef ENDSTOPS_ONLY_FOR_HOMING
     enable_endstops(false);
+#endif
+
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+    enable_external_z_endstop(false);
 #endif
 
     feedrate = saved_feedrate;
@@ -1365,22 +1404,35 @@ static void homeaxis(int axis) {
     feedrate = homing_feedrate[axis];
     
     if(home_Z_reverse && axis==Z_AXIS)              //speedup G27 (reversed Z homing)
-    {feedrate = homing_feedrate[axis]*6;}
+    { // Movement of Z downwards to endstops...
+	feedrate = homing_feedrate[axis]*6;
+    }
     
     plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
+    if (!home_Z_reverse && axis==Z_AXIS) set_amb_color_fading(false,true,false,100);
 
     current_position[axis] = 0;
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
     destination[axis] = -home_retract_mm(axis) * axis_home_dir;
     plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
+    if (!home_Z_reverse && axis==Z_AXIS) {
+      set_amb_color_fading(false,true,false,100);
+      retract_z_probe();
+      engage_z_probe();
+    }
 
     destination[axis] = 2*home_retract_mm(axis) * axis_home_dir;
 #ifdef DELTA
-    feedrate = homing_feedrate[axis]/10;
+    feedrate = homing_feedrate[axis]/5;
 #else
     feedrate = homing_feedrate[axis]/2 ;
+
+    if (!home_Z_reverse && axis==Z_AXIS) {
+    feedrate = homing_feedrate[axis]/10 ;
+    }
+
 #endif
     plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
@@ -1481,6 +1533,7 @@ void process_commands()
     {
     case 0: // G0 -> G1
     case 1: // G1
+      //inactivity=false; //re-enable warning for inactivy.
       if(Stopped == false) {
         get_coordinates(); // For X Y Z E F
           #ifdef FWRETRACT
@@ -1546,7 +1599,7 @@ void process_commands()
   #endif //ENABLE_AUTO_BED_LEVELING
   
         store_last_amb_color();
-        set_amb_color_fading(false,true,false,200);
+        set_amb_color_fading(false,true,false,100);
         
         
         saved_feedrate = feedrate;
@@ -1788,7 +1841,7 @@ void process_commands()
             #endif
 
             store_last_amb_color();
-            set_amb_color_fading(false,true,false,200);
+            set_amb_color_fading(false,true,false,100);
             
         
             // Prevent user from running a G29 without first homing in X and Y
@@ -1968,13 +2021,33 @@ void process_commands()
             
             //engage_z_probe(); // Engage Z Servo endstop if available
 
+
+            float feedRateUp = homing_feedrate[Z_AXIS];
+            float feedRateDown = homing_feedrate[Z_AXIS];
+            
+            if (code_seen('U')) {
+                // UP Value Feed Rate
+                feedRateUp = code_value();
+            }
+          
+            if (code_seen('D')) {
+              // Down Value (Bed Retract) Feed Rate
+              feedRateDown = code_value();
+            }
+            
+
+
             st_synchronize();
             // TODO: make sure the bed_level_rotation_matrix is identity or the planner will get set incorectly
             setup_for_endstop_move();
 
-            feedrate = homing_feedrate[Z_AXIS];
+            feedrate = feedRateUp; //homing_feedrate[Z_AXIS];
           
-            run_fast_z_probe();
+            SERIAL_PROTOCOLPGM(" Feedrate: ");
+            SERIAL_PROTOCOL(feedrate);
+            SERIAL_PROTOCOLPGM(" ");
+          
+            run_fast_z_probe(feedrate);
             SERIAL_PROTOCOLPGM(MSG_BED);
             SERIAL_PROTOCOLPGM(" X: ");
             SERIAL_PROTOCOL(current_position[X_AXIS]);
@@ -1986,11 +2059,47 @@ void process_commands()
 
             clean_up_after_endstop_move();
 
+            feedrate = homing_feedrate[Z_AXIS];
             //retract_z_probe(); // Retract Z Servo endstop if available
           }
         }
         break;
 #endif // ENABLE_AUTO_BED_LEVELING
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+    case 38: // G38 endstop based z probe
+	     // Same behaviour as G30 but with an endstop external z probe connected as described in M746
+	     // It does nothing unless the probe is enabled first with M746 S1
+        {
+          if(!Stopped && enable_secure_switch_zprobe){
+            
+            st_synchronize();
+            
+            setup_for_external_z_endstop_move();
+ 
+	    if (code_seen('S')) {
+	      feedrate = code_value();
+	      
+	      if(feedrate > 200 ) // ignore the user, greater than 200 for probing is considered to be dangerous (the tool will crash badly)
+		feedrate = 200;
+	    }
+	    else
+	      feedrate = homing_feedrate[Z_AXIS];
+          
+            run_fast_external_z_endstop();
+            SERIAL_PROTOCOLPGM(MSG_BED);
+            SERIAL_PROTOCOLPGM(" X: ");
+            SERIAL_PROTOCOL(current_position[X_AXIS]);
+            SERIAL_PROTOCOLPGM(" Y: ");
+            SERIAL_PROTOCOL(current_position[Y_AXIS]);
+            SERIAL_PROTOCOLPGM(" Z: ");
+            SERIAL_PROTOCOL(current_position[Z_AXIS]);
+            SERIAL_PROTOCOLPGM("\n");
+
+            clean_up_after_endstop_move();
+          }
+        }
+        break;        
+#endif //ENDSTOP_Z_PROBING
     case 90: // G90
       relative_mode = false;
       break;
@@ -2217,6 +2326,8 @@ void process_commands()
       if(setTargetedHotend(104)){
         break;
       }
+      fanSpeed=255; //set fan on by default
+      inactivity=false;
       if (code_seen('S')) setTargetHotend(code_value(), tmp_extruder);
 #ifdef DUAL_X_CARRIAGE
       if (dual_x_carriage_mode == DXC_DUPLICATION_MODE && tmp_extruder == 0)
@@ -2225,6 +2336,7 @@ void process_commands()
       setWatch();
       break;
     case 140: // M140 set bed temp
+      inactivity=false;
       if (code_seen('S')) setTargetBed(code_value());
       break;
     case 105 : // M105
@@ -2297,6 +2409,9 @@ void process_commands()
         break;
       }
       LCD_MESSAGEPGM(MSG_HEATING);
+      fanSpeed=255; //fan on by default
+      inactivity=false;
+      
       #ifdef AUTOTEMP
         autotemp_enabled=false;
       #endif
@@ -2384,6 +2499,7 @@ void process_commands()
       }
       break;
     case 190: // M190 - Wait for bed heater to reach target.
+    inactivity=false;
     #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
         LCD_MESSAGEPGM(MSG_BED_HEATING);
         if (code_seen('S')) {
@@ -2519,7 +2635,7 @@ void process_commands()
     case 18: //compatibility
     case 84: // M84
       if(code_seen('S')){
-        stepper_inactive_time = code_value() * 1000;
+        max_inactive_time = code_value() * 1000;
       }
       else
       {
@@ -3634,7 +3750,6 @@ void process_commands()
       stop_fading();
       restore_last_amb_color();
       
-      
     }
     break;
     
@@ -3653,14 +3768,14 @@ void process_commands()
       disable_e1();
       disable_e2();
       
-      
       set_amb_color(0,0,0);
       store_last_amb_color();
-      set_amb_color_fading(true,true,false,200);
-      _delay_ms(45000);
-      restore_last_amb_color();
-       //while(1){}
       
+      set_amb_color_fading(true,true,true,100);
+              
+      set_amb_color(0,0,0);
+      restore_last_amb_color();
+
     }
     break;
     
@@ -3714,10 +3829,12 @@ void process_commands()
       triggered_kill=false;
       Stopped = false;
     }
-    break;
+    break;  
+    
     
     case 3: // M3 S[RPM] SPINDLE ON - Clockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
       {
+        inactivity=false;
         int servo_index = 0;
         int servo_position = SERVO_SPINDLE_ZERO;
         float rpm_1=0;
@@ -3775,6 +3892,7 @@ void process_commands()
       
    case 4: // M4 S[RPM] SPINDLE ON - CounterClockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
       {
+        inactivity=false;
         int servo_index = 0;
         int servo_position = SERVO_SPINDLE_ZERO;
         float rpm_1=0;
@@ -3893,6 +4011,55 @@ void process_commands()
         {SERIAL_PROTOCOLLN(MSG_ENDSTOP_OPEN);}
       }
       break;
+
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+    case 746:   // M746 - setting of an endstop sensor, to be used as an external endstop zprobe.
+		//
+		// The actual pin is provided by EXTERNAL_ENDSTOP_Z_PROBING_PIN macro, which defaults to pin 71 
+		// (in totumduino's silk screen "Secure_sw", see also M743).
+		//
+		// M746 S1 to enable this functionality.
+		// M746 S0 to disable this functionality.
+		// M746 to see the status of this functionality.
+		//
+		// If enabled you need to keep an external zprobe connected to this totumduino connector that makes the endstop read "open" in normal state or
+		// you will have undesirable behaviour (only during the time a Z probe is done, so during homing, G30 and G38).
+		//
+		// A possible probe is an electrical continuity probe between a copper cad (for making PCBs) and the mill (that in the hybrid head is to GND), like this:
+		// 
+		// |  | (secure_sw)
+		// |  \------------------------------+----- attach this to copper clad (via a metal washer to which the wire is soldered?)
+		// \-----------------------/\/\/\/---|
+		//                         1 kOhm
+    {
+      int value;
+      if (code_seen('S'))
+      {
+        value = code_value();
+        if(value>=1)
+        {
+          enable_secure_switch_zprobe=true;
+        }
+        else
+        {
+          enable_secure_switch_zprobe=false;
+        }
+      }
+      else
+      {
+          SERIAL_PROTOCOL("SECURE_SW Z PROBE ENABLED: ");
+          if(enable_secure_switch_zprobe)
+          {
+            SERIAL_PROTOCOLLN("TRUE");
+          }
+          else
+          {
+            SERIAL_PROTOCOLLN("FALSE");
+          }
+      }
+    }
+    break;
+#endif      
       
     case 750: // M750 - read PRESSURE sensor (ANALOG 0-1023)
       {
@@ -4492,19 +4659,46 @@ void handle_status_leds(void) {
 
 void manage_inactivity()
 {
-  if( (millis() - previous_millis_cmd) >  max_inactive_time )
-    if(max_inactive_time)
-      kill();
-  if(stepper_inactive_time)  {
-    if( (millis() - previous_millis_cmd) >  stepper_inactive_time )
+  
+  if (max_steppers_inactive_time){
+    if( (millis() - previous_millis_cmd) >  max_steppers_inactive_time){
+        if(blocks_queued() == false) {  
+            //steppers disabled
+            disable_x();
+            disable_y();
+            disable_z();
+            disable_e0();
+            disable_e1();
+            disable_e2();
+        }
+    }
+  }
+  
+  if(max_inactive_time)  {
+    if( (millis() - previous_millis_cmd) >  max_inactive_time )
     {
-      if(blocks_queued() == false) {
-        disable_x();
-        disable_y();
-        disable_z();
-        disable_e0();
-        disable_e1();
-        disable_e2();
+      if(blocks_queued() == false) {          
+        if (inactivity == false){
+ 
+         //steppers disabled
+          disable_x();
+          disable_y();
+          disable_z();
+          disable_e0();
+          disable_e1();
+          disable_e2();
+          
+          // disable heating & motors
+          disable_heater();
+          MILL_MOTOR_OFF();
+          SERVO1_OFF();                   
+          rpm=0;
+            
+          // warning
+          RPI_ERROR_ACK_ON();
+          ERROR_CODE=ERROR_IDLE_SAFETY;       
+          inactivity=true;
+        }
       }
     }
   }
@@ -4589,7 +4783,7 @@ void manage_inactivity()
   manage_secure_endstop();   
   manage_fab_soft_pwm();                        // manage light
   manage_amb_color_fading();                    // manage ligth fading
-    
+
 }
 
 void manage_secure_endstop()
