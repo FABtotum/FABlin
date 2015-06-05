@@ -691,9 +691,11 @@ blue_fading=false;
 slope=true;*/
 
 set_amb_color(0,0,0);
-set_amb_color_fading(true,true,false,100);
+set_amb_color_fading(true,true,false,200);
+
 
 Read_Head_Info();
+
 
 _delay_ms(50);
 BEEP_OFF()
@@ -701,6 +703,8 @@ _delay_ms(30);
 BEEP_ON()
 _delay_ms(50);
 BEEP_OFF()
+
+
 
 }
 
@@ -3750,6 +3754,7 @@ void process_commands()
       stop_fading();
       restore_last_amb_color();
       
+      
     }
     break;
     
@@ -3768,14 +3773,14 @@ void process_commands()
       disable_e1();
       disable_e2();
       
+      
       set_amb_color(0,0,0);
       store_last_amb_color();
-      
-      set_amb_color_fading(true,true,true,100);
-              
-      set_amb_color(0,0,0);
+      set_amb_color_fading(true,true,false,200);
+      _delay_ms(45000);
       restore_last_amb_color();
-
+       //while(1){}
+      
     }
     break;
     
@@ -3829,8 +3834,7 @@ void process_commands()
       triggered_kill=false;
       Stopped = false;
     }
-    break;  
-    
+    break;
     
     case 3: // M3 S[RPM] SPINDLE ON - Clockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
       {
