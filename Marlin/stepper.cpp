@@ -522,18 +522,18 @@ ISR(TIMER1_COMPA_vect)
         #endif
       }
 
-       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
+      #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
       CHECK_EXTERNAL_Z_ENDSTOPS
       {
-         bool external_endstop=(READ(EXTERNAL_ENDSTOP_Z_PROBING_PIN) != EXTERNAL_Z_ENDSTOP_INVERTING);
+         bool external_endstop=(READ(EXTERNAL_ENDSTOP_Z_PROBING_PIN) != external_z_endstop_inverting );
           if(external_endstop && old_external_z_endstop && (current_block->steps_z > 0)) {
             endstops_trigsteps[Z_AXIS] = count_position[Z_AXIS];
             endstop_z_hit=true;
             step_events_completed = current_block->step_event_count;
           }
           old_external_z_endstop = external_endstop;
+      }
       #endif
-     }
     }
     else { // +direction
       WRITE(Z_DIR_PIN,!INVERT_Z_DIR);
