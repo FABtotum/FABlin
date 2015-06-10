@@ -265,6 +265,10 @@ extern unsigned int ERROR_CODE;
 
 extern bool head_placed;
 
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+extern bool enable_secure_switch_zprobe;
+#endif
+
 // Handling multiple extruders pins
 extern uint8_t active_extruder;
 
@@ -390,9 +394,6 @@ extern unsigned int general_assembly_version;
 #define SERIAL_N_4             5
 #define SERIAL_N_5             6
 #define SERIAL_N_CRC           7
-
-//external endstop probing
-extern bool external_z_endstop_inverting;
 
 #define I2C_MAX_TIMEOUT 1000
 
