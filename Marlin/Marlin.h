@@ -265,6 +265,10 @@ extern unsigned int ERROR_CODE;
 
 extern bool head_placed;
 
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+extern bool enable_secure_switch_zprobe;
+#endif
+
 // Handling multiple extruders pins
 extern uint8_t active_extruder;
 

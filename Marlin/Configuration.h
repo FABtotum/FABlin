@@ -341,6 +341,7 @@ const bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of
 //= Z PROBING via endstop (e.g. electrical continuity between mill and PCB)==
 
 #define EXTERNAL_ENDSTOP_Z_PROBING
+//#undef EXTERNAL_ENDSTOP_Z_PROBING
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
  #define EXTERNAL_ENDSTOP_Z_PROBING_PIN 71
