@@ -344,7 +344,7 @@ const bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
  #define EXTERNAL_ENDSTOP_Z_PROBING_PIN 71
- //#define EXTERNAL_Z_ENDSTOP_INVERTING false
+ #define EXTERNAL_Z_ENDSTOP_INVERTING true
 #endif
 //============================= Bed Auto Leveling ===========================
 

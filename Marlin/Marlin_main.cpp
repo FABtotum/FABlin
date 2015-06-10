@@ -436,8 +436,6 @@ bool rpi_recovery_flag=false;
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
 bool enable_secure_switch_zprobe=false;
-bool external_z_endstop_inverting=false;
-
 #endif
 
 float rpm = 0;
@@ -693,7 +691,7 @@ blue_fading=false;
 slope=true;*/
 
 set_amb_color(0,0,0);
-set_amb_color_fading(true,true,false,fading_speed);
+set_amb_color_fading(true,true,false,200);
 
 
 Read_Head_Info();
@@ -1416,7 +1414,7 @@ static void homeaxis(int axis) {
     
     plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
-    if (!home_Z_reverse && axis==Z_AXIS) set_amb_color_fading(false,true,false,fading_speed);
+    if (!home_Z_reverse && axis==Z_AXIS) set_amb_color_fading(false,true,false,100);
 
     current_position[axis] = 0;
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
@@ -1424,7 +1422,7 @@ static void homeaxis(int axis) {
     plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
     if (!home_Z_reverse && axis==Z_AXIS) {
-      set_amb_color_fading(false,true,false,fading_speed);
+      set_amb_color_fading(false,true,false,100);
       retract_z_probe();
       engage_z_probe();
     }
@@ -1605,7 +1603,7 @@ void process_commands()
   #endif //ENABLE_AUTO_BED_LEVELING
   
         store_last_amb_color();
-        set_amb_color_fading(false,true,false,fading_speed);
+        set_amb_color_fading(false,true,false,100);
         
         
         saved_feedrate = feedrate;
@@ -1847,7 +1845,7 @@ void process_commands()
             #endif
 
             store_last_amb_color();
-            set_amb_color_fading(false,true,false,fading_speed);
+            set_amb_color_fading(false,true,false,100);
             
         
             // Prevent user from running a G29 without first homing in X and Y
@@ -2076,7 +2074,6 @@ void process_commands()
 	     // Same behaviour as G30 but with an endstop external z probe connected as described in M746
 	     // It does nothing unless the probe is enabled first with M746 S1
         {
-          
           if(!Stopped && enable_secure_switch_zprobe){
             
             st_synchronize();
@@ -3779,9 +3776,9 @@ void process_commands()
       
       set_amb_color(0,0,0);
       store_last_amb_color();
-      set_amb_color_fading(true,true,true,fading_speed);
-      //_delay_ms(45000);
-      //restore_last_amb_color();
+      set_amb_color_fading(true,true,false,200);
+      _delay_ms(45000);
+      restore_last_amb_color();
        //while(1){}
       
     }
@@ -4045,12 +4042,10 @@ void process_commands()
         value = code_value();
         if(value>=1)
         {
-          external_z_endstop_inverting = true;
           enable_secure_switch_zprobe=true;
         }
         else
         {
-          external_z_endstop_inverting = false;
           enable_secure_switch_zprobe=false;
         }
       }
@@ -4767,14 +4762,13 @@ void manage_inactivity()
      kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled
     }
 
- //if ((READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING) && (READ(Z_MIN_PIN)^Z_MIN_ENDSTOP_INVERTING))
-    //{
-    //rpi_recovery_flag=true;
-    //RPI_RECOVERY_ON();          //check if user is going to recover Raspberry OS
-    //stop_fading();
-    //set_amb_color(0,0,255);
-    //}
-    
+ if ((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING) && (READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
+    {
+    rpi_recovery_flag=true;
+    RPI_RECOVERY_ON();          //check if user is going to recover Raspberry OS
+    stop_fading();
+    set_amb_color(0,0,255);
+     }
  else
      {
        if(rpi_recovery_flag)

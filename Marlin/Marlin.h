@@ -391,9 +391,6 @@ extern unsigned int general_assembly_version;
 #define SERIAL_N_5             6
 #define SERIAL_N_CRC           7
 
-//external endstop probing
-extern bool external_z_endstop_inverting;
-
 #define I2C_MAX_TIMEOUT 1000
 
 #define AVG_MEASURED_Z_MAX     1
