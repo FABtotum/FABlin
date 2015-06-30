@@ -290,6 +290,14 @@ bool axis_known_position[3] = {false, false, false};
 float zprobe_zoffset;
 bool inactivity = true;
 
+//endstop configs
+bool X_MIN_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop. 
+bool Y_MIN_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
+bool Z_MIN_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
+bool X_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop. 
+bool Y_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
+bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
+
 
 // Extruder offset
 #if EXTRUDERS > 1
@@ -4065,6 +4073,56 @@ void process_commands()
     break;
 #endif      
       
+    case 747:   // M747 - Set logic. e.g. M747 X1
+    {
+      int value;
+      if (code_seen('X'))
+      {
+        value = code_value();
+        if(value>=1)
+        {
+          X_MIN_ENDSTOP_INVERTING=true;
+          X_MAX_ENDSTOP_INVERTING=true;
+        }
+        else
+        {
+          X_MIN_ENDSTOP_INVERTING=false;
+	  X_MAX_ENDSTOP_INVERTING=false;
+        }
+      }
+	  
+	  if (code_seen('Y'))
+      {
+        value = code_value();
+        if(value>=1)
+        {
+            Y_MIN_ENDSTOP_INVERTING=true;
+            Y_MAX_ENDSTOP_INVERTING=true;
+        }
+        else
+        {
+	  Y_MIN_ENDSTOP_INVERTING=false;
+          Y_MAX_ENDSTOP_INVERTING=false;
+        }
+      }
+      	  if (code_seen('Z'))
+      {
+        value = code_value();
+        if(value>=1)
+        {
+	  Z_MIN_ENDSTOP_INVERTING=true;
+          Z_MAX_ENDSTOP_INVERTING=true;
+        }
+        else
+        {
+	  Z_MIN_ENDSTOP_INVERTING=false;
+          Z_MAX_ENDSTOP_INVERTING=false;
+        }
+      }
+      
+    }
+    break;      
+      
     case 750: // M750 - read PRESSURE sensor (ANALOG 0-1023)
       {
         SERIAL_PROTOCOLPGM("Pressure:");
@@ -4762,13 +4820,13 @@ void manage_inactivity()
      kill_by_door();                    // if the FABtotum is working and the user opens the front door the FABtotum will be disabled
     }
 
- if ((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING) && (READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
-    {
-    rpi_recovery_flag=true;
-    RPI_RECOVERY_ON();          //check if user is going to recover Raspberry OS
-    stop_fading();
-    set_amb_color(0,0,255);
-     }
+ //if ((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING) && (READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
+ //   {
+ //   rpi_recovery_flag=true;
+ //   RPI_RECOVERY_ON();          //check if user is going to recover Raspberry OS
+ //   stop_fading();
+ //   set_amb_color(0,0,255);
+ //    }
  else
      {
        if(rpi_recovery_flag)

@@ -82,6 +82,7 @@ void Config_StoreSettings()
   EEPROM_WRITE_VAR(i,absPreheatHPBTemp);
   EEPROM_WRITE_VAR(i,absPreheatFanSpeed);
   EEPROM_WRITE_VAR(i,zprobe_zoffset);
+  
   #ifdef PIDTEMP
     EEPROM_WRITE_VAR(i,Kp);
     EEPROM_WRITE_VAR(i,Ki);

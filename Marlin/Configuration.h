@@ -15,7 +15,7 @@
 // User-specified version info of this build to display in [Pronterface, etc] terminal window during
 // startup. Implementation of an idea by Prof Braino to inform user that any changes made to this
 // build by the user have been successfully uploaded into firmware.
-#define STRING_BUILD_VERSION  "V 1.0.008"
+#define STRING_BUILD_VERSION  "V 1.0.009"
 #define STRING_BUILD_DATE __DATE__ " " __TIME__ // build date and time
 #define STRING_CONFIG_H_AUTHOR "FABteam" // Who made the changes.
 
@@ -284,12 +284,12 @@
 #endif
 
 // The pullups are needed if you directly connect a mechanical endswitch between the signal and ground pins.
-const bool X_MIN_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
-const bool Y_MIN_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
-const bool Z_MIN_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
-const bool X_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
-const bool Y_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
-const bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
+extern bool X_MIN_ENDSTOP_INVERTING; // = false; // set to true to invert the logic of the endstop. 
+extern bool Y_MIN_ENDSTOP_INVERTING;//= true; // set to true to invert the logic of the endstop.
+extern bool Z_MIN_ENDSTOP_INVERTING; //= true; // set to true to invert the logic of the endstop.
+extern bool X_MAX_ENDSTOP_INVERTING; //= false; // set to true to invert the logic of the endstop. 
+extern bool Y_MAX_ENDSTOP_INVERTING; // = true; // set to true to invert the logic of the endstop.
+extern bool Z_MAX_ENDSTOP_INVERTING; // = true; // set to true to invert the logic of the endstop.
 //#define DISABLE_MAX_ENDSTOPS
 //#define DISABLE_MIN_ENDSTOPS
 
