@@ -48,10 +48,17 @@ void _EEPROM_readData(int &pos, uint8_t* value, uint8_t size)
 #ifdef EEPROM_SETTINGS
 void Config_StoreSettings() 
 {
-  char ver[4]= "000";
-  int i=EEPROM_OFFSET_WRITE;
- 
-  
+  char ver[4] = "000";
+
+  // Save batch number too, because yes
+  int i = EEPROM_OFFSET_READ;
+  EEPROM_READ_VAR(i,fab_serial_code);
+  EEPROM_READ_VAR(i,fab_control_serial_code);
+  EEPROM_READ_VAR(i,fab_board_version);
+  EEPROM_WRITE_VAR(i,fab_batch_number);
+
+  i = EEPROM_OFFSET_WRITE;
+
   EEPROM_WRITE_VAR(i,ver); // invalidate data first 
   EEPROM_WRITE_VAR(i,axis_steps_per_unit);  
   EEPROM_WRITE_VAR(i,max_feedrate);  
