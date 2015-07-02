@@ -4205,11 +4205,12 @@ void process_commands()
       
     case 763 :  // M763 - read FABtotum Personal Fabricator Main Controller production batch number
       {
+        bool set = false;
         if (code_seen('S')) {
           fab_batch_number = code_value_long();
-          Config_StoreSettings();
         }
         SERIAL_PROTOCOLLN(fab_batch_number);
+        if (set) Config_StoreSettings();
       }
       break;
       
