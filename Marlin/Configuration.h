@@ -15,7 +15,7 @@
 // User-specified version info of this build to display in [Pronterface, etc] terminal window during
 // startup. Implementation of an idea by Prof Braino to inform user that any changes made to this
 // build by the user have been successfully uploaded into firmware.
-#define STRING_BUILD_VERSION  "V 1.0.009"
+#define STRING_BUILD_VERSION  "V 1.0.0091"
 #define STRING_BUILD_DATE __DATE__ " " __TIME__ // build date and time
 #define STRING_CONFIG_H_AUTHOR "FABteam" // Who made the changes.
 
@@ -284,12 +284,12 @@
 #endif
 
 // The pullups are needed if you directly connect a mechanical endswitch between the signal and ground pins.
-extern bool X_MIN_ENDSTOP_INVERTING; // = false; // set to true to invert the logic of the endstop. 
-extern bool Y_MIN_ENDSTOP_INVERTING;//= true; // set to true to invert the logic of the endstop.
-extern bool Z_MIN_ENDSTOP_INVERTING; //= true; // set to true to invert the logic of the endstop.
-extern bool X_MAX_ENDSTOP_INVERTING; //= false; // set to true to invert the logic of the endstop. 
-extern bool Y_MAX_ENDSTOP_INVERTING; // = true; // set to true to invert the logic of the endstop.
-extern bool Z_MAX_ENDSTOP_INVERTING; // = true; // set to true to invert the logic of the endstop.
+extern bool X_MIN_ENDSTOP_INVERTING;
+extern bool Y_MIN_ENDSTOP_INVERTING; 
+extern bool Z_MIN_ENDSTOP_INVERTING; 
+extern bool X_MAX_ENDSTOP_INVERTING; 
+extern bool Y_MAX_ENDSTOP_INVERTING; 
+extern bool Z_MAX_ENDSTOP_INVERTING; 
 //#define DISABLE_MAX_ENDSTOPS
 //#define DISABLE_MIN_ENDSTOPS
 
@@ -469,11 +469,9 @@ extern bool Z_MAX_ENDSTOP_INVERTING; // = true; // set to true to invert the log
 // X Y : 1:1 direct belt drive on 2mm pitch * 10 teeths t10 pulley.
 // extruder 1:20 worm gear.
 
-//#define DEFAULT_AXIS_STEPS_PER_UNIT   {80,80,2133.333,3048.1593}  //  steps per unit for fabtotum e=1914.5295 steps/mm with MK7 ----> MK8 e=2961.833
 #define DEFAULT_AXIS_STEPS_PER_UNIT   {72.5811,72.5811,2133.333,3048.1593}  //  steps per unit for fabtotum e=1914.5295 steps/mm with MK7 ----> MK8 e=2961.833
-//#define DEFAULT_AXIS_STEPS_PER_UNIT   {80,80,2133.333,177.7778}  //  steps per unit for fabtotum e=177.7778 steps/dgree  A= steps/degree
 
-#define DEFAULT_MAX_FEEDRATE          {550, 550, 15, 18}    // (mm/sec)  E0 was 2MM/SEC
+#define DEFAULT_MAX_FEEDRATE          {550, 550, 15, 12}    // (mm/sec)  E0 was 2MM/SEC
 #define DEFAULT_MAX_ACCELERATION      {10000,10000,50,100}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for Skeinforge 40+, for older versions raise them a lot.
 
 #define DEFAULT_ACCELERATION          4000    // X, Y, Z and E max acceleration in mm/s^2 for printing moves  (was 5000)
@@ -486,9 +484,9 @@ extern bool Z_MAX_ENDSTOP_INVERTING; // = true; // set to true to invert the log
 // #define EXTRUDER_OFFSET_Y {0.0, 5.00}  // (in mm) for each extruder, offset of the hotend on the Y axis
 
 // The speed change that does not require acceleration (i.e. the software might assume it can be done instantaneously)
-#define DEFAULT_XYJERK                20.0    // (mm/sec)
+#define DEFAULT_XYJERK                25.0    // (mm/sec)
 #define DEFAULT_ZJERK                 0.4     // (mm/sec)
-#define DEFAULT_EJERK                 5.0    // (mm/sec)
+#define DEFAULT_EJERK                 1.0    // (mm/sec)
 
 //===========================================================================
 //=============================Additional Features===========================
