@@ -132,11 +132,90 @@
 // 1010 is Pt1000 with 1k pullup (non standard)
 // 147 is Pt100 with 4k7 pullup
 // 110 is Pt100 with 1k pullup (non standard)
-
-#define TEMP_SENSOR_0 169
 #define TEMP_SENSOR_1 0
 #define TEMP_SENSOR_2 0
 #define TEMP_SENSOR_BED 1
+
+//********** configuration for thermistor type HOTSWAP ********************//
+#define THERMISTOR_HOTSWAP
+
+#ifdef THERMISTOR_HOTSWAP 
+// START: This are auxiliary macros supporting up to ELEVEN (0-10) tables
+#define CONCAT(A,B)         A ## B
+#define EXPAND_CONCAT(A,B)  CONCAT(A, B)
+#define ARGN(N, LIST)       EXPAND_CONCAT(ARG_, N) LIST
+#define ARG_0(A0, ...)      A0
+#define ARG_1(A0, A1, ...)  A1
+#define ARG_2(A0, A1, A2, ...)      A2
+#define ARG_3(A0, A1, A2, A3, ...)  A3
+#define ARG_4(A0, A1, A2, A3, A4, ...)      A4
+#define ARG_5(A0, A1, A2, A3, A4, A5, ...)  A5
+#define ARG_6(A0, A1, A2, A3, A4, A5, A6, ...)      A6
+#define ARG_7(A0, A1, A2, A3, A4, A5, A6, A7, ...)  A7
+#define ARG_8(A0, A1, A2, A3, A4, A5, A6, A7, A8, ...)      A8
+#define ARG_9(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, ...)  A9
+#define ARG_10(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, ...)    A10
+// END: This are auxiliary macros supporting up to ELEVEN (0-10) tables
+
+// USER CONFIGURATION:
+#define THERMISTOR_HOTSWAP_SUPPORTED_TYPES ( 169, 11 )
+#define THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN 2 // two types are currently supported
+#define THERMISTOR_HOTSWAP_DEFAULT_INDEX 0 // the index of within the supported types to which the printer will be initialised.
+
+// START: This are auxiliary macros
+#define xstr(s) str(s)
+#define str(s) #s
+     
+#define THERMISTOR_HOTSWAP_SUPPORTED_TYPES_AS_STRING xstr(THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
+
+#define ORREP1(PTH_TYPE) PTH_TYPE == ARGN(0, THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
+#define ORREP2(PTH_TYPE) ORREP1(PTH_TYPE) || PTH_TYPE == ARGN(1, THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
+#define ORREP3(PTH_TYPE) ORREP2(PTH_TYPE) || PTH_TYPE == ARGN(2, THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
+#define ORREP4(PTH_TYPE) ORREP3(PTH_TYPE) || PTH_TYPE == ARGN(3, THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
+#define ORREP5(PTH_TYPE) ORREP4(PTH_TYPE) || PTH_TYPE == ARGN(4, THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
+#define ORREP6(PTH_TYPE) ORREP5(PTH_TYPE) || PTH_TYPE == ARGN(5, THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
+#define ORREP7(PTH_TYPE) ORREP6(PTH_TYPE) || PTH_TYPE == ARGN(6, THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
+#define ORREP8(PTH_TYPE) ORREP7(PTH_TYPE) || PTH_TYPE == ARGN(7, THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
+#define ORREP9(PTH_TYPE) ORREP8(PTH_TYPE) || PTH_TYPE == ARGN(8, THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
+#define ORREP10(PTH_TYPE) ORREP9(PTH_TYPE) || PTH_TYPE == ARGN(9, THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
+#define ORREP11(PTH_TYPE) ORREP10(PTH_TYPE) || PTH_TYPE == ARGN(10, THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
+#endif
+
+#ifdef THERMISTOR_HOTSWAP
+#define THERMISTOR_HOTSWAP_IS_SUPPORTED(TH_TYPE) EXPAND_CONCAT (ORREP, THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN) (TH_TYPE)
+#else
+#define THERMISTOR_HOTSWAP_IS_SUPPORTED(TH_TYPE) false
+#endif
+
+#ifdef THERMISTOR_HOTSWAP
+#define AREP1(X) X(0)
+#define AREP2(X) AREP1(X), X(1)
+#define AREP3(X) AREP2(X), X(2)
+#define AREP4(X) AREP3(X), X(3)
+#define AREP5(X) AREP4(X), X(4)
+#define AREP6(X) AREP5(X), X(5)
+#define AREP7(X) AREP6(X), X(6)
+#define AREP8(X) AREP7(X), X(7)
+#define AREP9(X) AREP8(X), X(8)
+#define AREP10(X) AREP9(X), X(9)
+#define AREP11(X) AREP10(X), X(10)
+
+#define GHEATER_TEMPTABLE(HOTSWAP_SUPPORTED_TYPES_LEN) { EXPAND_CONCAT (AREP, HOTSWAP_SUPPORTED_TYPES_LEN) ((void *)HEATER_TEMPTABLE) }
+#define GHEATER_TEMPTABLE_LEN(HOTSWAP_SUPPORTED_TYPES_LEN) { EXPAND_CONCAT (AREP, HOTSWAP_SUPPORTED_TYPES_LEN) (HEATER_TEMPTABLE_LEN) }
+
+// this sets the default thermistor type and temperature for initialization purposes
+#define TEMP_SENSOR_0 ARGN(THERMISTOR_HOTSWAP_DEFAULT_INDEX,THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
+#define HEATER_0_MAXTEMP 235
+// END: This are auxiliary macros
+#else
+// When temperature exceeds max temp, your heater will be switched off.
+// This feature exists to protect your hotend from overheating accidentally, but *NOT* from thermistor short/failure!
+// You should use MINTEMP for thermistor short/failure protection.
+#define HEATER_0_MAXTEMP 235
+// Temperature sensor type as defined above
+#define TEMP_SENSOR_0 169 // 169 is default FAB Rev 1 thermistor | 11 is the typical 100K NTC beta=3950
+
+#endif
 
 // This makes temp sensor 1 a redundant sensor for sensor 0. If the temperatures difference between these sensors is to high the print will be aborted.
 //#define TEMP_SENSOR_1_AS_REDUNDANT
@@ -158,7 +237,6 @@
 // When temperature exceeds max temp, your heater will be switched off.
 // This feature exists to protect your hotend from overheating accidentally, but *NOT* from thermistor short/failure!
 // You should use MINTEMP for thermistor short/failure protection.
-#define HEATER_0_MAXTEMP 235
 #define HEATER_1_MAXTEMP 235
 #define HEATER_2_MAXTEMP 235
 #define BED_MAXTEMP 110
