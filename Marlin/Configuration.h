@@ -158,8 +158,8 @@
 // END: This are auxiliary macros supporting up to ELEVEN (0-10) tables
 
 // USER CONFIGURATION:
-#define THERMISTOR_HOTSWAP_SUPPORTED_TYPES ( 169, 11 )
-#define THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN 2 // two types are currently supported
+#define THERMISTOR_HOTSWAP_SUPPORTED_TYPES ( 169, 11, 1 )
+#define THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN 3 // two types are currently supported
 #define THERMISTOR_HOTSWAP_DEFAULT_INDEX 0 // the index of within the supported types to which the printer will be initialised.
 
 // START: This are auxiliary macros
