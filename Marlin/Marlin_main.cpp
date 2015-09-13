@@ -298,7 +298,6 @@ bool X_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic of the 
 bool Y_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
 bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
 
-
 // Extruder offset
 #if EXTRUDERS > 1
 #ifndef DUAL_X_CARRIAGE
@@ -480,6 +479,10 @@ bool zeroed_far_from_home_x=true;
 bool zeroed_far_from_home_y=true;
 
 float safe_probing_offset=1;        //it will probe until the (probe length - safe_probing_offset) is reached
+
+#ifdef THERMISTOR_HOTSWAP
+uint8_t extruder_0_thermistor_index = THERMISTOR_HOTSWAP_DEFAULT_INDEX;
+#endif
 
 //===========================================================================
 //=============================Routines======================================
@@ -4286,6 +4289,67 @@ void process_commands()
          SERIAL_PROTOCOLLN(String_Head);         
       }
       break;
+
+#ifdef THERMISTOR_HOTSWAP
+    case 800:   // M800 - changes/reads the thermistor of extruder0 type index
+		//
+		// M800 S0 changes the extruder0 to the thermistor in FABtotum Head v1
+		// M800 S1 changes the extruder0 to Marlin thermistor type 11 (the same as type 60, 100k NTC beta=3950)
+		// M800 returns the current extruder0 type index (0=type 169, 1=type 11,...)
+    {
+      int value;
+      
+      if (code_seen('S'))
+      {
+        value = code_value();
+        if(value>=0 && value<THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN)
+        {
+          extruder_0_thermistor_index=value;
+	  CRITICAL_SECTION_START
+	  heater_ttbl_map[0] = thermistors_map[extruder_0_thermistor_index];
+	  heater_ttbllen_map[0] = thermistors_map_len[extruder_0_thermistor_index]; 
+	  CRITICAL_SECTION_END
+        }
+      }
+      else
+      {
+	SERIAL_PROTOCOLLN_F(extruder_0_thermistor_index,DEC);
+      }
+    }
+    break;
+    case 801:   // M801 - changes/reads the current extruder0 max temp
+		//
+		// M801 S260 changes the extruder0 max temp to 260 Celsius
+		// M801 returns the current max temp of extruder0
+    {
+      int value;
+      if (code_seen('S'))
+      {
+        value = code_value();
+        if(value>=0)
+        {
+	  CRITICAL_SECTION_START
+	  maxttemp[0] = value;
+	  CRITICAL_SECTION_END
+        }
+      }
+      else
+      {
+          SERIAL_PROTOCOLLN(maxttemp[0]);
+      }
+    }
+    break;
+    case 802:   // M802 - returns supported thermistor types by index
+    {
+      int value;
+          SERIAL_PROTOCOLLN(THERMISTOR_HOTSWAP_SUPPORTED_TYPES_AS_STRING);
+    }
+    break;    
+    
+#endif     
+
+
+      
       
    case 998: // M998: Restart after being killed
       {
