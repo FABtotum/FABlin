@@ -4082,50 +4082,81 @@ void process_commands()
       if (code_seen('X'))
       {
         value = code_value();
-        if(value>=1)
+        if(value==1)
         {
           X_MIN_ENDSTOP_INVERTING=true;
           X_MAX_ENDSTOP_INVERTING=true;
         }
+	else if(value==2)
+	{
+          X_MIN_ENDSTOP_INVERTING=true;
+          X_MAX_ENDSTOP_INVERTING=false;
+	}
+	else if(value==3)
+	{
+          X_MIN_ENDSTOP_INVERTING=false;
+          X_MAX_ENDSTOP_INVERTING=true;
+	}
         else
         {
           X_MIN_ENDSTOP_INVERTING=false;
 	  X_MAX_ENDSTOP_INVERTING=false;
         }
       }
-	  
-	  if (code_seen('Y'))
+
+      if (code_seen('Y'))
       {
         value = code_value();
-        if(value>=1)
+        if(value==1)
         {
-            Y_MIN_ENDSTOP_INVERTING=true;
-            Y_MAX_ENDSTOP_INVERTING=true;
+          Y_MIN_ENDSTOP_INVERTING=true;
+          Y_MAX_ENDSTOP_INVERTING=true;
         }
+	else if(value==2)
+	{
+          Y_MIN_ENDSTOP_INVERTING=true;
+          Y_MAX_ENDSTOP_INVERTING=false;
+	}
+	else if(value==3)
+	{
+          Y_MIN_ENDSTOP_INVERTING=false;
+          Y_MAX_ENDSTOP_INVERTING=true;
+	}
         else
         {
 	  Y_MIN_ENDSTOP_INVERTING=false;
           Y_MAX_ENDSTOP_INVERTING=false;
         }
       }
-      	  if (code_seen('Z'))
+
+      if (code_seen('Z'))
       {
         value = code_value();
-        if(value>=1)
+        if(value==1)
         {
 	  Z_MIN_ENDSTOP_INVERTING=true;
           Z_MAX_ENDSTOP_INVERTING=true;
         }
+	else if(value==2)
+	{
+          Z_MIN_ENDSTOP_INVERTING=true;
+          Z_MAX_ENDSTOP_INVERTING=false;
+	}
+	else if(value==3)
+	{
+          Z_MIN_ENDSTOP_INVERTING=false;
+          Z_MAX_ENDSTOP_INVERTING=true;
+	}
         else
         {
 	  Z_MIN_ENDSTOP_INVERTING=false;
           Z_MAX_ENDSTOP_INVERTING=false;
         }
       }
-      
+
     }
-    break;      
-      
+    break;
+
     case 750: // M750 - read PRESSURE sensor (ANALOG 0-1023)
       {
         SERIAL_PROTOCOLPGM("Pressure:");
