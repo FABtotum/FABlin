@@ -3978,7 +3978,63 @@ void process_commands()
          servos[servo_index].detach();
       }
       break;
-      
+       
+    case 6: // M6 S[PWM] LASER ON (provisional code)
+      {
+        inactivity=false;
+        int servo_index = 0;
+        int servo_position = SERVO_SPINDLE_ZERO;
+        float pwm_1=0;
+        enable_endstops(false);
+        
+        if(!MILL_MOTOR_STATUS())
+            {
+            if ((servo_index >= 0) && (servo_index < NUM_SERVOS))
+              {
+			   servos[servo_index].attach(0);
+               servos[servo_index].write(servo_position);
+              }
+		  MILL_MOTOR_ON();
+          SERVO1_ON();
+          fanSpeed=255;
+          
+		  //_delay_ms(2000);
+          //servos[servo_index].write(SERVO_SPINDLE_ARM);
+          //_delay_ms(1000);
+          //servos[servo_index].write(servo_position);
+          //_delay_ms(500);
+          
+		  }
+        
+        if (code_seen('S')) {
+          int pwm = code_value();
+          if(pwm<=0)
+            {pwm=0;}
+          if(pwm>=255)
+            {pwm=255;}
+        }
+
+         SERIAL_PROTOCOL(MSG_OK);
+         //SERIAL_PROTOCOL("Laser On!");		  
+      }
+      break;
+	    
+   case 7: // M7 LASER OFF
+      {
+        int servo_index = 0;
+        int servo_position = SERVO_SPINDLE_ZERO;
+        enable_endstops(true);
+        
+        if(MILL_MOTOR_STATUS())
+            {
+            MILL_MOTOR_OFF();
+            SERVO1_OFF();
+            fanSpeed=0;
+           }
+         servos[servo_index].detach();
+      }
+      break;
+
    case 740: // M740 - read WIRE_END sensor
       {
         //SERIAL_PROTOCOLPGM(MSG_WIRE_END);
