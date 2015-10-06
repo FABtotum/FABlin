@@ -160,19 +160,41 @@ static volatile bool temp_meas_ready = false;
 static int minttemp_raw[EXTRUDERS] = ARRAY_BY_EXTRUDERS( HEATER_0_RAW_LO_TEMP , HEATER_1_RAW_LO_TEMP , HEATER_2_RAW_LO_TEMP );
 static int maxttemp_raw[EXTRUDERS] = ARRAY_BY_EXTRUDERS( HEATER_0_RAW_HI_TEMP , HEATER_1_RAW_HI_TEMP , HEATER_2_RAW_HI_TEMP );
 static int minttemp[EXTRUDERS] = ARRAY_BY_EXTRUDERS( 0, 0, 0 );
+
+#ifdef THERMISTOR_HOTSWAP
+int maxttemp[EXTRUDERS] = ARRAY_BY_EXTRUDERS( 16383, 16383, 16383 );
+#else
 static int maxttemp[EXTRUDERS] = ARRAY_BY_EXTRUDERS( 16383, 16383, 16383 );
+#endif
+
 //static int bed_minttemp_raw = HEATER_BED_RAW_LO_TEMP; /* No bed mintemp error implemented?!? */
 #ifdef BED_MAXTEMP
 static int bed_maxttemp_raw = HEATER_BED_RAW_HI_TEMP;
 #endif
 
 #ifdef TEMP_SENSOR_1_AS_REDUNDANT
+  #ifdef THERMISTOR_HOTSWAP
+  void *heater_ttbl_map[2] = {(void *)HEATER_0_TEMPTABLE, (void *)HEATER_1_TEMPTABLE };
+  uint8_t heater_ttbllen_map[2] = { HEATER_0_TEMPTABLE_LEN, HEATER_1_TEMPTABLE_LEN };
+  #else
   static void *heater_ttbl_map[2] = {(void *)HEATER_0_TEMPTABLE, (void *)HEATER_1_TEMPTABLE };
   static uint8_t heater_ttbllen_map[2] = { HEATER_0_TEMPTABLE_LEN, HEATER_1_TEMPTABLE_LEN };
+  #endif
 #else
+  #ifdef THERMISTOR_HOTSWAP
+  void *heater_ttbl_map[EXTRUDERS] = ARRAY_BY_EXTRUDERS( (void *)HEATER_0_TEMPTABLE, (void *)HEATER_1_TEMPTABLE, (void *)HEATER_2_TEMPTABLE );
+  uint8_t heater_ttbllen_map[EXTRUDERS] = ARRAY_BY_EXTRUDERS( HEATER_0_TEMPTABLE_LEN, HEATER_1_TEMPTABLE_LEN, HEATER_2_TEMPTABLE_LEN );
+  #else
   static void *heater_ttbl_map[EXTRUDERS] = ARRAY_BY_EXTRUDERS( (void *)HEATER_0_TEMPTABLE, (void *)HEATER_1_TEMPTABLE, (void *)HEATER_2_TEMPTABLE );
-  static uint8_t heater_ttbllen_map[EXTRUDERS] = ARRAY_BY_EXTRUDERS( HEATER_0_TEMPTABLE_LEN, HEATER_1_TEMPTABLE_LEN, HEATER_2_TEMPTABLE_LEN );
+  static uint8_t heater_ttbllen_map[EXTRUDERS] = ARRAY_BY_EXTRUDERS( HEATER_0_TEMPTABLE_LEN, HEATER_1_TEMPTABLE_LEN, HEATER_2_TEMPTABLE_LEN ); 
+  #endif
 #endif
+
+#ifdef THERMISTOR_HOTSWAP
+  void *thermistors_map[THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN] = GHEATER_TEMPTABLE(THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN);
+  uint8_t thermistors_map_len[THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN] = GHEATER_TEMPTABLE_LEN(THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN);
+#endif   
+
 
 static float analog2temp(int raw, uint8_t e);
 static float analog2tempBed(int raw);
