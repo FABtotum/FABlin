@@ -1614,8 +1614,7 @@ void process_commands()
   #endif //ENABLE_AUTO_BED_LEVELING
   
         store_last_amb_color();
-        set_amb_color_fading(false,true,false,fading_speed);
-        
+        set_amb_color(0,255,0);       
         
         saved_feedrate = feedrate;
         saved_feedmultiply = feedmultiply;
@@ -1843,7 +1842,6 @@ void process_commands()
       z_probe_activation=true;
       home_Z_reverse=false;
       
-      stop_fading();
       restore_last_amb_color();
       break;
 
@@ -1856,7 +1854,7 @@ void process_commands()
             #endif
 
             store_last_amb_color();
-            set_amb_color_fading(false,true,false,fading_speed);
+            set_amb_color(0,255,0); 
             
         
             // Prevent user from running a G29 without first homing in X and Y
@@ -2022,7 +2020,7 @@ void process_commands()
             plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
           }
         }
-        stop_fading();
+        
         restore_last_amb_color();
         if(Stopped)
                     {

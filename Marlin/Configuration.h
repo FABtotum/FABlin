@@ -205,7 +205,7 @@
 
 // this sets the default thermistor type and temperature for initialization purposes
 #define TEMP_SENSOR_0 ARGN(THERMISTOR_HOTSWAP_DEFAULT_INDEX,THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
-#define HEATER_0_MAXTEMP 235
+#define HEATER_0_MAXTEMP 235 //V1 235, V2 260
 // END: This are auxiliary macros
 #else
 // When temperature exceeds max temp, your heater will be switched off.
@@ -330,7 +330,7 @@
 #define PREVENT_LENGTHY_EXTRUDE
 
 #define EXTRUDE_MINTEMP 175
-#define EXTRUDE_MAXLENGTH (800) //prevent extrusion of very large distances.
+#define EXTRUDE_MAXLENGTH (850) //prevent extrusion of very large distances.
 
 //===========================================================================
 //=============================Mechanical Settings===========================
