@@ -195,6 +195,10 @@ static int bed_maxttemp_raw = HEATER_BED_RAW_HI_TEMP;
   uint8_t thermistors_map_len[THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN] = GHEATER_TEMPTABLE_LEN(THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN);
 #endif   
 
+#ifdef THERMISTOR_INPUT_HOTSWAP
+  uint8_t extruder_0_thermistor_input_index = THERMISTOR_HOTSWAP_INPUT_DEFAULT_INDEX;
+#endif
+  
 
 static float analog2temp(int raw, uint8_t e);
 static float analog2tempBed(int raw);
@@ -1227,8 +1231,8 @@ ISR(TIMER0_COMPB_vect)
       temp_state = 1;
       break;
     case 1: // Measure TEMP_0
-      #if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)
-        raw_temp_0_value += ADC;
+      #if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)  
+	raw_temp_0_value += ADC;	
       #endif
       #ifdef HEATER_0_USES_MAX6675 // TODO remove the blocking
         raw_temp_0_value = read_max6675();
@@ -1269,7 +1273,7 @@ ISR(TIMER0_COMPB_vect)
       break;
     case 5: // Measure TEMP_1
       #if defined(TEMP_1_PIN) && (TEMP_1_PIN > -1)
-        raw_temp_1_value += ADC;
+	raw_temp_1_value += ADC;	     
       #endif
       temp_state = 6;
       break;
@@ -1378,7 +1382,13 @@ ISR(TIMER0_COMPB_vect)
   {
     if (!temp_meas_ready) //Only update the raw values if they have been read. Else we could be updating them during reading.
     {
+      
+      #ifdef THERMISTOR_INPUT_HOTSWAP
+      current_temperature_raw[0] = ((extruder_0_thermistor_input_index == 1)?raw_temp_1_value:raw_temp_0_value);
+      #else
       current_temperature_raw[0] = raw_temp_0_value;
+      #endif    
+      
 #if EXTRUDERS > 1
       current_temperature_raw[1] = raw_temp_1_value;
 #endif

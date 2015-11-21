@@ -4433,6 +4433,30 @@ void process_commands()
     
 #endif     
 
+#ifdef THERMISTOR_INPUT_HOTSWAP
+    case 803:   // M803 - changes/reads the current extruder0 thermistor input
+		//
+		// M803 S1 changes input of current extruder0 to thermistor1
+		// M803 S0 changes input of current extruder0 to thermistor0      
+		// M803 returns the current input of extruder0
+    {
+      int value;
+      
+      if (code_seen('S'))
+      {
+        value = code_value();
+        if(value == 0 || value == 1)
+        {
+          extruder_0_thermistor_input_index=value;
+        }
+      }
+      else
+      {
+	SERIAL_PROTOCOLLN_F(extruder_0_thermistor_input_index,DEC);
+      }
+    }
+    break;    
+#endif
 
       
       
