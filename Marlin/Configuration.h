@@ -96,6 +96,9 @@
 // Define this to have the electronics keep the power supply off on startup. If you don't know what this is leave it.
 // #define PS_DEFAULT_OFF
 
+//********** configuration for automatic FAN on TEMP change (M104/M109) ********************//
+#define SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE // this allows the user to choose whether the automatic fan on behaviour when issuing M104/M109 should happen or not
+
 //===========================================================================
 //=============================Thermal Settings  ============================
 //===========================================================================
@@ -135,6 +138,13 @@
 #define TEMP_SENSOR_1 0
 #define TEMP_SENSOR_2 0
 #define TEMP_SENSOR_BED 1
+
+//********** configuration for thermistor INPUT HOTSWAP ********************//
+#define THERMISTOR_INPUT_HOTSWAP
+
+#ifdef THERMISTOR_INPUT_HOTSWAP
+#define THERMISTOR_HOTSWAP_INPUT_DEFAULT_INDEX 0
+#endif
 
 //********** configuration for thermistor type HOTSWAP ********************//
 #define THERMISTOR_HOTSWAP

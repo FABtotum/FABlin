@@ -489,6 +489,10 @@ float safe_probing_offset=1;        //it will probe until the (probe length - sa
 uint8_t extruder_0_thermistor_index = THERMISTOR_HOTSWAP_DEFAULT_INDEX;
 #endif
 
+#ifdef SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE
+bool auto_fan_on_temp_change = true;
+#endif
+
 //===========================================================================
 //=============================Routines======================================
 //===========================================================================
@@ -2351,7 +2355,12 @@ void process_commands()
       if(setTargetedHotend(104)){
         break;
       }
+      #ifdef SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE
+      if(auto_fan_on_temp_change)
+	fanSpeed=255; //set fan on by default  
+      #else
       fanSpeed=255; //set fan on by default
+      #endif
       inactivity=false;
       if (code_seen('S')) setTargetHotend(code_value(), tmp_extruder);
 #ifdef DUAL_X_CARRIAGE
@@ -2434,7 +2443,12 @@ void process_commands()
         break;
       }
       LCD_MESSAGEPGM(MSG_HEATING);
-      fanSpeed=255; //fan on by default
+      #ifdef SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE
+      if(auto_fan_on_temp_change)
+	fanSpeed=255; //set fan on by default  
+      #else
+      fanSpeed=255; //set fan on by default
+      #endif
       inactivity=false;
       
       #ifdef AUTOTEMP
@@ -4473,7 +4487,54 @@ void process_commands()
     
 #endif     
 
+#ifdef THERMISTOR_INPUT_HOTSWAP
+    case 803:   // M803 - changes/reads the current extruder0 thermistor input
+		//
+		// M803 S1 changes input of current extruder0 to thermistor1
+		// M803 S0 changes input of current extruder0 to thermistor0      
+		// M803 returns the current input of extruder0
+    {
+      int value;
+      
+      if (code_seen('S'))
+      {
+        value = code_value();
+        if(value == 0 || value == 1)
+        {
+          extruder_0_thermistor_input_index=value;
+        }
+      }
+      else
+      {
+	SERIAL_PROTOCOLLN_F(extruder_0_thermistor_input_index,DEC);
+      }
+    }
+    break;    
+#endif
 
+#ifdef SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE
+    case 804:   // M804 - changes/reads the current automatic fan on temp change configuration.
+		//
+		// M804 S1 enables this automatic fan (default is enabled)
+		// M804 S0 disables this automatic fan      
+		// M804 returns the current setting 1/0 (enabled/disabled)
+    {
+      int value;
+      
+      if (code_seen('S'))
+      {
+        value = code_value();
+
+        auto_fan_on_temp_change=(value==0?false:true);
+      }
+      else
+      {
+	SERIAL_PROTOCOLLN_F((auto_fan_on_temp_change==false?0:1),DEC);
+      }
+    }
+    break;        
+#endif
+    
       
       
    case 998: // M998: Restart after being killed

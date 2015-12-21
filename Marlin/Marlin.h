@@ -283,6 +283,10 @@ extern void *thermistors_map[THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN];
 extern uint8_t thermistors_map_len[THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN];
 #endif
 
+#ifdef THERMISTOR_INPUT_HOTSWAP
+extern uint8_t extruder_0_thermistor_input_index;
+#endif
+
 // Handling multiple extruders pins
 extern uint8_t active_extruder;
 
