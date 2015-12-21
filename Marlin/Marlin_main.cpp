@@ -228,6 +228,9 @@
 // M766 - read FABtotum Personal Fabricator Firmware Build Date and Time
 // M767 - read FABtotum Personal Fabricator Firmware Update Author
 
+// M785 - Turn Prism UV module On/off M785 S[0-1]  
+// M786 - External Power OFF
+
 // M779 - force Head product ID reading (for testing purpose only)
 // M780 - read Head Product Name
 // M781 - read Head Vendor Name
@@ -258,6 +261,8 @@
 #ifdef SDSUPPORT
 CardReader card;
 #endif
+bool PRISM;
+bool red_led=false;
 float homing_feedrate[] = HOMING_FEEDRATE;
 bool axis_relative_modes[] = AXIS_RELATIVE_MODES;
 int feedmultiply=100; //100->1 200->2
@@ -564,6 +569,8 @@ void setup_photpin()
   #endif
 }
 
+
+
 void setup_powerhold()
 {
   #if defined(SUICIDE_PIN) && SUICIDE_PIN > -1
@@ -643,18 +650,23 @@ pinMode(MON_5V_PIN,INPUT);
 pinMode(MON_24V_PIN,INPUT);
 pinMode(PRESSURE_ANALOG_PIN,INPUT);
 
+pinMode(NOT_REEL_LENS_OPEN_PIN,OUTPUT);
+
+//POWER MABNAHGEMENT
+pinMode(51, OUTPUT);  //set external PSU shutdown pin (Optional on I2C)
+digitalWrite(51, HIGH);
+
 //fastio init
 // SET_INPUT(IO)  ; SET_OUTPUT(IO);
 SET_INPUT(WIRE_END_PIN);
 SET_OUTPUT(NOT_RASPI_PWR_ON_PIN);
 SET_INPUT(NOT_SECURE_SW_PIN);
-SET_INPUT(NOT_REEL_LENS_OPEN_PIN);
+SET_OUTPUT(NOT_REEL_LENS_OPEN_PIN);
 SET_OUTPUT(LIGHT_SIGN_ON_PIN);
 SET_OUTPUT(RPI_RECOVERY_PIN);
 
 
 //set output
-
 RED_OFF();
 GREEN_OFF();
 BLUE_OFF();
@@ -4374,7 +4386,35 @@ void process_commands()
          SERIAL_PROTOCOLLN(String_Head);         
       }
       break;
+   
+    case 785: {
+      //PRISM UV MODULE ON/OFF 
+      if (code_seen('S')) {
+          int PRISM_UV=code_value();
+          if (PRISM_UV==1){
+              PRISM = true;
+              SERIAL_PROTOCOL("PRISM UV ON!");
+          }
+          if (PRISM_UV==0){
+              PRISM = false;
+              SERIAL_PROTOCOL("PRISM UV OFF!");  
+          }
+      }else{
+              SERIAL_PROTOCOL("Usage: M785 S[0-1]");
+      }
+    }
+    break;
+        
+    case 786: // M787 - external power on/off pin control
+      {
+        //kill external power supply.
+        SERIAL_PROTOCOL("SHUTDOWN!");
+        digitalWrite(51, LOW);
+      }
+      break;
+        
 
+    
 #ifdef THERMISTOR_HOTSWAP
     case 800:   // M800 - changes/reads the thermistor of extruder0 type index
 		//
@@ -4839,34 +4879,33 @@ void controllerFan()
 
 #ifdef TEMP_STAT_LEDS
 static bool blue_led = false;
-static bool red_led = false;
 static uint32_t stat_update = 0;
 
 void handle_status_leds(void) {
   float max_temp = 0.0;
   if(millis() > stat_update) {
-    stat_update += 500; // Update every 0.5s
-    for (int8_t cur_extruder = 0; cur_extruder < EXTRUDERS; ++cur_extruder) {
-       //max_temp = max(max_temp, degHotend(cur_extruder));            //<------------------
-       //max_temp = max(max_temp, degTargetHotend(cur_extruder));      //<-------------------
-    }
-    #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
-      max_temp = max(max_temp, degTargetBed());
-      max_temp = max(max_temp, degBed());
-    #endif
-    if((max_temp > 55.0) && (red_led == false)) {
-      digitalWrite(STAT_LED_RED, 0);
-      //digitalWrite(STAT_LED_BLUE, 0);
-      red_led = true;
-      //blue_led = false;
-    }
-    //if((max_temp < 54.0) && (blue_led == false))
-    if((max_temp < 54.0)) {
-      digitalWrite(STAT_LED_RED, 1);
-      //digitalWrite(STAT_LED_BLUE, 1);
-      red_led = false;
-      //blue_led = true;
-    }
+     stat_update += 500; // Update every 0.5s
+      for (int8_t cur_extruder = 0; cur_extruder < EXTRUDERS; ++cur_extruder) {
+         //max_temp = max(max_temp, degHotend(cur_extruder));            //<------------------
+         //max_temp = max(max_temp, degTargetHotend(cur_extruder));      //<-------------------
+      }
+      #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
+        max_temp = max(max_temp, degTargetBed());
+        max_temp = max(max_temp, degBed());
+      #endif
+      if((max_temp > 55.0) && (red_led == false)) {
+        digitalWrite(STAT_LED_RED, 0);
+        //digitalWrite(STAT_LED_BLUE, 0);
+        red_led = true;
+        //blue_led = false;
+      }
+      //if((max_temp < 54.0) && (blue_led == false))
+      if((max_temp < 54.0)) {
+        digitalWrite(STAT_LED_RED, 1);
+        //digitalWrite(STAT_LED_BLUE, 1);
+        red_led = false;
+        //blue_led = true;
+      }
   }
 }
 #endif
@@ -4931,7 +4970,7 @@ void manage_inactivity()
       kill();
   #endif
   #if defined(CONTROLLERFAN_PIN) && CONTROLLERFAN_PIN > -1
-    controllerFan(); //Check if fan should be turned on to cool stepper drivers down
+    /controllerFan(); //Check if fan should be turned on to cool stepper drivers down
   #endif
   #ifdef EXTRUDER_RUNOUT_PREVENT
     if( (millis() - previous_millis_cmd) >  EXTRUDER_RUNOUT_SECONDS*1000 )
@@ -4963,7 +5002,11 @@ void manage_inactivity()
     }
   #endif
   #ifdef TEMP_STAT_LEDS
+      if (PRISM==false){
       handle_status_leds();
+      }else{
+     digitalWrite(STAT_LED_RED, 0);    
+      }
   #endif
   check_axes_activity();
 

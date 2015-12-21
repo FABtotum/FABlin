@@ -15,7 +15,7 @@
 // User-specified version info of this build to display in [Pronterface, etc] terminal window during
 // startup. Implementation of an idea by Prof Braino to inform user that any changes made to this
 // build by the user have been successfully uploaded into firmware.
-#define STRING_BUILD_VERSION  "V 1.0.0092"
+#define STRING_BUILD_VERSION  "V 1.0.0093"
 #define STRING_BUILD_DATE __DATE__ " " __TIME__ // build date and time
 #define STRING_CONFIG_H_AUTHOR "FABteam" // Who made the changes.
 
@@ -26,7 +26,7 @@
 
 // This determines the communication speed of the printer
 // This determines the communication speed of the printer
-#define BAUDRATE 115200
+#define BAUDRATE 1152l00
 
 // This enables the serial port associated to the Bluetooth interface
 //#define BTENABLED              // Enable BT interface on AT90USB devices
@@ -205,13 +205,13 @@
 
 // this sets the default thermistor type and temperature for initialization purposes
 #define TEMP_SENSOR_0 ARGN(THERMISTOR_HOTSWAP_DEFAULT_INDEX,THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
-#define HEATER_0_MAXTEMP 235 //V1 235, V2 260
+#define HEATER_0_MAXTEMP 260 //V1 235, V2 260
 // END: This are auxiliary macros
 #else
 // When temperature exceeds max temp, your heater will be switched off.
 // This feature exists to protect your hotend from overheating accidentally, but *NOT* from thermistor short/failure!
 // You should use MINTEMP for thermistor short/failure protection.
-#define HEATER_0_MAXTEMP 235
+#define HEATER_0_MAXTEMP 260
 // Temperature sensor type as defined above
 #define TEMP_SENSOR_0 169 // 169 is default FAB Rev 1 thermistor | 11 is the typical 100K NTC beta=3950
 
@@ -487,7 +487,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
   //#define Z_PROBE_OFFSET_FROM_EXTRUDER -50.6
   #define X_PROBE_OFFSET_FROM_EXTRUDER -17
   #define Y_PROBE_OFFSET_FROM_EXTRUDER -61.5
-  #define Z_PROBE_OFFSET_FROM_EXTRUDER -34.65
+  #define Z_PROBE_OFFSET_FROM_EXTRUDER -31.65
 
   #define Z_RAISE_BEFORE_HOMING 42       // (in mm) Raise Z before homing (G28) for Probe Clearance.
                                         // Be sure you have this distance over your Z_MAX_POS in case
