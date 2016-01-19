@@ -309,6 +309,7 @@ extern unsigned int flex_board_version;
 extern unsigned int plateconn_board_version;
 extern unsigned int hotplate_board_version;
 extern unsigned int general_assembly_version;
+extern unsigned int installed_head_id;
 
 //FABtotum IO definition
 #define RED_ON()	WRITE(RED_PIN,LOW)

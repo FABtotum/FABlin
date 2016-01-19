@@ -245,7 +245,7 @@
 // [unimplemented] M790 - read Head capability: wattage (0-200W)
 // [unimplemented] M791 - read Head capability: axis (number of axis)
 // [unimplemented] M792 - read Head capability: servo (number of axis)
-// [unimplemented] M793 - read Head Product Name
+// M793 - set/read installed head soft ID
 
 // M800 - changes/reads the thermistor of extruder0 type index
 // M801 - changes/reads the current extruder0 max temp
@@ -384,6 +384,7 @@ unsigned int flex_board_version=0;
 unsigned int plateconn_board_version=0;
 unsigned int hotplate_board_version=0;
 unsigned int general_assembly_version=0;
+unsigned int installed_head_id=0;
 //===========================================================================
 //=============================Private Variables=============================
 //===========================================================================
@@ -4434,7 +4435,15 @@ void process_commands()
         digitalWrite(51, LOW);
       }
       break;
-        
+
+    case 793: // M793 - Set/read installed head soft ID
+      {
+        if (code_seen('S')) {
+          installed_head_id = code_value_long();
+        }
+        SERIAL_PROTOCOLLN(installed_head_id);
+      }
+      break;
 
     
 #ifdef THERMISTOR_HOTSWAP

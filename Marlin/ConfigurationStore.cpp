@@ -40,9 +40,9 @@ void _EEPROM_readData(int &pos, uint8_t* value, uint8_t size)
 // wrong data being written to the variables.
 // ALSO:  always make sure the variables in the Store and retrieve sections are in the same order.
 #ifdef DELTA
-#define EEPROM_VERSION "V11"
+#define EEPROM_VERSION "V12"
 #else
-#define EEPROM_VERSION "V10"
+#define EEPROM_VERSION "V11"
 #endif
 
 #ifdef EEPROM_SETTINGS
@@ -107,6 +107,8 @@ void Config_StoreSettings()
   EEPROM_WRITE_VAR(i,lcd_contrast);
   EEPROM_WRITE_VAR(i,servo_retracted_angle);
   EEPROM_WRITE_VAR(i,servo_extended_angle);
+  EEPROM_WRITE_VAR(i,installed_head_id);
+
   char ver2[4]=EEPROM_VERSION;
   i=EEPROM_OFFSET_WRITE;
   EEPROM_WRITE_VAR(i,ver2); // validate data
@@ -286,6 +288,8 @@ void Config_RetrieveSettings()
         EEPROM_READ_VAR(i,servo_extended_angle);
         servo_endstop_angles[4] = servo_extended_angle;
         servo_endstop_angles[5] = servo_retracted_angle;
+
+        EEPROM_READ_VAR(i,installed_head_id);
 
 		// Call updatePID (similar to when we have processed M301)
 		updatePID();
