@@ -172,8 +172,8 @@
 // M928 - Start SD logging (M928 filename.g) - ended by M29
 // M999 - Restart after being stopped by error
 
-//FABtotum custom M code
-
+//FABtotum custom M codes
+//-----------------------
 // M3 S[RPM] SPINDLE ON - Clockwise
 // M4 S[RPM] SPINDLE ON - CounterClockwise
 // M5        SPINDLE OFF
@@ -232,21 +232,29 @@
 // M786 - External Power OFF
 
 // M779 - force Head product ID reading (for testing purpose only)
-// M780 - read Head Product Name
-// M781 - read Head Vendor Name
+// [unimplemented] M780 - read Head Product Name
+// [unimplemented] M781 - read Head Vendor Name
 // M782 - read Head product ID
-// M783 - read Head vendor ID
+// [unimplemented] M783 - read Head vendor ID
 // M784 - read Head Serial ID
-// M785 - read Head firmware version
-// M786 - read needed firmware version of FABtotum Personal Fabricator Main Controller
-// M787 - read Head capability: type0 (passive, active)
-// M788 - read Head capability: type1 (additive, milling, syringe, laser etc..)
-// M789 - read Head capability: purpose (single purpose, multipurpose)
-// M790 - read Head capability: wattage (0-200W)
-// M791 - read Head capability: axis (number of axis)
-// M792 - read Head capability: servo (number of axis)
+// [overridden] M785 - read Head firmware version
+// [overridden] M786 - read needed firmware version of FABtotum Personal Fabricator Main Controller
+// [unimplemented] M787 - read Head capability: type0 (passive, active)
+// [unimplemented] M788 - read Head capability: type1 (additive, milling, syringe, laser etc..)
+// [unimplemented] M789 - read Head capability: purpose (single purpose, multipurpose)
+// [unimplemented] M790 - read Head capability: wattage (0-200W)
+// [unimplemented] M791 - read Head capability: axis (number of axis)
+// [unimplemented] M792 - read Head capability: servo (number of axis)
+// [unimplemented] M793 - read Head Product Name
 
+// M800 - changes/reads the thermistor of extruder0 type index
+// M801 - changes/reads the current extruder0 max temp
+// M802 - returns supported thermistor types by index
+// M803 - changes/reads the current extruder0 thermistor input
+// M804 - changes/reads the current automatic fan on temp change configuration.
 
+// M998 - Restart after being killed
+// M999 - Restart after being stopped
 
 //Stepper Movement Variables
 
