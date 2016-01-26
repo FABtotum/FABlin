@@ -1012,8 +1012,8 @@ void max_temp_error(uint8_t e) {
 }
 
 void min_temp_error(uint8_t e) {
-  if(head_placed)
-    {
+  //if(head_placed)
+    //{
         disable_heater();
         if(IsStopped() == false) {
           SERIAL_ERROR_START;
@@ -1027,7 +1027,8 @@ void min_temp_error(uint8_t e) {
         
         RPI_ERROR_ACK_ON();
         ERROR_CODE=ERROR_MIN_TEMP;
-    }
+
+    //}
 }
 
 void bed_max_temp_error(void) {
@@ -1577,5 +1578,3 @@ float unscalePID_d(float d)
 }
 
 #endif //PIDTEMP
-
-

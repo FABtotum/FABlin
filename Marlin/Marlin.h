@@ -402,6 +402,10 @@ extern unsigned int installed_head_id;
 #define ERROR_Y_BOTH_TRIGGERED   120
 #define ERROR_Z_BOTH_TRIGGERED   121
 
+//temperature related messages
+#define ERROR_AMBIENT_TEMP   122
+#define ERROR_EXTRUDE_MINTEMP   123
+#define ERROR_LONG_EXTRUSION   124
 
 //Head Serial ID
 #define SERIAL_ID_ADDR          80//(0x50)

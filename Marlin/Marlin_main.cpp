@@ -2364,12 +2364,14 @@ void process_commands()
       if(setTargetedHotend(104)){
         break;
       }
-      #ifdef SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE
-      if(auto_fan_on_temp_change)
-	fanSpeed=255; //set fan on by default  
-      #else
-      fanSpeed=255; //set fan on by default
-      #endif
+      if(installed_head_id<2)
+        #ifdef SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE
+          if(auto_fan_on_temp_change)
+	    fanSpeed=255; //set fan on by default  
+        #else
+            fanSpeed=255; //set fan on by default on V1 heads    
+        #endif      
+       
       inactivity=false;
       if (code_seen('S')) setTargetHotend(code_value(), tmp_extruder);
 #ifdef DUAL_X_CARRIAGE
@@ -2451,13 +2453,15 @@ void process_commands()
       if(setTargetedHotend(109)){
         break;
       }
-      LCD_MESSAGEPGM(MSG_HEATING);
-      #ifdef SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE
-      if(auto_fan_on_temp_change)
-	fanSpeed=255; //set fan on by default  
-      #else
-      fanSpeed=255; //set fan on by default
-      #endif
+      //LCD_MESSAGEPGM(MSG_HEATING);
+        if(installed_head_id<2)
+        #ifdef SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE
+          if(auto_fan_on_temp_change)
+	    fanSpeed=255; //set fan on by default  
+        #else
+            fanSpeed=255; //set fan on by default on V1 heads    
+        #endif  
+              
       inactivity=false;
       
       #ifdef AUTOTEMP

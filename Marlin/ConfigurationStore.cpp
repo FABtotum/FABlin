@@ -122,6 +122,12 @@ void Config_StoreSettings()
 void Config_PrintSettings()
 {  // Always have this function, even with EEPROM_SETTINGS disabled, the current values will be shown
     SERIAL_ECHO_START;
+    //BAUDRATE
+    SERIAL_ECHOLNPGM("FABtotum TOTUMDUINO");
+    SERIAL_ECHOPAIR("Serial ",BAUDRATE," baud"); 
+    SERIAL_ECHOLN("");
+    SERIAL_ECHO_START;
+
     SERIAL_ECHOLNPGM("Steps per unit:");
     SERIAL_ECHO_START;
     SERIAL_ECHOPAIR("  M92 X",axis_steps_per_unit[0]);
