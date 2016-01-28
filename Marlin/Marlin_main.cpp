@@ -1634,6 +1634,7 @@ void process_commands()
       home_Z_reverse= true;
     case 28: //G28 Home all Axis one at a time
     if(!Stopped){
+        retract_z_probe(); //Safety first.
   #ifdef ENABLE_AUTO_BED_LEVELING
         plan_bed_level_matrix.set_to_identity();  //Reset the plane ("erase" all leveling data)
   #endif //ENABLE_AUTO_BED_LEVELING
@@ -1652,38 +1653,6 @@ void process_commands()
           destination[i] = current_position[i];
         }
         feedrate = 0.0;
-  
-  #ifdef DELTA
-            // A delta can only safely home all axis at the same time
-            // all axis have to home at the same time
-  
-            // Move all carriages up together until the first endstop is hit.
-            current_position[X_AXIS] = 0;
-            current_position[Y_AXIS] = 0;
-            current_position[Z_AXIS] = 0;
-            plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
-  
-            destination[X_AXIS] = 3 * Z_MAX_LENGTH;
-            destination[Y_AXIS] = 3 * Z_MAX_LENGTH;
-            destination[Z_AXIS] = 3 * Z_MAX_LENGTH;
-            feedrate = 1.732 * homing_feedrate[X_AXIS];
-            plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
-            st_synchronize();
-            endstops_hit_on_purpose();
-  
-            current_position[X_AXIS] = destination[X_AXIS];
-            current_position[Y_AXIS] = destination[Y_AXIS];
-            current_position[Z_AXIS] = destination[Z_AXIS];
-  
-            // take care of back off and rehome now we are all at the top
-            HOMEAXIS(X);
-            HOMEAXIS(Y);
-            HOMEAXIS(Z);
-  
-            calculate_delta(current_position);
-            plan_set_position(delta[X_AXIS], delta[Y_AXIS], delta[Z_AXIS], current_position[E_AXIS]);
-  
-  #else // NOT DELTA
   
         home_all_axis = !((code_seen(axis_codes[X_AXIS])) || (code_seen(axis_codes[Y_AXIS])) || (code_seen(axis_codes[Z_AXIS])));
   
@@ -1853,7 +1822,7 @@ void process_commands()
           }
         #endif
         plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
-  #endif // else DELTA
+  
   
         #ifdef ENDSTOPS_ONLY_FOR_HOMING
           enable_endstops(false);
@@ -4306,6 +4275,16 @@ void process_commands()
       return;
       break;
       
+
+    case 756 :  // M756 - ERROR GENERATOR
+      {
+      RPI_ERROR_ACK_ON();
+      ERROR_CODE=9999999;  
+     
+
+      }
+      break;
+      
       
     case 760 :  // M760 - read FABtotum Personal Fabricator Main Controller serial ID
       {
@@ -5144,18 +5123,37 @@ void manage_secure_endstop()
   if((READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING)&&!READ(Y_ENABLE_PIN) && !(RPI_ERROR_STATUS()))
   {
     zeroed_far_from_home_y=true;
-    kill();}
+    //kill();
+    RPI_ERROR_ACK_ON();
+    ERROR_CODE=ERROR_Y_MIN_ENDSTOP;
+  }
+  
   if((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING)&&!READ(X_ENABLE_PIN) && !(RPI_ERROR_STATUS()) && !x_axis_endstop_sel)
-  {zeroed_far_from_home_x=true;
-  kill();}
+  {
+    zeroed_far_from_home_x=true;
+    //kill();
+    RPI_ERROR_ACK_ON();
+    ERROR_CODE=ERROR_X_MAX_ENDSTOP;
+  }
+
 //  if(READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)
 //  {kill();}
   
   if((READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING) && zeroed_far_from_home_x && !READ(X_ENABLE_PIN) && !(RPI_ERROR_STATUS()))
-  {kill();}
-  if((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING) && zeroed_far_from_home_y && !READ(Y_ENABLE_PIN) && !(RPI_ERROR_STATUS()))      
-  {kill();}
+  {
+    RPI_ERROR_ACK_ON();
+    ERROR_CODE=ERROR_X_MIN_ENDSTOP;
+    //kill();
+  }
 
+  if((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING) && zeroed_far_from_home_y && !READ(Y_ENABLE_PIN) && !(RPI_ERROR_STATUS()))      
+  {
+    RPI_ERROR_ACK_ON();
+    ERROR_CODE=ERROR_Y_MAX_ENDSTOP;
+    //kill();
+  }
+ 
+ 
 }
 void manage_fab_soft_pwm()
 {

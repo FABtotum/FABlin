@@ -121,10 +121,12 @@ void Config_StoreSettings()
 #ifndef DISABLE_M503
 void Config_PrintSettings()
 {  // Always have this function, even with EEPROM_SETTINGS disabled, the current values will be shown
+
+    unsigned long BaudRate=BAUDRATE;
+    
     SERIAL_ECHO_START;
-    //BAUDRATE
     SERIAL_ECHOLNPGM("FABtotum TOTUMDUINO");
-    SERIAL_ECHOPAIR("Serial ",BAUDRATE," baud"); 
+    SERIAL_ECHOPAIR(" Baudrate: ", BaudRate); 
     SERIAL_ECHOLN("");
     SERIAL_ECHO_START;
 
