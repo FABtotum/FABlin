@@ -5125,7 +5125,7 @@ void manage_secure_endstop()
     zeroed_far_from_home_y=true;
     //kill();
     RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_Y_MIN_ENDSTOP;
+    ERROR_CODE=ERROR_Y_MAX_ENDSTOP;
   }
   
   if((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING)&&!READ(X_ENABLE_PIN) && !(RPI_ERROR_STATUS()) && !x_axis_endstop_sel)
@@ -5149,7 +5149,7 @@ void manage_secure_endstop()
   if((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING) && zeroed_far_from_home_y && !READ(Y_ENABLE_PIN) && !(RPI_ERROR_STATUS()))      
   {
     RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_Y_MAX_ENDSTOP;
+    ERROR_CODE=ERROR_Y_MIN_ENDSTOP;
     //kill();
   }
  
