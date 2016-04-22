@@ -15,7 +15,7 @@
 // User-specified version info of this build to display in [Pronterface, etc] terminal window during
 // startup. Implementation of an idea by Prof Braino to inform user that any changes made to this
 // build by the user have been successfully uploaded into firmware.
-#define STRING_BUILD_VERSION  "V 1.0.0094"
+#define STRING_BUILD_VERSION  "V 1.0.0095"
 #define STRING_BUILD_DATE __DATE__ " " __TIME__ // build date and time
 #define STRING_CONFIG_H_AUTHOR "FABteam" // Who made the changes.
 
@@ -26,7 +26,7 @@
 
 // This determines the communication speed of the printer
 // This determines the communication speed of the printer
-#define BAUDRATE 115200
+#define BAUDRATE 250000
 
 // This enables the serial port associated to the Bluetooth interface
 //#define BTENABLED              // Enable BT interface on AT90USB devices
@@ -383,7 +383,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 
 // Disable max endstops for compatibility with endstop checking routine
 #if defined(COREXY) && !defined(DISABLE_MAX_ENDSTOPS)
-  //#define DISABLE_MAX_ENDSTOPS
+//#define DISABLE_MAX_ENDSTOPS
 #endif
 
 // For Inverting Stepper Enable Pins (Active Low) use 0, Non Inverting (Active High) use 1
@@ -498,7 +498,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
   #define X_PROBE_OFFSET_FROM_EXTRUDER -17
   #define Y_PROBE_OFFSET_FROM_EXTRUDER -61.5
   #define Z_PROBE_OFFSET_FROM_EXTRUDER -31.65
-
+  
   #define Z_RAISE_BEFORE_HOMING 42       // (in mm) Raise Z before homing (G28) for Probe Clearance.
                                         // Be sure you have this distance over your Z_MAX_POS in case
 
@@ -527,8 +527,8 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 
   #ifdef Z_SAFE_HOMING
 
-   #define Z_SAFE_HOMING_X_POINT (73)    // X point for Z homing when homing all axis (G28)
-   #define Z_SAFE_HOMING_Y_POINT (29)    // Y point for Z homing when homing all axis (G28)
+   #define Z_SAFE_HOMING_X_POINT (85.5)    // X point for Z homing when homing all axis (G28)
+   #define Z_SAFE_HOMING_Y_POINT (57.5)    // Y point for Z homing when homing all axis (G28) 
 
   #endif
 

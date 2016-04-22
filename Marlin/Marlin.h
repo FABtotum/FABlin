@@ -406,7 +406,7 @@ extern unsigned int installed_head_id;
 #define ERROR_AMBIENT_TEMP   122
 #define ERROR_EXTRUDE_MINTEMP   123
 #define ERROR_LONG_EXTRUSION   124
-#define ERROR_HEAD_ABSENT    125
+//#define ERROR_HEAD_ABSENT    125
 
 //Head Serial ID
 #define SERIAL_ID_ADDR          80//(0x50)

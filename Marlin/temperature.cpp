@@ -1012,7 +1012,7 @@ void max_temp_error(uint8_t e) {
 }
 
 void min_temp_error(uint8_t e) {
-  if(head_placed)
+  if(head_placed && installed_head_id!=3)
     {
         disable_heater();
         if(IsStopped() == false) {
