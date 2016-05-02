@@ -9,6 +9,12 @@ The changes made are focused on multipurpose personal fabrication and hardware c
 Supported G-codes: http://forum.fabtotum.cc/showthread.php?1364-Supported-Gcodes
 
 ## Changelog
+### Version: 1.0.0095.1 - 2016-05-02
+* Fixed a bug with timing when using M3,M4,M5
+* Subtractive gcodes will not require a G4 before M5 or after M3 and M4 like before..
+  M3,M4 and M5 will in fact start spinning after 1.5 seconds the last movement operation is completed.
+  This allows to use some standard Gcode Posts processors instead of manually editing the code with pauses
+
 ### Version: 1.0.0095 - 2016-04-22
 
 * Default Baud rate changed to 250000 bps.

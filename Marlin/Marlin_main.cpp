@@ -3998,15 +3998,16 @@ void process_commands()
         if(!MILL_MOTOR_STATUS())
             {
               
-          //wait
-          int codenum=1500;
-          //st_synchronize();
-          codenum += millis();  // keep track of when we started waiting
-          previous_millis_cmd = millis();
-          while(millis()  < codenum ){
-            //do nothing
-          }
-              
+        //wait
+        codenum=1500;       
+        st_synchronize();
+        codenum += millis();  // keep track of when we started waiting
+        previous_millis_cmd = millis();
+        while(millis()  < codenum ){
+          manage_heater();
+          manage_inactivity();
+          lcd_update();
+        }
               
             if ((servo_index >= 0) && (servo_index < NUM_SERVOS))
               {
@@ -4060,14 +4061,16 @@ void process_commands()
       {
         
         
-          //wait
-          int codenum=1500;
-          //st_synchronize();
-          codenum += millis();  // keep track of when we started waiting
-          previous_millis_cmd = millis();
-          while(millis()  < codenum ){
-            //do nothing
-          }
+        //wait
+        codenum=1500;       
+        st_synchronize();
+        codenum += millis();  // keep track of when we started waiting
+        previous_millis_cmd = millis();
+        while(millis()  < codenum ){
+          manage_heater();
+          manage_inactivity();
+          lcd_update();
+        }
 
 
         inactivity=false;
@@ -4128,17 +4131,17 @@ void process_commands()
       
    case 5: // M5 SPINDLE OFF
       {
-          //wait
-          int codenum=1500;
-          //st_synchronize();
-          codenum += millis();  // keep track of when we started waiting
-          previous_millis_cmd = millis();
-          while(millis()  < codenum ){
-               //do nothing
-          }
-
-
-        st_synchronize(); //wait movement finish.
+        //wait
+        codenum=1500;       
+        st_synchronize();
+        codenum += millis();  // keep track of when we started waiting
+        previous_millis_cmd = millis();
+        while(millis()  < codenum ){
+          manage_heater();
+          manage_inactivity();
+          lcd_update();
+        }
+        
         int servo_index = 0;
         int servo_position = SERVO_SPINDLE_ZERO;
         enable_endstops(true);
