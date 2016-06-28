@@ -153,6 +153,8 @@
 // M302 - Allow cold extrudes, or set the minimum extrude S<temperature>.
 // M303 - PID relay autotune S<temperature> sets the target temperature. (default target temperature = 150C)
 // M304 - Set bed PID parameters P I and D
+// M350 - Set microstepping mode.
+// M351 - Toggle MS1 MS2 pins directly.
 // M400 - Finish all moves
 // M401 - Lower z-probe if present
 // M402 - Raise z-probe if present
@@ -162,13 +164,11 @@
 // M503 - print the current settings (from memory not from EEPROM)
 // M540 - Use S[0|1] to enable or disable the stop SD card print on endstop hit (requires ABORT_ON_ENDSTOP_HIT_FEATURE_ENABLED)
 // M600 - Pause for filament change X[pos] Y[pos] Z[relative lift] E[initial retract] L[later retract distance for removal]
+// M605 - Set dual x-carriage movement mode: S<mode> [ X<duplication x-offset> R<duplication temp offset> ]
 // M665 - set delta configurations
 // M666 - set delta endstop adjustment
-// M605 - Set dual x-carriage movement mode: S<mode> [ X<duplication x-offset> R<duplication temp offset> ]
 // M907 - Set digital trimpot motor current using axis codes.
 // M908 - Control digital trimpot directly.
-// M350 - Set microstepping mode.
-// M351 - Toggle MS1 MS2 pins directly.
 // M928 - Start SD logging (M928 filename.g) - ended by M29
 // M999 - Restart after being stopped by error
 
@@ -177,6 +177,8 @@
 // M3 S[RPM] SPINDLE ON - Clockwise
 // M4 S[RPM] SPINDLE ON - CounterClockwise
 // M5        SPINDLE OFF
+
+// M563 [Pn [D<0-2>] [S<0,1>]] - Edit tool definition or query defined tools
 
 // M700 S<0-255> - Laser Power Control
 // M701 S<0-255> - Ambient Light, Set Red
@@ -228,8 +230,6 @@
 // M766 - read FABtotum Personal Fabricator Firmware Build Date and Time
 // M767 - read FABtotum Personal Fabricator Firmware Update Author
 
-// M785 - Turn Prism UV module On/off M785 S[0-1]
-// M786 - External Power OFF
 
 // M779 - force Head product ID reading (for testing purpose only)
 // [unimplemented] M780 - read Head Product Name
@@ -237,9 +237,9 @@
 // M782 - read Head product ID
 // [unimplemented] M783 - read Head vendor ID
 // M784 - read Head Serial ID
-// [overridden] M785 - read Head firmware version
-// [overridden] M786 - read needed firmware version of FABtotum Personal Fabricator Main Controller
-// [unimplemented] M787 - read Head capability: type0 (passive, active)
+// M785 - Turn Prism UV module On/off M785 S[0-1] // [overrides] M785 - read Head firmware version
+// M786 - External Power OFF // [overrides] M786 - read needed firmware version of FABtotum Personal Fabricator Main Controller
+// M787 - external power on/off pin control // [overrides] M787 - read Head capability: type0 (passive, active)
 // [unimplemented] M788 - read Head capability: type1 (additive, milling, syringe, laser etc..)
 // [unimplemented] M789 - read Head capability: purpose (single purpose, multipurpose)
 // [unimplemented] M790 - read Head capability: wattage (0-200W)
@@ -324,9 +324,12 @@ float extruder_offset[NUM_EXTRUDER_OFFSETS][EXTRUDERS] = {
 #endif
 };
 #endif
-uint8_t active_extruder = 0;
-uint8_t mapped_extruder = 0;
-uint8_t extruder_mapping[] = { 0, 1, 2 };
+uint8_t active_tool = 0;     // Active logical tool
+uint8_t active_extruder = 0; // Active actual extruder
+bool head_is_dummy = false;  // Head reaquires TWI silencing
+uint8_t tool_extruder_mapping[] = { 0, 1, 2 };  // Tool to drive mapping
+uint8_t tool_heater_mapping[]   = { 0, -1, 0 };  // Tool to heater mapping
+bool    tool_twi_support[]      = { true, false, false };  // Tool TWI support
 int fanSpeed=0;
 #ifdef SERVO_ENDSTOPS
   int servo_endstops[] = SERVO_ENDSTOPS;
@@ -388,7 +391,6 @@ unsigned int hotplate_board_version=0;
 unsigned int general_assembly_version=0;
 unsigned int installed_head_id=0;
 
-bool head_is_dummy = false;  // Signals head is Dummy (does not support I²C), depending on installed head id
 bool head_placed = false;
 
 //===========================================================================
@@ -647,6 +649,28 @@ void servo_init()
   #endif
 }
 
+void defineTool(uint8_t tool, unsigned int drive=0, unsigned int heater=0, bool twi=true)
+{
+   tool_extruder_mapping[tool] = drive;
+   tool_heater_mapping[tool] = heater;
+   tool_twi_support[tool] = twi;
+}
+
+uint8_t loadTool (uint8_t tool)
+{
+   active_tool = tool;
+   active_extruder = tool_extruder_mapping[tool];
+   head_is_dummy = !tool_twi_support[tool];
+
+   if (head_is_dummy) {
+      TWCR &= ~MASK(TWEN);
+   } else {
+      Wire.begin();
+   }
+
+   return active_extruder;
+}
+
 void FabtotumIO_init()
 {
    BEEP_ON()
@@ -727,16 +751,17 @@ void FabtotumIO_init()
    switch (installed_head_id)
    {
       case 4:  // Direct-drive?
-         // Remap extruders
-         extruder_mapping[0] = 2;
-         extruder_mapping[2] = 0;
+         defineTool(2, 0, 0, true);
+         defineTool(0, 2, 0, false);
+         break;
       case 3:  // Milling V2
-         head_is_dummy = true;
+         defineTool(0, 0, 0, false);
          break;
       default:
-         head_is_dummy = false;
-         Wire.begin();
+         defineTool(0, 0, 0, true);
    }
+   // Starting tool is #0 (T0)
+   loadTool(0);
 
    /*fading_speed=200;
    fading_started=false;
@@ -2853,8 +2878,7 @@ void process_commands()
         tmp_extruder = active_extruder;
         if(code_seen('T')) {
           tmp_extruder = code_value();
-          mapped_extruder = tmp_extruder;
-          tmp_extruder = extruder_mapping[tmp_extruder];
+          tmp_extruder = tool_extruder_mapping[tmp_extruder];
           if(tmp_extruder >= EXTRUDERS) {
             SERIAL_ECHO_START;
             SERIAL_ECHO(MSG_M200_INVALID_EXTRUDER);
@@ -4483,16 +4507,69 @@ void process_commands()
       }
       break;
 
-    case 794: // M794 Tn- Swap active estreuder with target extrder
+    /*case 793: // M794 P1|P0 - Enable disable
       {
-        if (code_seen('T')) {
-          unsigned int target = code_value_long();
-          extruder_mapping[mapped_extruder] = extruder_mapping[target];
-          extruder_mapping[target] = active_extruder;
-          SERIAL_PROTOCOL("T"); SERIAL_PROTOCOL(target); SERIAL_PROTOCOL(" -> E"); SERIAL_PROTOCOLLN(active_extruder);
+        if (code_seen('S')) {
+          installed_head_id = code_value_long();
         }
-        uint8_t lol = extruder_mapping[mapped_extruder];
-        SERIAL_PROTOCOL("T"); SERIAL_PROTOCOL(mapped_extruder); SERIAL_PROTOCOL(" -> E"); SERIAL_PROTOCOLLN(lol);
+        SERIAL_PROTOCOLLN(installed_head_id);
+      }
+      break;*/
+
+    case 563: // M563 [Px] [Dy] - Define tool or swap definitions
+      {
+         // Select target (logical) tool
+         unsigned long target_tool;
+        if (code_seen('P')) {
+          target_tool = code_value_long();
+       } else {
+          target_tool = active_tool;
+
+         // Output tool definitions
+         SERIAL_ECHOLNPGM("");
+         for (target_tool = 0; target_tool < EXTRUDERS; target_tool++)
+         {
+            if (target_tool == active_tool) {
+               SERIAL_ECHOPGM(" * ");
+            } else {
+              SERIAL_ECHOPGM("   ");
+           }
+            SERIAL_ECHOPAIR("T", (unsigned long)target_tool);
+            SERIAL_ECHOPAIR(": drive:", (unsigned long)tool_extruder_mapping[target_tool]);
+            if (tool_twi_support[target_tool]) {
+              SERIAL_ECHOPGM(" / twi:on");
+           } else {
+              SERIAL_ECHOPGM(" / twi:off");
+           }
+            SERIAL_ECHOLNPGM("");
+         }
+         return;
+       }
+
+       // Assign drive
+       uint8_t drive;
+        if (code_seen('D')) {
+          drive = code_value_long();
+           //tool_extruder_mapping[target_tool] = tmp_extruder;
+        } else /*if (target_tool != active_tool)*/ {
+           drive = active_extruder;
+           /*tool_extruder_mapping[active_tool] = tool_extruder_mapping[target_tool];
+           tool_extruder_mapping[target_tool] = active_extruder;*/
+        }
+
+        bool twi;
+        if (code_seen('S')) {
+           twi = code_value_long()==1 ? true : false;
+        } else {
+           twi = !head_is_dummy;
+        }
+
+        defineTool(target_tool, drive, 0, twi);
+
+        // Reselect activ tool to reload definition
+        loadTool(active_tool);
+        //active_extruder = tool_extruder_mapping[active_tool];
+
       }
       break;
 
@@ -4630,8 +4707,7 @@ void process_commands()
   else if(code_seen('T'))
   {
     tmp_extruder = code_value();
-    mapped_extruder = tmp_extruder;
-    tmp_extruder = extruder_mapping[tmp_extruder];
+    tmp_extruder = loadTool(tmp_extruder);
     if(tmp_extruder >= EXTRUDERS) {
       SERIAL_ECHO_START;
       SERIAL_ECHO("T");
@@ -5561,7 +5637,7 @@ bool setTargetedHotend(int code){
   tmp_extruder = active_extruder;
   if(code_seen('T')) {
     tmp_extruder = code_value();
-    tmp_extruder = extruder_mapping[tmp_extruder];
+    tmp_extruder = tool_extruder_mapping[tmp_extruder];
     if(tmp_extruder >= EXTRUDERS) {
       SERIAL_ECHO_START;
       switch(code){

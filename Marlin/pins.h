@@ -876,14 +876,17 @@
 #define Z2_DIR_PIN         34
 #define Z2_ENABLE_PIN      30
 
+// 1st drive: onboard feeder
 #define E0_STEP_PIN        26
 #define E0_DIR_PIN         28
 #define E0_ENABLE_PIN      24
 
+// 2nd drive: 5th axis
 #define E1_STEP_PIN        36
 #define E1_DIR_PIN         34
 #define E1_ENABLE_PIN      30
 
+// 3rd drive: directdrive feeder
 #define E2_STEP_PIN        20
 #define E2_DIR_PIN         21
 #define E2_ENABLE_PIN      24
@@ -893,14 +896,14 @@
 #define BEEPER	4
 
 #define HEATER_0_PIN       10
-#define HEATER_1_PIN       -1
-#define HEATER_2_PIN       -1
+#define HEATER_1_PIN       10
+#define HEATER_2_PIN       10
 #define HEATER_BED_PIN   8
 #define FAN_PIN            9
 
 #define TEMP_0_PIN         13   // ANALOG NUMBERING
 #define TEMP_BED_PIN       14   // ANALOG NUMBERING
-#define TEMP_1_PIN         15   // ANALOG NUMBERING
+#define TEMP_1_PIN         13   // ANALOG NUMBERING
 #define TEMP_2_PIN         -1   // ANALOG NUMBERING
 
 
