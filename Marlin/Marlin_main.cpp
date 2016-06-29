@@ -49,6 +49,8 @@
 #include "math.h"
 #include "Wire.h"
 
+#include "Configuration_heads.h"
+
 #ifdef BLINKM
 #include "BlinkM.h"
 #include "Wire.h"
@@ -752,19 +754,27 @@ void FabtotumIO_init()
    enable_door_kill=true;
    rpm = 0;
 
+   // Default tool definitions
+   defineTool(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+   defineTool(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_5th_axis_SMART);
+   defineTool(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
+
+   // Particular tool definitions
+   // TODO: move these in an in-memory table of factory-supported heads and load
+   //       definitions accordingly
    switch (installed_head_id)
    {
-      case 4:  // Direct-drive?
-         defineTool(2, 0, 0, true);
-         defineTool(0, 2, 0, false);
+      case FAB_HEADS_direct_ID:
+         defineTool(0, FAB_HEADS_direct_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
+         defineTool(2, FAB_HEADS_default_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
          break;
-      case 3:  // Milling V2
-         defineTool(0, 0, 0, false);
-         break;
-      default:
-         defineTool(0, 0, 0, true);
+      case FAB_HEADS_mill_v2_ID:
+         defineTool(0, -1, FAB_HEADS_default_HEATER, FAB_HEADS_mill_v2_SMART);
+      /*default:
+         defineTool(0, 0, 0, true);*/
    }
-   // Starting tool is #0 (T0)
+
+   // Load starting tool (T0)
    loadTool(0);
 
    /*fading_speed=200;
