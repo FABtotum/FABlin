@@ -4497,14 +4497,13 @@ void process_commands()
 
     case 786: // M786 - external power on/off pin control
       {
-          poweroff_rqs();
+          //poweroff_rqs();
       }
       break;
 
     case 787: // M787 - external power on/off pin control
       {
               SERIAL_PROTOCOL(READ(PWR_IN_PIN));
-
       }
       break;
 
