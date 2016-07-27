@@ -27,6 +27,8 @@
     http://reprap.org/pipermail/reprap-dev/2011-May/003323.html
  */
 
+#include <Wire.h>
+
 #include "Marlin.h"
 
 #ifdef ENABLE_AUTO_BED_LEVELING
@@ -47,9 +49,6 @@
 #include "language.h"
 #include "pins_arduino.h"
 #include "math.h"
-#include "Wire.h"
-
-#include "Configuration_heads.h"
 
 #ifdef BLINKM
 #include "BlinkM.h"
@@ -64,6 +63,10 @@
 #include <SPI.h>
 #endif
 
+#include "tools.h"
+#include "Configuration_heads.h"
+
+#include <SmartComm.h>
 
 // look here for descriptions of G-codes: http://linuxcnc.org/handbook/gcode/g-code.html
 // http://objects.reprap.org/wiki/Mendel_User_Manual:_RepRapGCodes
@@ -181,6 +184,7 @@
 // M5        SPINDLE OFF
 
 // M563 [Pn [D<0-2>] [S<0,1>]] - Edit tool definition or query defined tools
+// M575 P<serial_port_n> R<rx_pin_n> T<tx_pin_n> [B<baud_rate>] S<opt_mask>
 
 // M700 S<0-255> - Laser Power Control
 // M701 S<0-255> - Ambient Light, Set Red
@@ -520,6 +524,8 @@ uint8_t extruder_0_thermistor_index = THERMISTOR_HOTSWAP_DEFAULT_INDEX;
 bool auto_fan_on_temp_change = true;
 #endif
 
+SmartComm Smart;
+
 //===========================================================================
 //=============================Routines======================================
 //===========================================================================
@@ -660,28 +666,6 @@ void servo_init()
   #endif
 }
 
-void defineTool(uint8_t tool, unsigned int drive=0, unsigned int heater=0, bool twi=true)
-{
-   tool_extruder_mapping[tool] = drive;
-   tool_heater_mapping[tool] = heater;
-   tool_twi_support[tool] = twi;
-}
-
-uint8_t loadTool (uint8_t tool)
-{
-   active_tool = tool;
-   active_extruder = tool_extruder_mapping[tool];
-   head_is_dummy = !tool_twi_support[tool];
-
-   if (head_is_dummy) {
-      TWCR &= ~MASK(TWEN);
-   } else {
-      Wire.begin();
-   }
-
-   return active_extruder;
-}
-
 void FabtotumIO_init()
 {
    BEEP_ON()
@@ -755,9 +739,9 @@ void FabtotumIO_init()
    rpm = 0;
 
    // Default tool definitions
-   defineTool(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-   defineTool(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_5th_axis_SMART);
-   defineTool(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
+   tools.define(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+   tools.define(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_5th_axis_SMART);
+   tools.define(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
 
    // Particular tool definitions
    // TODO: move these in an in-memory table of factory-supported heads and load
@@ -765,17 +749,17 @@ void FabtotumIO_init()
    switch (installed_head_id)
    {
       case FAB_HEADS_direct_ID:
-         defineTool(0, FAB_HEADS_direct_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
-         defineTool(2, FAB_HEADS_default_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+         tools.define(0, FAB_HEADS_direct_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
+         tools.define(2, FAB_HEADS_default_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
          break;
       case FAB_HEADS_mill_v2_ID:
-         defineTool(0, -1, FAB_HEADS_default_HEATER, FAB_HEADS_mill_v2_SMART);
+         tools.define(0, -1, FAB_HEADS_default_HEATER, FAB_HEADS_mill_v2_SMART);
       /*default:
          defineTool(0, 0, 0, true);*/
    }
 
    // Load starting tool (T0)
-   loadTool(0);
+   tools.load(0);
 
    /*fading_speed=200;
    fading_started=false;
@@ -4708,7 +4692,7 @@ void process_commands()
       }
       break;*/
 
-    case 563: // M563 [Px] [Dy] - Define tool or swap definitions
+    case 563: // M563 [Px] [Dy] [Sz]- Define tool or swap definitions
       {
          // Select target (logical) tool
          unsigned long target_tool;
@@ -4749,6 +4733,7 @@ void process_commands()
            tool_extruder_mapping[target_tool] = active_extruder;*/
         }
 
+        // State head smartness
         bool twi;
         if (code_seen('S')) {
            twi = code_value_long()==1 ? true : false;
@@ -4756,12 +4741,57 @@ void process_commands()
            twi = !head_is_dummy;
         }
 
-        defineTool(target_tool, drive, 0, twi);
+        tools.define(target_tool, drive, 0, twi);
 
-        // Reselect activ tool to reload definition
-        loadTool(active_tool);
-        //active_extruder = tool_extruder_mapping[active_tool];
+        // Reselect active tool to possibly reload its definition
+        tools.load(active_tool);
 
+      }
+      break;
+
+      /**
+       * M575 P B R T S - Set serial communication params
+       *
+       * @param  P 1  Select serial port number (only `1` is supported by now, currently ignored)
+       * @param  R <rx>  Set receive pin for serial bus
+       * @param  T <tx>  Set transmit pin for serial bus
+       * @param  B 0,300,...,115200  Set serial bus baud rate
+       * @param  S <bitmask>  Define features, sum of:
+       *                  1   Use error checking (currently unsupported)
+       *                  2   Enable TWI (if compatible with pins used)
+       */
+      case 575:
+      {
+         /*uint8_t port_n = 1;
+         if (code_seen('P')) {
+            port_n = code_value_long() & 0xFF;
+         }*/
+
+         uint8_t sRX = 255, sTX = 255;
+         if (code_seen('R')) {
+            sRX = code_value_long() & 0xFF;
+            if (code_seen('T')) {
+               sTX = code_value_long() & 0xFF;
+            }
+         }
+
+         uint32_t baudRate = 0xFFFFFFFFUL;
+         if (code_seen('B')) {
+            baudRate = code_value_long();
+         }
+
+         unsigned long options = 0;
+         if (code_seen('S')) {
+            options = code_value_long();
+         }
+
+         if (sRX != 255 && sTX != 255) {
+            // Set serial pins
+            Smart.serial(sRX, sTX, baudRate);
+         }
+
+         // TODO: Enable / disable TWI
+         //Smart.wire (options & 2? true : false);
       }
       break;
 
@@ -4899,7 +4929,7 @@ void process_commands()
   else if(code_seen('T'))
   {
     tmp_extruder = code_value();
-    tmp_extruder = loadTool(tmp_extruder);
+    tmp_extruder = tools.load(tmp_extruder);
     if(tmp_extruder >= EXTRUDERS) {
       SERIAL_ECHO_START;
       SERIAL_ECHO("T");

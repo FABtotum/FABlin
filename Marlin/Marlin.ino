@@ -1,3 +1,7 @@
+#include <Arduino.h>
+#include <SmartComm.h>
+#include <SoftwareSerial.h>
+
 /* -*- c++ -*- */
 
 /*

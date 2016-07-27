@@ -289,7 +289,12 @@ extern uint8_t extruder_0_thermistor_input_index;
 #endif
 
 // Handling multiple extruders pins
+extern uint8_t active_tool;     // Active logical tool
 extern uint8_t active_extruder;
+extern bool head_is_dummy;
+extern uint8_t tool_extruder_mapping[];
+extern uint8_t tool_heater_mapping[];
+extern bool    tool_twi_support[];
 
 #ifdef DIGIPOT_I2C
 extern void digipot_i2c_set_current( int channel, float current );
