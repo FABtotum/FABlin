@@ -670,6 +670,27 @@ uint8_t loadTool (uint8_t tool)
       Wire.begin();
    }
 
+   switch (active_extruder) {
+      case 0:
+         WRITE(E1_ENABLE_PIN,!E1_ENABLE_ON);
+         WRITE(E2_ENABLE_PIN,!E2_ENABLE_ON);
+         break;
+      case 1:
+         WRITE(E0_ENABLE_PIN,!E0_ENABLE_ON);
+         WRITE(E2_ENABLE_PIN,!E2_ENABLE_ON);
+         break;
+      case 2:
+         WRITE(E0_ENABLE_PIN,!E0_ENABLE_ON);
+         WRITE(E1_ENABLE_PIN,!E1_ENABLE_ON);
+   }
+
+   // Hack for fabtotum direct-drive head
+   if (tool == FAB_HEADS_direct_ID) {
+      MILL_MOTOR_ON();
+   } else {
+      MILL_MOTOR_OFF();
+   }
+
    return active_extruder;
 }
 
@@ -756,7 +777,7 @@ void FabtotumIO_init()
    defineTool(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
 
    // Particular tool definitions
-   // TODO: move these in an in-memory table of factory-supported heads and load
+   // TODO: move these in a flash-mem table of factory-supported heads and load
    //       definitions accordingly
    switch (installed_head_id)
    {

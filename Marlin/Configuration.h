@@ -390,7 +390,10 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 #define X_ENABLE_ON 0
 #define Y_ENABLE_ON 0
 #define Z_ENABLE_ON 0
-#define E_ENABLE_ON 0 // For all extruders
+#define E_ENABLE_ON  0 // For all extruders
+#define E0_ENABLE_ON E_ENABLE_ON
+#define E1_ENABLE_ON E_ENABLE_ON
+#define E2_ENABLE_ON 1
 
 // Disables axis when it's not being used.
 #define DISABLE_X false

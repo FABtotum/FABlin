@@ -889,7 +889,7 @@
 // 3rd drive: directdrive feeder
 #define E2_STEP_PIN        20
 #define E2_DIR_PIN         21
-#define E2_ENABLE_PIN      24
+#define E2_ENABLE_PIN      23
 
 #define LED_PIN            13
 
@@ -904,7 +904,7 @@
 #define TEMP_0_PIN         13   // ANALOG NUMBERING
 #define TEMP_BED_PIN       14   // ANALOG NUMBERING
 #define TEMP_1_PIN         13   // ANALOG NUMBERING
-#define TEMP_2_PIN         -1   // ANALOG NUMBERING
+#define TEMP_2_PIN         13   // ANALOG NUMBERING
 
 
 //fastio define
