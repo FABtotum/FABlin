@@ -682,13 +682,7 @@ uint8_t loadTool (uint8_t tool)
       case 2:
          WRITE(E0_ENABLE_PIN,!E0_ENABLE_ON);
          WRITE(E1_ENABLE_PIN,!E1_ENABLE_ON);
-   }
-
-   // Hack for fabtotum direct-drive head
-   if (tool == FAB_HEADS_direct_ID) {
-      MILL_MOTOR_ON();
-   } else {
-      MILL_MOTOR_OFF();
+         MILL_MOTOR_ON();
    }
 
    return active_extruder;

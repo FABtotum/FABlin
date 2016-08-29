@@ -887,8 +887,8 @@
 #define E1_ENABLE_PIN      30
 
 // 3rd drive: directdrive feeder
-#define E2_STEP_PIN        20
-#define E2_DIR_PIN         21
+#define E2_STEP_PIN        21
+#define E2_DIR_PIN         20
 #define E2_ENABLE_PIN      23
 
 #define LED_PIN            13
