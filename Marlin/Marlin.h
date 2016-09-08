@@ -272,13 +272,13 @@ extern bool enable_secure_switch_zprobe;
 #endif
 
 #ifdef THERMISTOR_HOTSWAP
-extern int maxttemp[EXTRUDERS];
+extern int maxttemp[HEATERS];
 #ifdef TEMP_SENSOR_1_AS_REDUNDANT
 extern void *heater_ttbl_map[2];
 extern uint8_t heater_ttbllen_map[2];
 #else
-extern void *heater_ttbl_map[EXTRUDERS];
-extern uint8_t heater_ttbllen_map[EXTRUDERS];
+extern void *heater_ttbl_map[HEATERS];
+extern uint8_t heater_ttbllen_map[HEATERS];
 #endif
 extern void *thermistors_map[THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN];
 extern uint8_t thermistors_map_len[THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN];

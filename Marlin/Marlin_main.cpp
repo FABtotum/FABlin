@@ -330,7 +330,7 @@ uint8_t active_tool = 0;     // Active logical tool
 uint8_t active_extruder = 0; // Active actual extruder
 bool head_is_dummy = false;  // Head reaquires TWI silencing
 uint8_t tool_extruder_mapping[] = { 0, 1, 2 };  // Tool to drive mapping
-uint8_t tool_heater_mapping[]   = { 0, -1, 0 };  // Tool to heater mapping
+uint8_t tool_heater_mapping[]   = { 0, 0, 0 };  // Tool to heater mapping
 bool    tool_twi_support[]      = { true, false, false };  // Tool TWI support
 int fanSpeed=0;
 #ifdef SERVO_ENDSTOPS
@@ -651,10 +651,10 @@ void servo_init()
   #endif
 }
 
-void defineTool(uint8_t tool, unsigned int drive=0, unsigned int heater=0, bool twi=true)
+void defineTool(uint8_t tool, int8_t drive=-1, int8_t heater=-1, bool twi=false)
 {
    tool_extruder_mapping[tool] = drive;
-   tool_heater_mapping[tool] = heater;
+   tool_heater_mapping[tool] = heater - 1;
    tool_twi_support[tool] = twi;
 }
 
@@ -671,15 +671,15 @@ uint8_t loadTool (uint8_t tool)
    }
 
    switch (active_extruder) {
-      case 0:
+      case FAB_HEADS_default_DRIVE:
          WRITE(E1_ENABLE_PIN,!E1_ENABLE_ON);
          WRITE(E2_ENABLE_PIN,!E2_ENABLE_ON);
          break;
-      case 1:
+      case FAB_HEADS_5th_axis_DRIVE:
          WRITE(E0_ENABLE_PIN,!E0_ENABLE_ON);
          WRITE(E2_ENABLE_PIN,!E2_ENABLE_ON);
          break;
-      case 2:
+      case FAB_HEADS_direct_DRIVE:
          WRITE(E0_ENABLE_PIN,!E0_ENABLE_ON);
          WRITE(E1_ENABLE_PIN,!E1_ENABLE_ON);
          MILL_MOTOR_ON();
@@ -2466,7 +2466,7 @@ void process_commands()
           SERIAL_PROTOCOLPGM(" /");
           SERIAL_PROTOCOL_F(degTargetBed(),1);
         #endif //TEMP_BED_PIN
-        for (int8_t cur_extruder = 0; cur_extruder < EXTRUDERS; ++cur_extruder) {
+        for (int8_t cur_extruder = 0; cur_extruder < HEATERS; ++cur_extruder) {
           SERIAL_PROTOCOLPGM(" T");
           SERIAL_PROTOCOL(cur_extruder);
           SERIAL_PROTOCOLPGM(":");
@@ -4361,7 +4361,7 @@ void process_commands()
             SERIAL_PROTOCOLPGM("C->");
             SERIAL_PROTOCOL_F(rawBedTemp()/OVERSAMPLENR,0);
           #endif
-          for (int8_t cur_extruder = 0; cur_extruder < EXTRUDERS; ++cur_extruder) {
+          for (int8_t cur_extruder = 0; cur_extruder < HEATERS; ++cur_extruder) {
             SERIAL_PROTOCOLPGM("  T");
             SERIAL_PROTOCOL(cur_extruder);
             SERIAL_PROTOCOLPGM(":");
@@ -4540,7 +4540,15 @@ void process_commands()
       }
       break;*/
 
-    case 563: // M563 [Px] [Dy] - Define tool or swap definitions
+      /**
+       * M563 - Define or remove a tool
+       *
+       *    P - Tool to define
+       *    D - Associated drive (0-2)
+       *    H - Associated heater (0)
+       *    S - Whether tool supports communication (0,1)
+       */
+    case 563: // M563 [Pn [Dn] [Hn] [Sn]] - Define tool
       {
          // Select target (logical) tool
          unsigned long target_tool;
@@ -4550,49 +4558,49 @@ void process_commands()
           target_tool = active_tool;
 
          // Output tool definitions
-         SERIAL_ECHOLNPGM("");
          for (target_tool = 0; target_tool < EXTRUDERS; target_tool++)
          {
-            if (target_tool == active_tool) {
-               SERIAL_ECHOPGM(" * ");
-            } else {
-              SERIAL_ECHOPGM("   ");
-           }
-            SERIAL_ECHOPAIR("T", (unsigned long)target_tool);
-            SERIAL_ECHOPAIR(": drive:", (unsigned long)tool_extruder_mapping[target_tool]);
+            SERIAL_ECHO_START;
+            SERIAL_ECHOPAIR(" T", (unsigned long)target_tool);
+            SERIAL_ECHOPAIR(" Drive=", (unsigned long)(tool_extruder_mapping[target_tool]));
+            SERIAL_ECHOPAIR(" Heater=", (unsigned long)(tool_heater_mapping[target_tool]+1));
             if (tool_twi_support[target_tool]) {
-              SERIAL_ECHOPGM(" / twi:on");
+              SERIAL_ECHOPGM(" Smart=on");
            } else {
-              SERIAL_ECHOPGM(" / twi:off");
+              SERIAL_ECHOPGM(" Smart=off");
            }
-            SERIAL_ECHOLNPGM("");
+            SERIAL_ECHOLN("");
          }
          return;
        }
 
        // Assign drive
-       uint8_t drive;
+      int8_t drive;
         if (code_seen('D')) {
           drive = code_value_long();
-           //tool_extruder_mapping[target_tool] = tmp_extruder;
-        } else /*if (target_tool != active_tool)*/ {
-           drive = active_extruder;
-           /*tool_extruder_mapping[active_tool] = tool_extruder_mapping[target_tool];
-           tool_extruder_mapping[target_tool] = active_extruder;*/
+        } else  {
+           drive = -1;
+        }
+
+        // Assign heater
+        int8_t heater;
+        if (code_seen('H')) {
+           heater = code_value_long();
+        } else  {
+           heater = -1;
         }
 
         bool twi;
         if (code_seen('S')) {
            twi = code_value_long()==1 ? true : false;
         } else {
-           twi = !head_is_dummy;
+           twi = false;
         }
 
-        defineTool(target_tool, drive, 0, twi);
+        defineTool(target_tool, drive, heater, twi);
 
-        // Reselect activ tool to reload definition
+        // Reselect active tool to reload definition
         loadTool(active_tool);
-        //active_extruder = tool_extruder_mapping[active_tool];
 
       }
       break;
@@ -5115,7 +5123,7 @@ void handle_status_leds(void) {
   float max_temp = 0.0;
   if(millis() > stat_update) {
      stat_update += 500; // Update every 0.5s
-      for (int8_t cur_extruder = 0; cur_extruder < EXTRUDERS; ++cur_extruder) {
+      for (int8_t cur_extruder = 0; cur_extruder < HEATERS; ++cur_extruder) {
          //max_temp = max(max_temp, degHotend(cur_extruder));            //<------------------
          //max_temp = max(max_temp, degTargetHotend(cur_extruder));      //<-------------------
       }
@@ -5658,11 +5666,12 @@ void setPwmFrequency(uint8_t pin, int val)
 #endif //FAST_PWM_FAN
 
 bool setTargetedHotend(int code){
-  tmp_extruder = active_extruder;
+  tmp_extruder = active_tool;
   if(code_seen('T')) {
     tmp_extruder = code_value();
-    tmp_extruder = tool_extruder_mapping[tmp_extruder];
-    if(tmp_extruder >= EXTRUDERS) {
+}
+    tmp_extruder = tool_heater_mapping[tmp_extruder];
+    if(tmp_extruder >= HEATERS) {
       SERIAL_ECHO_START;
       switch(code){
         case 104:
@@ -5684,6 +5693,5 @@ bool setTargetedHotend(int code){
       SERIAL_ECHOLN(tmp_extruder);
       return true;
     }
-  }
   return false;
 }

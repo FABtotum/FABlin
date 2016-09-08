@@ -50,10 +50,10 @@ bool blue_fading_read();*/
 
 // low level conversion routines
 // do not use these routines and variables outside of temperature.cpp
-extern int target_temperature[EXTRUDERS];  
-extern float current_temperature[EXTRUDERS];
+extern int target_temperature[HEATERS];
+extern float current_temperature[HEATERS];
 #ifdef SHOW_TEMP_ADC_VALUES
-  extern int current_temperature_raw[EXTRUDERS];
+  extern int current_temperature_raw[HEATERS];
   extern int current_temperature_bed_raw;
 #endif
 extern int current_pressure_raw_value;
@@ -184,7 +184,7 @@ FORCE_INLINE float MainCurrent() {
 #define setTargetHotend0(_celsius) setTargetHotend((_celsius), 0)
 #define isHeatingHotend0() isHeatingHotend(0)
 #define isCoolingHotend0() isCoolingHotend(0)
-#if EXTRUDERS > 1
+#if HEATERS > 1
 #define degHotend1() degHotend(1)
 #define degTargetHotend1() degTargetHotend(1)
 #define setTargetHotend1(_celsius) setTargetHotend((_celsius), 1)
@@ -193,7 +193,7 @@ FORCE_INLINE float MainCurrent() {
 #else
 #define setTargetHotend1(_celsius) do{}while(0)
 #endif
-#if EXTRUDERS > 2
+#if HEATERS > 2
 #define degHotend2() degHotend(2)
 #define degTargetHotend2() degTargetHotend(2)
 #define setTargetHotend2(_celsius) setTargetHotend((_celsius), 2)
@@ -202,7 +202,7 @@ FORCE_INLINE float MainCurrent() {
 #else
 #define setTargetHotend2(_celsius) do{}while(0)
 #endif
-#if EXTRUDERS > 3
+#if HEATERS > 3
 #error Invalid number of extruders
 #endif
 

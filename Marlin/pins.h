@@ -896,15 +896,15 @@
 #define BEEPER	4
 
 #define HEATER_0_PIN       10
-#define HEATER_1_PIN       10
-#define HEATER_2_PIN       10
+#define HEATER_1_PIN       -1
+#define HEATER_2_PIN       -1
 #define HEATER_BED_PIN   8
 #define FAN_PIN            9
 
 #define TEMP_0_PIN         13   // ANALOG NUMBERING
 #define TEMP_BED_PIN       14   // ANALOG NUMBERING
-#define TEMP_1_PIN         13   // ANALOG NUMBERING
-#define TEMP_2_PIN         13   // ANALOG NUMBERING
+#define TEMP_1_PIN         -1   // ANALOG NUMBERING
+#define TEMP_2_PIN         -1   // ANALOG NUMBERING
 
 
 //fastio define
