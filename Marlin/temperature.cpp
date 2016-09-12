@@ -655,16 +655,16 @@ void manage_heater()
 // For hot end temperature measurement.
 static float analog2temp(int raw, uint8_t e) {
 #ifdef TEMP_SENSOR_1_AS_REDUNDANT
-  if(e > EXTRUDERS)
+  if(e > HEATERS)
 #else
-  if(e >= EXTRUDERS)
+  if(e >= HEATERS)
 #endif
   {
       SERIAL_ERROR_START;
       SERIAL_ERROR((int)e);
       SERIAL_ERRORLNPGM(" - Invalid extruder number !");
       kill();
-  } 
+  }
   #ifdef HEATER_0_USES_MAX6675
     if (e == 0)
     {
