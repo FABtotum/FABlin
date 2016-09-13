@@ -681,10 +681,16 @@ uint8_t loadTool (uint8_t tool)
          WRITE(E2_ENABLE_PIN,!E2_ENABLE_ON);
          break;
       case FAB_HEADS_5th_axis_DRIVE:
+          if (installed_head_id != FAB_HEADS_5th_axis_ID) {
+            return INVALID_EXTRUDER | active_extruder;
+          }
          WRITE(E0_ENABLE_PIN,!E0_ENABLE_ON);
          WRITE(E2_ENABLE_PIN,!E2_ENABLE_ON);
          break;
       case FAB_HEADS_direct_DRIVE:
+        if (installed_head_id != FAB_HEADS_direct_ID) {
+          return INVALID_EXTRUDER | active_extruder;
+        }
          WRITE(E0_ENABLE_PIN,!E0_ENABLE_ON);
          WRITE(E1_ENABLE_PIN,!E1_ENABLE_ON);
          MILL_MOTOR_ON();
@@ -4753,8 +4759,9 @@ void process_commands()
     tmp_extruder = loadTool(tmp_extruder);
     if(tmp_extruder >= EXTRUDERS) {
       SERIAL_ECHO_START;
-      SERIAL_ECHO("T");
-      SERIAL_ECHO(tmp_extruder);
+      SERIAL_ECHOPGM(" T");
+      SERIAL_ECHO(tmp_extruder && 0x03);
+      SERIAL_ECHOPGM(" ");
       SERIAL_ECHOLN(MSG_INVALID_EXTRUDER);
     }
     else {

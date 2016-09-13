@@ -167,6 +167,10 @@ void manage_inactivity();
   #define disable_e2() /* nothing */
 #endif
 
+#define INVALID_EXTRUDER 252
+#define INVALID_EXTRUDER_1 (INVALID_EXRTUDER | 1)
+#define INVALID_EXTRUDER_2 (INVALID_EXTRUDER | 2)
+
 
 enum AxisEnum {X_AXIS=0, Y_AXIS=1, Z_AXIS=2, E_AXIS=3};
 
