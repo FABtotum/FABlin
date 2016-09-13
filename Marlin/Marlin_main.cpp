@@ -329,10 +329,10 @@ float extruder_offset[NUM_EXTRUDER_OFFSETS][EXTRUDERS] = {
 uint8_t active_tool = 0;     // Active logical tool number: 0, ...
 uint8_t active_extruder = 0; // Actual active extruder: 0, 1, 2
 bool head_is_dummy = false;  // Current tool support of communication channels. serial, TWI
-uint8_t tool_extruder_mapping[] = { 0, 1, 2 };  // Tool to drive mapping, could be an open array, or > 3 anyway
+uint8_t tool_extruder_mapping[] = { -1, -1, -1 };  // Tool to drive mapping, could be an open array, or > 3 anyway
 uint8_t extruder_heater_mapping[EXTRUDERS];     // Extruder to heater mapping
 //uint8_t tool_heater_mapping[]   = { 0, 0, 0 };  // Tool to heater mapping
-bool    tool_twi_support[]      = { true, false, false };  // Tool TWI support
+bool    tool_twi_support[]      = { false, false, false };  // Tool TWI support
 int fanSpeed=0;
 #ifdef SERVO_ENDSTOPS
   int servo_endstops[] = SERVO_ENDSTOPS;
@@ -788,9 +788,9 @@ void FabtotumIO_init()
    rpm = 0;
 
    // Default tool definitions
-   defineTool(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+   /*defineTool(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
    defineTool(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_5th_axis_SMART);
-   defineTool(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
+   defineTool(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);*/
 
    // Particular tool definitions
    // TODO: move these in a flash-mem table of factory-supported heads and load
@@ -802,9 +802,10 @@ void FabtotumIO_init()
          defineTool(2, FAB_HEADS_default_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
          break;
       case FAB_HEADS_mill_v2_ID:
-         defineTool(0, -1, FAB_HEADS_default_HEATER, FAB_HEADS_mill_v2_SMART);
-      /*default:
-         defineTool(0, 0, 0, true);*/
+         defineTool(0, -1, -1, FAB_HEADS_mill_v2_SMART);
+         break;
+      default:
+        defineTool(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
    }
 
    // Load starting tool (T0)
