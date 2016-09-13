@@ -1006,13 +1006,13 @@ void max_temp_error(uint8_t e) {
   #ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
   Stop();
   #endif
-  
+
   RPI_ERROR_ACK_ON();
   ERROR_CODE=ERROR_MAX_TEMP;
 }
 
 void min_temp_error(uint8_t e) {
-  if(head_placed && installed_head_id!=3)
+  if(/*head_placed &&*/ installed_head_id!=3)
     {
         disable_heater();
         if(IsStopped() == false) {
@@ -1024,7 +1024,10 @@ void min_temp_error(uint8_t e) {
         #ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
         Stop();
         #endif
-        
+
+        // StopTool afer general Stop
+        StopTool();
+
         RPI_ERROR_ACK_ON();
         ERROR_CODE=ERROR_MIN_TEMP;
     }

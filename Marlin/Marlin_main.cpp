@@ -699,6 +699,17 @@ uint8_t loadTool (uint8_t tool)
    return active_extruder;
 }
 
+void StopTool ()
+{
+   TWCR &= ~MASK(TWEN);
+
+  #if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
+     if (active_extruder == FAB_HEADS_direct_DRIVE) {
+       MILL_MOTOR_OFF();
+     }
+  #endif
+}
+
 void FabtotumIO_init()
 {
    BEEP_ON()
