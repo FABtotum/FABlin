@@ -338,12 +338,12 @@ extern unsigned int installed_head_id;
 #define LASER_GATE_OFF()	WRITE(LASER_GATE_PIN,HIGH)
 
 #define MILL_MOTOR_ON()	 WRITE(MILL_MOTOR_ON_PIN,HIGH)
-#define MILL_MOTOR_OFF() if (!IsStopped() && active_extruder!=2) WRITE(MILL_MOTOR_ON_PIN,LOW)
+#define MILL_MOTOR_OFF() if (IsStopped() || active_extruder!=2) WRITE(MILL_MOTOR_ON_PIN,LOW)
 
 #define MILL_MOTOR_STATUS()  READ(MILL_MOTOR_ON_PIN)
 
-#define SERVO1_ON()	if (active_extruder!=2) WRITE(NOT_SERVO1_ON_PIN,LOW)
-#define SERVO1_OFF()	if (!IsStopped() && active_extruder!=2) WRITE(NOT_SERVO1_ON_PIN,HIGH)
+#define SERVO1_ON()	if (IsStopped() || active_extruder!=2) WRITE(NOT_SERVO1_ON_PIN,LOW)
+#define SERVO1_OFF()	if (active_extruder!=2) WRITE(NOT_SERVO1_ON_PIN,HIGH)
 #define SERVO1_STATUS()   !READ(NOT_SERVO1_ON_PIN)
 
 #define SERVO2_ON()	WRITE(NOT_SERVO2_ON_PIN,LOW)

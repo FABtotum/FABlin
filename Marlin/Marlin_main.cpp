@@ -675,24 +675,17 @@ uint8_t loadTool (uint8_t tool)
       Wire.begin();
    }
 
-   switch (active_extruder) {
-      case FAB_HEADS_default_DRIVE:
-         WRITE(E1_ENABLE_PIN,!E1_ENABLE_ON);
-         WRITE(E2_ENABLE_PIN,!E2_ENABLE_ON);
-         break;
+   switch (active_extruder)
+   {
       case FAB_HEADS_5th_axis_DRIVE:
-          if (installed_head_id != FAB_HEADS_5th_axis_ID) {
+         if (installed_head_id != FAB_HEADS_5th_axis_ID) {
             return INVALID_EXTRUDER | active_extruder;
-          }
-         WRITE(E0_ENABLE_PIN,!E0_ENABLE_ON);
-         WRITE(E2_ENABLE_PIN,!E2_ENABLE_ON);
+         }
          break;
       case FAB_HEADS_direct_DRIVE:
-        if (installed_head_id != FAB_HEADS_direct_ID) {
-          return INVALID_EXTRUDER | active_extruder;
-        }
-         WRITE(E0_ENABLE_PIN,!E0_ENABLE_ON);
-         WRITE(E1_ENABLE_PIN,!E1_ENABLE_ON);
+         if (installed_head_id != FAB_HEADS_direct_ID) {
+             return INVALID_EXTRUDER | active_extruder;
+         }
          MILL_MOTOR_ON();
    }
 
@@ -701,13 +694,18 @@ uint8_t loadTool (uint8_t tool)
 
 void StopTool ()
 {
-   TWCR &= ~MASK(TWEN);
+   /* Shut-down dangerous things connected to the mounted tool upon a forced stop */
 
-  #if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
-     if (active_extruder == FAB_HEADS_direct_DRIVE) {
-       MILL_MOTOR_OFF();
-     }
-  #endif
+   #if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
+      // Shot down +24V line if FABtotum DirectDrive head is present
+      if (installed_head_id==FAB_HEADS_direct_ID) {
+         MILL_MOTOR_OFF();
+      }
+   #endif
+
+   fanSpeed = 0;
+
+   TWCR &= ~MASK(TWEN);
 }
 
 void FabtotumIO_init()
