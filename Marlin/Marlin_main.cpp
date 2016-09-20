@@ -66,6 +66,7 @@
 #include "tools.h"
 #include "Configuration_heads.h"
 
+#include <SoftwareSerial.h>
 #include <SmartComm.h>
 
 // look here for descriptions of G-codes: http://linuxcnc.org/handbook/gcode/g-code.html
@@ -526,10 +527,16 @@ uint8_t extruder_0_thermistor_index = THERMISTOR_HOTSWAP_DEFAULT_INDEX;
 bool auto_fan_on_temp_change = true;
 #endif
 
-SmartComm Smart;
-static bool head_forward = false;  // Wether to forward a command line to head insted of FABlin
-static bool head_echo    = false;  // Wether to echo back on main serial line output from head
-void forward_command(const char*, uint8_t=1);
+// Additional (software) serial interfaces
+#if defined(RX4) && defined(TX4)
+SoftwareSerial Serial4(RX4, TX4);
+#endif
+
+SmartComm SmartHead(Serial4);  // Allocate (soft) Serial #4 for smart heads
+
+void forward_command(uint8_t, const char*);
+static int8_t forward_commands_to = -1;      // What communication line to forward to
+static bool   feedback_responses  = false;  // Wether to feed back responses on main serial line
 
 //===========================================================================
 //=============================Routines======================================
@@ -851,9 +858,14 @@ void setup()
 
 inline void manage_head ()
 {
-   if (head_echo)
-   while (Smart.Serial.available()) {
-      MYSERIAL.write(Smart.Serial.read());
+   if (feedback_responses)
+   {
+      if (forward_commands_to >= 0)
+      {
+         while (Serial4.available()) {
+            MYSERIAL.write(Serial4.read());
+         }
+      }
    }
 }
 
@@ -892,8 +904,8 @@ void loop()
         process_commands();
      }*/
     #else
-    if (head_forward) {
-      forward_command(cmdbuffer[bufindr]);
+    if (forward_commands_to >= 0) {
+      forward_command(forward_commands_to, cmdbuffer[bufindr]);
    } else {
       process_commands();
    }
@@ -1612,22 +1624,40 @@ void refresh_cmd_timeout(void)
   } //retract
 #endif //FWRETRACT
 
-inline void forward_command (const char* line, uint8_t interface)
+inline void forward_command (uint8_t interface, const char* line)
 {
-   if (code_seen(SMART_COMM_FORWARD_TERMINATION)) {
-      head_forward = false;
-      head_echo    = false;
+   if (code_seen(LINE_FORWARDING_TERMINATION_CHAR)) {
+      forward_commands_to = -1;
+      feedback_responses  = false;
       return;
    }
 
-   if (!Smart.Serial.isListening()) {
+   bool error = false;
+   switch (interface)
+   {
+      case 0:
+         SERIAL_ERRORPGM("Cannot forward commands to interface #0");
+         return;
+
+      case 4:
+         if (!Serial4.isListening()) {
+            error = true;
+            break;
+         }
+         Serial4.write(line);
+         return;
+
+      default:
+         SERIAL_ERRORPGM("Invalid interface #");
+         SERIAL_ECHO(interface);
+         return;
+   }
+
+   if (error) {
       SERIAL_ERRORPGM("Comm interface ");
       SERIAL_ECHO(interface);
       SERIAL_ERRORLNPGM(" is not active");
-      return;
    }
-
-   Smart.Serial.write(line);
 }
 
 void process_commands()
@@ -4354,18 +4384,19 @@ void process_commands()
             MYSERIAL.end();
             MYSERIAL.begin(baudRate);
             break;
-         case 1:
+
+         case 4:
             if (baudRate > 0) {
                if (sRX != 255 && sTX != 255 && sRX != sTX) {
                   // Set serial pins
-                  Smart.serial(sRX, sTX, baudRate);
+                  SmartHead.serial(sRX, sTX, baudRate);
                }
             } else {
-               Smart.serial(false);
+               SmartHead.serial(false);
             }
             break;
-         case 2:
-            if (baudRate > 0) {
+         //case 2:
+            /*if (baudRate > 0) {
                if (sRX > 0) {
                   Smart.wire(sRX);
                } else {
@@ -4373,8 +4404,8 @@ void process_commands()
                }
             } else {
                Smart.wire(false);
-            }
-            break;
+            }*/
+            //break;
       }
 
    } break;
@@ -4841,22 +4872,29 @@ void process_commands()
     */
    case 790: {
 
-      // TODO: maybe support P-word to reference comm bus (1: aux serial; 2 - twi)
+      // TODO: maybe support P-word to reference comm bus
+      int8_t port = forward_commands_to;
+      if (code_seen('P')) {
+         port = code_value_long();
+      }
+
+      if (port < 0) {
+         SERIAL_ERROR_START;
+         SERIAL_ERRORLNPGM("Communication interface not specified");
+         break;
+      }
 
       unsigned int offs = 4;
-      if (cmdbuffer[bufindr][offs] == SMART_COMM_FORWARD_DELIMITER)
+      if (cmdbuffer[bufindr][offs] == LINE_FORWARDING_DELIMITER_CHAR)
       {
-         for (; cmdbuffer[bufindr][offs] == SMART_COMM_FORWARD_DELIMITER; offs++);
+         for (; cmdbuffer[bufindr][offs] == LINE_FORWARDING_DELIMITER_CHAR; offs++);
 
          if (cmdbuffer[bufindr][offs] == 0)
             break;
 
          char *str = strchr_pointer + offs;
 
-         Smart.Serial.println(str);
-         head_echo = true;
-         head_forward = false;
-
+         forward_command(port, str);
       }
       else
       {
@@ -4866,8 +4904,8 @@ void process_commands()
          }
 
          // Forward lines until empty line is found
-         head_forward = true;
-         head_echo    = true;
+         forward_commands_to = port;
+         feedback_responses  = true;
       }
 
    } break;

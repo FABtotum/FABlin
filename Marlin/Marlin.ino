@@ -57,6 +57,6 @@
 #endif
 
 #if defined(SMART_COMM)
-   #include <SmartComm.h>
    #include <SoftwareSerial.h>
+   #include <SmartComm.h>
 #endif

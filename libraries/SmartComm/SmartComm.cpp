@@ -1,26 +1,26 @@
 #include <Arduino.h>
-#include <Wire.h>
 #include <SoftwareSerial.h>
-#include <SmartComm.h>
+#include "SmartComm.h"
 
 // Supported speeds
 static uint32_t speeds[] = { 0, 300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 31250, 38400, 57600, 115200 };
 #define SPEEDS_N  ((sizeof speeds / sizeof speeds[0]) - 1)
 
-Smart_s::Smart_s (uint8_t sRX, uint8_t sTX):
-   Serial(sRX, sTX) {}
+SmartComm::SmartComm (SoftwareSerial& serial):
+   _Serial(serial) {}
 
-void Smart_s::serial (bool enable)
+void SmartComm::serial (bool enable)
 {
    if (enable) {
+      // TODO: maybe disable wire
       // TODO: enable something
    } else {
-      Serial.flush();
-      Serial.end();
+      _Serial.flush();
+      _Serial.end();
    }
 }
 
-void Smart_s::serial (uint8_t sRX, uint8_t sTX, uint32_t baud)
+void SmartComm::serial (uint8_t sRX, uint8_t sTX, uint32_t baud)
 {
    if (sRX != _rx || sTX != _tx)
    {
@@ -30,7 +30,7 @@ void Smart_s::serial (uint8_t sRX, uint8_t sTX, uint32_t baud)
       // - analog converters
 
       // Reinstantiate SoftwareSerial
-      Serial = SoftwareSerial(sRX,sTX);
+      _Serial = SoftwareSerial(sRX,sTX);
    }
 
    _rx = sRX;
@@ -40,7 +40,7 @@ void Smart_s::serial (uint8_t sRX, uint8_t sTX, uint32_t baud)
    switch (baud)
    {
       default:
-         Serial.begin(baud);
+         _Serial.begin(baud);
    }
 }
 
@@ -49,26 +49,26 @@ void Smart_s::serial (uint8_t sRX, uint8_t sTX, uint32_t baud)
  *
  * @param bool enable - Enables (true) or disables (false) TWI bus
  */
-void Smart_s::wire(bool enable)
+/*void Smart_s::wire(bool enable)
 {
    if (enable) {
       Wire.begin();
    } else {
       TWCR &= ~_BV(TWEN);
    }
-}
+}*/
 
 /**
  * Enables TWI bus and initializes communication as slave.
  *
  * @param uint8_t:7 addr - Slave address (only least significant 7 bits used)
  */
-void Smart_s::wire (uint8_t addr)
+/*void Smart_s::wire (uint8_t addr)
 {
    Wire.begin(addr & 0x7F);
-}
+}*/
 
-inline boolean _probe_serial (SoftwareSerial &serial, uint32_t speed, const char *probe, const char *resp)
+inline boolean _probe_serial (SoftwareSerial& serial, uint32_t speed, const char *probe, const char *resp)
 {
    serial.flush();
    serial.write(probe);
@@ -98,7 +98,7 @@ inline boolean _probe_serial (SoftwareSerial &serial, uint32_t speed, const char
    return false;
 }
 
-uint32_t Smart_s::probe (const char *probe, const char *resp, bool asc)
+uint32_t SmartComm::probe (const char *probe, const char *resp, bool asc)
 {
    static uint8_t p_speed = 0;
 
@@ -107,15 +107,15 @@ uint32_t Smart_s::probe (const char *probe, const char *resp, bool asc)
       p_speed > 0;
       p_speed--
    ) {
-      Serial.begin(speeds[p_speed]);
+      _Serial.begin(speeds[p_speed]);
       //Serial.flush();
 
-      boolean ok = _probe_serial(Serial, speeds[p_speed], probe, resp);
+      boolean ok = _probe_serial(_Serial, speeds[p_speed], probe, resp);
 
       if (ok) {
          return speeds[p_speed];
       } else {
-         Serial.end();
+         _Serial.end();
       }
    }
 
