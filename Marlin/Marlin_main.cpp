@@ -177,14 +177,16 @@
 // M928 - Start SD logging (M928 filename.g) - ended by M29
 // M999 - Restart after being stopped by error
 
+// Implemented RepRap-like codes
+//-----------------------
+// M563 [Pn [D<0-2>] [S<0,1>]] - Edit tool definition or query defined tools
+// M575 [P<port number>] R<rx address> T<tx address> [B<baud rate>] [S<option mask>] - Set communication port parameters
+
 //FABtotum custom M codes
 //-----------------------
 // M3 S[RPM] SPINDLE ON - Clockwise
 // M4 S[RPM] SPINDLE ON - CounterClockwise
 // M5        SPINDLE OFF
-
-// M563 [Pn [D<0-2>] [S<0,1>]] - Edit tool definition or query defined tools
-// M575 P<serial_port_n> R<rx_pin_n> T<tx_pin_n> [B<baud_rate>] S<opt_mask>
 
 // M700 S<0-255> - Laser Power Control
 // M701 S<0-255> - Ambient Light, Set Red
@@ -250,7 +252,7 @@
 // M787 - external power on/off pin control // [overrides] M787 - read Head capability: type0 (passive, active)
 // [unimplemented] M788 - read Head capability: type1 (additive, milling, syringe, laser etc..)
 // [unimplemented] M789 - read Head capability: purpose (single purpose, multipurpose)
-// [unimplemented] M790 - read Head capability: wattage (0-200W)
+// M790 - Send command(s) to smart head  // [overrides] M790 - read Head capability: wattage (0-200W)
 // [unimplemented] M791 - read Head capability: axis (number of axis)
 // [unimplemented] M792 - read Head capability: servo (number of axis)
 // M793 - set/read installed head soft ID
@@ -525,6 +527,9 @@ bool auto_fan_on_temp_change = true;
 #endif
 
 SmartComm Smart;
+static bool head_forward = false;  // Wether to forward a command line to head insted of FABlin
+static bool head_echo    = false;  // Wether to echo back on main serial line output from head
+void forward_command(const char*, uint8_t=1);
 
 //===========================================================================
 //=============================Routines======================================
@@ -844,6 +849,13 @@ void setup()
   #endif
 }
 
+inline void manage_head ()
+{
+   if (head_echo)
+   while (Smart.Serial.available()) {
+      MYSERIAL.write(Smart.Serial.read());
+   }
+}
 
 void loop()
 {
@@ -876,11 +888,15 @@ void loop()
         }
       }
       else
-      {
+      /*{
         process_commands();
-      }
+     }*/
     #else
+    if (head_forward) {
+      forward_command(cmdbuffer[bufindr]);
+   } else {
       process_commands();
+   }
     #endif //SDSUPPORT
     buflen = (buflen-1);
     bufindr = (bufindr + 1)%BUFSIZE;
@@ -889,6 +905,7 @@ void loop()
   manage_heater();
   manage_inactivity();
   checkHitEndstops();
+  manage_head();
   lcd_update();
 }
 
@@ -1594,6 +1611,24 @@ void refresh_cmd_timeout(void)
     }
   } //retract
 #endif //FWRETRACT
+
+inline void forward_command (const char* line, uint8_t interface)
+{
+   if (code_seen(SMART_COMM_FORWARD_TERMINATION)) {
+      head_forward = false;
+      head_echo    = false;
+      return;
+   }
+
+   if (!Smart.Serial.isListening()) {
+      SERIAL_ERRORPGM("Comm interface ");
+      SERIAL_ECHO(interface);
+      SERIAL_ERRORLNPGM(" is not active");
+      return;
+   }
+
+   Smart.Serial.write(line);
+}
 
 void process_commands()
 {
@@ -4216,6 +4251,134 @@ void process_commands()
       }
       break;
 
+    case 563: // M563 [Px] [Dy] [Sz]- Define tool or swap definitions
+      {
+         // Select target (logical) tool
+         unsigned long target_tool;
+        if (code_seen('P')) {
+          target_tool = code_value_long();
+       } else {
+          target_tool = active_tool;
+
+         // Output tool definitions
+         SERIAL_ECHOLNPGM("");
+         for (target_tool = 0; target_tool < EXTRUDERS; target_tool++)
+         {
+            if (target_tool == active_tool) {
+               SERIAL_ECHOPGM(" * ");
+            } else {
+              SERIAL_ECHOPGM("   ");
+           }
+            SERIAL_ECHOPAIR("T", (unsigned long)target_tool);
+            SERIAL_ECHOPAIR(": drive:", (unsigned long)tool_extruder_mapping[target_tool]);
+            if (tool_twi_support[target_tool]) {
+              SERIAL_ECHOPGM(" / twi:on");
+           } else {
+              SERIAL_ECHOPGM(" / twi:off");
+           }
+            SERIAL_ECHOLNPGM("");
+         }
+         return;
+       }
+
+       // Assign drive
+       uint8_t drive;
+        if (code_seen('D')) {
+          drive = code_value_long();
+           //tool_extruder_mapping[target_tool] = tmp_extruder;
+        } else /*if (target_tool != active_tool)*/ {
+           drive = active_extruder;
+           /*tool_extruder_mapping[active_tool] = tool_extruder_mapping[target_tool];
+           tool_extruder_mapping[target_tool] = active_extruder;*/
+        }
+
+        // State head smartness
+        bool twi;
+        if (code_seen('S')) {
+           twi = code_value_long()==1 ? true : false;
+        } else {
+           twi = !head_is_dummy;
+        }
+
+        tools.define(target_tool, drive, 0, twi);
+
+        // Reselect active tool to possibly reload its definition
+        tools.load(active_tool);
+
+      }
+      break;
+
+   /**
+    * M575 P B R T S - Set communication params
+    *
+    * @param  P <port number> - Select communication port number:
+    *                       0 - Main serial bus
+    *                       1 - Auxiliary serial bus (wired to the head)
+    *                       2 - TWI bus (wired to the head)
+    * @param  R <rx>  - Set receive pin for serial bus, or slave address for twi bus. Not available for port 0.
+    * @param  T <tx>  - Set transmit pin for serial bus, or default target address for twi bus. Not available for port 0.
+    * @param  B 0,300,...,115200 - For serial bus: set baud rate, or disable (0);
+    *                            - for twi bus: enable (1) or disables (0) bus.
+    * @param  B +/- - Only for serial bus: probe serial speeds in increasing/decreasing order
+    * @param  S <options> - Define features, sum of:
+    *                   1 - use error checking (currently unsupported).
+    */
+   case 575: {
+
+      uint8_t port_n = 1;
+      if (code_seen('P')) {
+         port_n = code_value_long() & 0xFF;
+      }
+
+      uint8_t sRX = 255, sTX = 255;
+      if (code_seen('R')) {
+         sRX = code_value_long() & 0xFF;
+         if (code_seen('T')) {
+            sTX = code_value_long() & 0xFF;
+         }
+      }
+
+      uint32_t baudRate = 0;
+      if (code_seen('B')) {
+         baudRate = code_value_long();
+      }
+
+      /*unsigned long options = 0;
+      if (code_seen('S')) {
+         options = code_value_long();
+      }*/
+
+      switch (port_n)
+      {
+         case 0:
+            MYSERIAL.end();
+            MYSERIAL.begin(baudRate);
+            break;
+         case 1:
+            if (baudRate > 0) {
+               if (sRX != 255 && sTX != 255 && sRX != sTX) {
+                  // Set serial pins
+                  Smart.serial(sRX, sTX, baudRate);
+               }
+            } else {
+               Smart.serial(false);
+            }
+            break;
+         case 2:
+            if (baudRate > 0) {
+               if (sRX > 0) {
+                  Smart.wire(sRX);
+               } else {
+                  Smart.wire(true);
+               }
+            } else {
+               Smart.wire(false);
+            }
+            break;
+      }
+
+   } break;
+
    case 740: // M740 - read WIRE_END sensor
       {
         //SERIAL_PROTOCOLPGM(MSG_WIRE_END);
@@ -4671,9 +4834,44 @@ void process_commands()
           }else{
               SERIAL_PROTOCOL("Usage: M792 S[0-1]");
       }
-    }
-    break;
-      
+      break;
+
+   /**
+    * M790 - Send command(s) to smart head.
+    */
+   case 790: {
+
+      // TODO: maybe support P-word to reference comm bus (1: aux serial; 2 - twi)
+
+      unsigned int offs = 4;
+      if (cmdbuffer[bufindr][offs] == SMART_COMM_FORWARD_DELIMITER)
+      {
+         for (; cmdbuffer[bufindr][offs] == SMART_COMM_FORWARD_DELIMITER; offs++);
+
+         if (cmdbuffer[bufindr][offs] == 0)
+            break;
+
+         char *str = strchr_pointer + offs;
+
+         Smart.Serial.println(str);
+         head_echo = true;
+         head_forward = false;
+
+      }
+      else
+      {
+         if (head_is_dummy) {
+            SERIAL_ERRORLNPGM("Smart head communication disabled by active tool definition");
+            break;
+         }
+
+         // Forward lines until empty line is found
+         head_forward = true;
+         head_echo    = true;
+      }
+
+   } break;
+
     case 793: // M793 - Set/read installed head soft ID
       {
         if (code_seen('S')) {
@@ -4691,126 +4889,6 @@ void process_commands()
         SERIAL_PROTOCOLLN(installed_head_id);
       }
       break;*/
-
-    case 563: // M563 [Px] [Dy] [Sz]- Define tool or swap definitions
-      {
-         // Select target (logical) tool
-         unsigned long target_tool;
-        if (code_seen('P')) {
-          target_tool = code_value_long();
-       } else {
-          target_tool = active_tool;
-
-         // Output tool definitions
-         SERIAL_ECHOLNPGM("");
-         for (target_tool = 0; target_tool < EXTRUDERS; target_tool++)
-         {
-            if (target_tool == active_tool) {
-               SERIAL_ECHOPGM(" * ");
-            } else {
-              SERIAL_ECHOPGM("   ");
-           }
-            SERIAL_ECHOPAIR("T", (unsigned long)target_tool);
-            SERIAL_ECHOPAIR(": drive:", (unsigned long)tool_extruder_mapping[target_tool]);
-            if (tool_twi_support[target_tool]) {
-              SERIAL_ECHOPGM(" / twi:on");
-           } else {
-              SERIAL_ECHOPGM(" / twi:off");
-           }
-            SERIAL_ECHOLNPGM("");
-         }
-         return;
-       }
-
-       // Assign drive
-       uint8_t drive;
-        if (code_seen('D')) {
-          drive = code_value_long();
-           //tool_extruder_mapping[target_tool] = tmp_extruder;
-        } else /*if (target_tool != active_tool)*/ {
-           drive = active_extruder;
-           /*tool_extruder_mapping[active_tool] = tool_extruder_mapping[target_tool];
-           tool_extruder_mapping[target_tool] = active_extruder;*/
-        }
-
-        // State head smartness
-        bool twi;
-        if (code_seen('S')) {
-           twi = code_value_long()==1 ? true : false;
-        } else {
-           twi = !head_is_dummy;
-        }
-
-        tools.define(target_tool, drive, 0, twi);
-
-        // Reselect active tool to possibly reload its definition
-        tools.load(active_tool);
-
-      }
-      break;
-
-      /**
-       * M575 P B R T S - Set serial communication params
-       *
-       * @param  P 1  Select serial port number (only `1` is supported by now, currently ignored)
-       * @param  R <rx>  Set receive pin for serial bus
-       * @param  T <tx>  Set transmit pin for serial bus
-       * @param  B 0,300,...,115200  Set serial bus baud rate
-       * @param  S <bitmask>  Define features, sum of:
-       *                  1   Use error checking (currently unsupported)
-       *                  2   Enable TWI (if compatible with pins used)
-       */
-      case 575:
-      {
-         /*uint8_t port_n = 1;
-         if (code_seen('P')) {
-            port_n = code_value_long() & 0xFF;
-         }*/
-
-         uint8_t sRX = 255, sTX = 255;
-         if (code_seen('R')) {
-            sRX = code_value_long() & 0xFF;
-            if (code_seen('T')) {
-               sTX = code_value_long() & 0xFF;
-            }
-         }
-
-         uint32_t baudRate = 0xFFFFFFFFUL;
-         if (code_seen('B')) {
-            baudRate = code_value_long();
-         }
-
-         unsigned long options = 0;
-         if (code_seen('S')) {
-            options = code_value_long();
-         }
-
-         if (sRX != 255 && sTX != 255 && sRX != sTX) {
-            // Set serial pins
-            Smart.serial(sRX, sTX, baudRate);
-         }
-
-         // Enable / disable TWI
-         Smart.wire (options & 2? true : false);
-      }
-      break;
-
-      /* Temporary test address */
-      case 576: {
-
-         SERIAL_ECHOLNPGM("Hello smart head?");
-
-         Smart.Serial.println("Hello smart head?");
-
-         SERIAL_ECHO_START;
-
-         for (uint8_t t = 250; !Smart.Serial.available() && t > 0; t--) delay(4);  // Wait for up to 1 sec
-
-         while (Smart.Serial.available()) {
-            MYSERIAL.write(Smart.Serial.read());
-         }
-
-      } break;
 
 #ifdef THERMISTOR_HOTSWAP
     case 800:   // M800 - changes/reads the thermistor of extruder0 type index
@@ -4941,6 +5019,8 @@ void process_commands()
       }
     break;
     }
+  }
+
   }
 
   else if(code_seen('T'))
