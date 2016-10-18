@@ -44,19 +44,29 @@ void Smart_s::serial (uint8_t sRX, uint8_t sTX, uint32_t baud)
    }
 }
 
-/*void Smart_s::wire(boolean enable)
+/**
+ * Enables TWI bus and initializes communication as master, or disables TWI bus altogether.
+ *
+ * @param bool enable - Enables (true) or disables (false) TWI bus
+ */
+void Smart_s::wire(bool enable)
 {
    if (enable) {
       Wire.begin();
    } else {
-      // TODO: disable Wire
+      TWCR &= ~_BV(TWEN);
    }
 }
 
+/**
+ * Enables TWI bus and initializes communication as slave.
+ *
+ * @param uint8_t:7 addr - Slave address (only least significant 7 bits used)
+ */
 void Smart_s::wire (uint8_t addr)
 {
    Wire.begin(addr & 0x7F);
-}*/
+}
 
 inline boolean _probe_serial (SoftwareSerial &serial, uint32_t speed, const char *probe, const char *resp)
 {

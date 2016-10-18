@@ -828,6 +828,11 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 #define SERVO_ENDSTOPS {-1, -1, 1} // Servo index for X, Y, Z. Disable with -1
 #define SERVO_ENDSTOP_ANGLES {0,0, 0,0, 127,26} // X,Y,Z Axis Extend and Retract angles
 
+/******************\
+* SmartComm module *
+*******************/
+#define SMART_COMM
+
 #include "Configuration_adv.h"
 #include "thermistortables.h"
 

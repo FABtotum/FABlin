@@ -4785,15 +4785,32 @@ void process_commands()
             options = code_value_long();
          }
 
-         if (sRX != 255 && sTX != 255) {
+         if (sRX != 255 && sTX != 255 && sRX != sTX) {
             // Set serial pins
             Smart.serial(sRX, sTX, baudRate);
          }
 
-         // TODO: Enable / disable TWI
-         //Smart.wire (options & 2? true : false);
+         // Enable / disable TWI
+         Smart.wire (options & 2? true : false);
       }
       break;
+
+      /* Temporary test address */
+      case 576: {
+
+         SERIAL_ECHOLNPGM("Hello smart head?");
+
+         Smart.Serial.println("Hello smart head?");
+
+         SERIAL_ECHO_START;
+
+         for (uint8_t t = 250; !Smart.Serial.available() && t > 0; t--) delay(4);  // Wait for up to 1 sec
+
+         while (Smart.Serial.available()) {
+            MYSERIAL.write(Smart.Serial.read());
+         }
+
+      } break;
 
 #ifdef THERMISTOR_HOTSWAP
     case 800:   // M800 - changes/reads the thermistor of extruder0 type index
