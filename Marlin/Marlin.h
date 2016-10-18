@@ -59,6 +59,10 @@
   #define MYSERIAL MSerial
 #endif
 
+#ifdef SMART_COMM
+  #include <SmartComm.h>
+#endif
+
 #define SERIAL_PROTOCOL(x) (MYSERIAL.print(x))
 #define SERIAL_PROTOCOL_F(x,y) (MYSERIAL.print(x,y))
 #define SERIAL_PROTOCOLPGM(x) (serialprintPGM(PSTR(x)))
@@ -316,6 +320,13 @@ extern unsigned int plateconn_board_version;
 extern unsigned int hotplate_board_version;
 extern unsigned int general_assembly_version;
 extern unsigned int installed_head_id;
+
+#ifdef SMART_COMM
+
+  // Smart Heads
+  extern SmartComm SmartHead;
+
+#endif
 
 //FABtotum IO definition
 #define RED_ON()	WRITE(RED_PIN,LOW)

@@ -495,8 +495,7 @@ const unsigned int dropsegments=5; //everything with less than this number of st
 #endif
 
 #if defined(SMART_COMM)
-   #define LINE_FORWARDING_DELIMITER_CHAR   ' '
-   #define LINE_FORWARDING_ENCLOSING_CHAR   '"'  // not really working and cumbersome afterall
+   #define LINE_FORWARDING_ENCLOSING_CHAR   '"'
    #define LINE_FORWARDING_TERMINATION_CHAR '.'  // This character alone on an input line is used to escape from input echoing to the head
 
    #define SMART_HEAD_RX_PIN 11

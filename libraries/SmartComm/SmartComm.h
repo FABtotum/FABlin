@@ -10,6 +10,9 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 
+#define SMARTCOMM_BUS_SERIAL 1
+#define SMARTCOMM_BUS_TWI    2
+
 class SmartComm
 {
    public:
@@ -20,17 +23,22 @@ class SmartComm
       void serial (bool=true);
       void serial (uint8_t, uint8_t, uint32_t=0xFF);
 
+      SoftwareSerial& Serial;
+
       // Set two-wire mode
       /*void wire (boolean=true);
       void wire (uint8_t);*/
 
-      void begin (uint8_t=0xFF);
+      void begin ();
       void end   ();
 
    private:
 
-      SoftwareSerial& _Serial;
-      uint8_t _rx, _tx;  // Serial pins used
+      uint8_t _active:1;
+      uint8_t _bus:1;      // Communication bus (serial / twi)
+
+      uint8_t _serial_rx, _serial_tx;  // Serial pins used
+      uint16_t _serial_baud;    // Serial baud rate
 
       uint32_t probe (const char* = "\x05", const char* = "\x06", bool = false);
 

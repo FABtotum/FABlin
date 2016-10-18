@@ -1,5 +1,6 @@
-#include <Arduino.h>
-#include <SoftwareSerial.h>
+//#include <Arduino.h>
+//#include <SoftwareSerial.h>
+
 #include "SmartComm.h"
 
 // Supported speeds
@@ -7,41 +8,64 @@ static uint32_t speeds[] = { 0, 300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 
 #define SPEEDS_N  ((sizeof speeds / sizeof speeds[0]) - 1)
 
 SmartComm::SmartComm (SoftwareSerial& serial):
-   _Serial(serial) {}
+   Serial(serial) {}
+
+void SmartComm::begin()
+{
+   // TODO: disable any possible thing interfering with pins (for known pins):
+   // - oscillators
+   // - TWI
+   // - analog converters
+
+   switch (_bus)
+   {
+      case SMARTCOMM_BUS_SERIAL:
+         // Begin at exact baud rate or start probe cycle
+         switch (_serial_baud)
+         {
+            default:
+               Serial.begin(_serial_baud);
+         }
+         break;
+   }
+}
+
+void SmartComm::end()
+{
+   Serial.flush();
+   Serial.end();
+
+   // For good measure?
+   TWCR &= ~_BV(TWEN);
+}
 
 void SmartComm::serial (bool enable)
 {
    if (enable) {
-      // TODO: maybe disable wire
-      // TODO: enable something
+      _bus = SMARTCOMM_BUS_SERIAL;
    } else {
-      _Serial.flush();
-      _Serial.end();
+      end();
+      _bus &= ~SMARTCOMM_BUS_SERIAL;
    }
 }
 
 void SmartComm::serial (uint8_t sRX, uint8_t sTX, uint32_t baud)
 {
-   if (sRX != _rx || sTX != _tx)
+   if (sRX != _serial_rx || sTX != _serial_tx || baud != _serial_baud) {
+      end();
+      _serial_baud = baud;
+   }
+   
+   if (sRX != _serial_rx || sTX != _serial_tx)
    {
-      // TODO: disable any possible thing interfering with pins (for known pins):
-      // - oscillators
-      // - TWI
-      // - analog converters
+      _serial_rx = sRX;
+      _serial_tx = sTX;
 
-      // Reinstantiate SoftwareSerial
-      _Serial = SoftwareSerial(sRX,sTX);
+      // Reinstantiate SoftwareSerial if pin changed
+      Serial = SoftwareSerial(_serial_rx,_serial_tx);
    }
 
-   _rx = sRX;
-   _tx = sTX;
-
-   // Begin at exact baud rate or start probe cycle
-   switch (baud)
-   {
-      default:
-         _Serial.begin(baud);
-   }
+   serial(true);
 }
 
 /**
@@ -107,15 +131,15 @@ uint32_t SmartComm::probe (const char *probe, const char *resp, bool asc)
       p_speed > 0;
       p_speed--
    ) {
-      _Serial.begin(speeds[p_speed]);
+      Serial.begin(speeds[p_speed]);
       //Serial.flush();
 
-      boolean ok = _probe_serial(_Serial, speeds[p_speed], probe, resp);
+      boolean ok = _probe_serial(Serial, speeds[p_speed], probe, resp);
 
       if (ok) {
          return speeds[p_speed];
       } else {
-         _Serial.end();
+         Serial.end();
       }
    }
 

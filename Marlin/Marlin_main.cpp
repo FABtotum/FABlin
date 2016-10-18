@@ -529,10 +529,12 @@ bool auto_fan_on_temp_change = true;
 
 // Additional (software) serial interfaces
 #if defined(RX4) && defined(TX4)
-SoftwareSerial Serial4(RX4, TX4);
-#endif
 
-SmartComm SmartHead(Serial4);  // Allocate (soft) Serial #4 for smart heads
+  // Smart Heads
+  SoftwareSerial Serial4(RX4, TX4);
+  SmartComm SmartHead(Serial4);
+
+#endif
 
 void forward_command(uint8_t, const char*);
 static int8_t forward_commands_to = -1;      // What communication line to forward to
@@ -2651,6 +2653,7 @@ void process_commands()
         previous_millis_cmd = millis();
       }
       break;
+
     case 190: // M190 - Wait for bed heater to reach target.
     inactivity=false;
     #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
@@ -4343,40 +4346,37 @@ void process_commands()
     *
     * @param  P <port number> - Select communication port number:
     *                       0 - Main serial bus
-    *                       1 - Auxiliary serial bus (wired to the head)
-    *                       2 - TWI bus (wired to the head)
+    *                       1-3 - Additional Hardware serial ports (reserved)
+    *                       4 - 1st Auxiliary serial port (linked to the head)
     * @param  R <rx>  - Set receive pin for serial bus, or slave address for twi bus. Not available for port 0.
     * @param  T <tx>  - Set transmit pin for serial bus, or default target address for twi bus. Not available for port 0.
     * @param  B 0,300,...,115200 - For serial bus: set baud rate, or disable (0);
     *                            - for twi bus: enable (1) or disables (0) bus.
-    * @param  B +/- - Only for serial bus: probe serial speeds in increasing/decreasing order
-    * @param  S <options> - Define features, sum of:
-    *                   1 - use error checking (currently unsupported).
+    * @param  S <options> - Define features (currently unsupported)
     */
    case 575: {
 
-      uint8_t port_n = 1;
+      uint8_t port_n = 4;
       if (code_seen('P')) {
          port_n = code_value_long() & 0xFF;
       }
 
       uint8_t sRX = 255, sTX = 255;
+		switch (port_n) {
+			case 4: sRX = RX4; sTX = TX4; break;
+		}
       if (code_seen('R')) {
          sRX = code_value_long() & 0xFF;
-         if (code_seen('T')) {
-            sTX = code_value_long() & 0xFF;
-         }
       }
+      
+		if (code_seen('T')) {
+			sTX = code_value_long() & 0xFF;
+		}
 
       uint32_t baudRate = 0;
       if (code_seen('B')) {
          baudRate = code_value_long();
       }
-
-      /*unsigned long options = 0;
-      if (code_seen('S')) {
-         options = code_value_long();
-      }*/
 
       switch (port_n)
       {
@@ -4385,27 +4385,16 @@ void process_commands()
             MYSERIAL.begin(baudRate);
             break;
 
-         case 4:
+         case 4:  // Smart Head port
+            SmartHead.end();
             if (baudRate > 0) {
                if (sRX != 255 && sTX != 255 && sRX != sTX) {
                   // Set serial pins
                   SmartHead.serial(sRX, sTX, baudRate);
+                  SmartHead.begin();
                }
-            } else {
-               SmartHead.serial(false);
             }
             break;
-         //case 2:
-            /*if (baudRate > 0) {
-               if (sRX > 0) {
-                  Smart.wire(sRX);
-               } else {
-                  Smart.wire(true);
-               }
-            } else {
-               Smart.wire(false);
-            }*/
-            //break;
       }
 
    } break;
@@ -4872,7 +4861,12 @@ void process_commands()
     */
    case 790: {
 
-      // TODO: maybe support P-word to reference comm bus
+       if (head_is_dummy) {
+         SERIAL_ERROR_START;
+          SERIAL_ERRORLNPGM("Smart head communication disabled by active tool definition");
+          break;
+       }
+
       int8_t port = forward_commands_to;
       if (code_seen('P')) {
          port = code_value_long();
@@ -4884,25 +4878,15 @@ void process_commands()
          break;
       }
 
-      unsigned int offs = 4;
-      if (cmdbuffer[bufindr][offs] == LINE_FORWARDING_DELIMITER_CHAR)
+      if (code_seen(LINE_FORWARDING_ENCLOSING_CHAR))
       {
-         for (; cmdbuffer[bufindr][offs] == LINE_FORWARDING_DELIMITER_CHAR; offs++);
-
-         if (cmdbuffer[bufindr][offs] == 0)
-            break;
-
-         char *str = strchr_pointer + offs;
-
-         forward_command(port, str);
+        char* s = strchr(strchr_pointer+1, LINE_FORWARDING_ENCLOSING_CHAR);
+        if (s)
+          *s = 0;
+        forward_command(port, strchr_pointer+1);
       }
       else
       {
-         if (head_is_dummy) {
-            SERIAL_ERRORLNPGM("Smart head communication disabled by active tool definition");
-            break;
-         }
-
          // Forward lines until empty line is found
          forward_commands_to = port;
          feedback_responses  = true;
@@ -5786,7 +5770,11 @@ void Read_Head_Info(bool force=false)
    {
       // ...unless you force it
       if (force) {
+#if defined(SMART_COMM)
+         SmartHead.begin();
+#else
          Wire.begin();
+#endif
       } else {
          return;
       }
