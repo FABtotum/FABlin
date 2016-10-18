@@ -153,6 +153,8 @@
 // M302 - Allow cold extrudes, or set the minimum extrude S<temperature>.
 // M303 - PID relay autotune S<temperature> sets the target temperature. (default target temperature = 150C)
 // M304 - Set bed PID parameters P I and D
+// M350 - Set microstepping mode.
+// M351 - Toggle MS1 MS2 pins directly.
 // M400 - Finish all moves
 // M401 - Lower z-probe if present
 // M402 - Raise z-probe if present
@@ -162,13 +164,11 @@
 // M503 - print the current settings (from memory not from EEPROM)
 // M540 - Use S[0|1] to enable or disable the stop SD card print on endstop hit (requires ABORT_ON_ENDSTOP_HIT_FEATURE_ENABLED)
 // M600 - Pause for filament change X[pos] Y[pos] Z[relative lift] E[initial retract] L[later retract distance for removal]
+// M605 - Set dual x-carriage movement mode: S<mode> [ X<duplication x-offset> R<duplication temp offset> ]
 // M665 - set delta configurations
 // M666 - set delta endstop adjustment
-// M605 - Set dual x-carriage movement mode: S<mode> [ X<duplication x-offset> R<duplication temp offset> ]
 // M907 - Set digital trimpot motor current using axis codes.
 // M908 - Control digital trimpot directly.
-// M350 - Set microstepping mode.
-// M351 - Toggle MS1 MS2 pins directly.
 // M928 - Start SD logging (M928 filename.g) - ended by M29
 // M999 - Restart after being stopped by error
 
@@ -177,6 +177,8 @@
 // M3 S[RPM] SPINDLE ON - Clockwise
 // M4 S[RPM] SPINDLE ON - CounterClockwise
 // M5        SPINDLE OFF
+
+// M563 [Pn [D<0-2>] [S<0,1>]] - Edit tool definition or query defined tools
 
 // M700 S<0-255> - Laser Power Control
 // M701 S<0-255> - Ambient Light, Set Red
@@ -201,7 +203,7 @@
 // M726 - 5VDC RASPBERRY PI power ON
 // M727 - 5VDC RASPBERRY PI power OFF
 // M728	- RASPBERRY Alive Command
-// M729 - RASPBERRY Sleep                    //wait for the complete shutdown of raspberryPI 
+// M729 - RASPBERRY Sleep                    //wait for the complete shutdown of raspberryPI
 // M730 - Read last error code
 // M731 - Disable kill on Door Open
 // M732 - Enable or disable the permanent door security switch (M732 S0 -> disable (unsafe), M732 S1 -> enable (safe))
@@ -230,8 +232,6 @@
 // M766 - read FABtotum Personal Fabricator Firmware Build Date and Time
 // M767 - read FABtotum Personal Fabricator Firmware Update Author
 
-// M785 - Turn Prism UV module On/off M785 S[0-1]  
-// M786 - External Power OFF
 
 // M779 - force Head product ID reading (for testing purpose only)
 // [unimplemented] M780 - read Head Product Name
@@ -239,9 +239,9 @@
 // M782 - read Head product ID
 // [unimplemented] M783 - read Head vendor ID
 // M784 - read Head Serial ID
-// [overridden] M785 - read Head firmware version
-// [overridden] M786 - read needed firmware version of FABtotum Personal Fabricator Main Controller
-// [unimplemented] M787 - read Head capability: type0 (passive, active)
+// M785 - Turn Prism UV module On/off M785 S[0-1] // [overrides] M785 - read Head firmware version
+// M786 - External Power OFF // [overrides] M786 - read needed firmware version of FABtotum Personal Fabricator Main Controller
+// M787 - external power on/off pin control // [overrides] M787 - read Head capability: type0 (passive, active)
 // [unimplemented] M788 - read Head capability: type1 (additive, milling, syringe, laser etc..)
 // [unimplemented] M789 - read Head capability: purpose (single purpose, multipurpose)
 // [unimplemented] M790 - read Head capability: wattage (0-200W)
@@ -307,10 +307,10 @@ bool inactivity = true;
 bool silent=false;
 
 //endstop configs
-bool X_MIN_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop. 
+bool X_MIN_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
 bool Y_MIN_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
 bool Z_MIN_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
-bool X_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop. 
+bool X_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
 bool Y_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
 bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
 
@@ -327,7 +327,12 @@ float extruder_offset[NUM_EXTRUDER_OFFSETS][EXTRUDERS] = {
 #endif
 };
 #endif
-uint8_t active_extruder = 0;
+uint8_t active_tool = 0;     // Active logical tool
+uint8_t active_extruder = 0; // Active actual extruder
+bool head_is_dummy = false;  // Head reaquires TWI silencing
+uint8_t tool_extruder_mapping[] = { 0, 1, 2 };  // Tool to drive mapping
+uint8_t tool_heater_mapping[]   = { 0, -1, 0 };  // Tool to heater mapping
+bool    tool_twi_support[]      = { true, false, false };  // Tool TWI support
 int fanSpeed=0;
 #ifdef SERVO_ENDSTOPS
   int servo_endstops[] = SERVO_ENDSTOPS;
@@ -363,15 +368,15 @@ int EtoPPressure=0;
   // these are the default values, can be overriden with M665
   float delta_radius= DELTA_RADIUS;
   float delta_tower1_x= -SIN_60*delta_radius; // front left tower
-  float delta_tower1_y= -COS_60*delta_radius;	   
+  float delta_tower1_y= -COS_60*delta_radius;
   float delta_tower2_x=  SIN_60*delta_radius; // front right tower
-  float delta_tower2_y= -COS_60*delta_radius;	   
+  float delta_tower2_y= -COS_60*delta_radius;
   float delta_tower3_x= 0.0;                  // back middle tower
   float delta_tower3_y= delta_radius;
   float delta_diagonal_rod= DELTA_DIAGONAL_ROD;
   float delta_diagonal_rod_2= sq(delta_diagonal_rod);
   float delta_segments_per_second= DELTA_SEGMENTS_PER_SECOND;
-#endif	
+#endif
 
 
 int servo_extended_angle=servo_endstop_angles[4];
@@ -389,7 +394,6 @@ unsigned int hotplate_board_version=0;
 unsigned int general_assembly_version=0;
 unsigned int installed_head_id=0;
 
-bool head_is_dummy = false;  // Signals head is Dummy (does not support I²C), depending on installed head id
 bool head_placed = false;
 
 //===========================================================================
@@ -654,6 +658,28 @@ void servo_init()
   #endif
 }
 
+void defineTool(uint8_t tool, unsigned int drive=0, unsigned int heater=0, bool twi=true)
+{
+   tool_extruder_mapping[tool] = drive;
+   tool_heater_mapping[tool] = heater;
+   tool_twi_support[tool] = twi;
+}
+
+uint8_t loadTool (uint8_t tool)
+{
+   active_tool = tool;
+   active_extruder = tool_extruder_mapping[tool];
+   head_is_dummy = !tool_twi_support[tool];
+
+   if (head_is_dummy) {
+      TWCR &= ~MASK(TWEN);
+   } else {
+      Wire.begin();
+   }
+
+   return active_extruder;
+}
+
 void FabtotumIO_init()
 {
    BEEP_ON()
@@ -728,14 +754,18 @@ void FabtotumIO_init()
 
    switch (installed_head_id)
    {
-            // Direct-drive?
+      case 4:  // Direct-drive?
+         defineTool(2, 0, 0, true);
+         defineTool(0, 2, 0, false);
+         break;
       case 3:  // Milling V2
-         head_is_dummy = true;
+         defineTool(0, 0, 0, false);
          break;
       default:
-         head_is_dummy = false;
-         Wire.begin();
+         defineTool(0, 0, 0, true);
    }
+   // Starting tool is #0 (T0)
+   loadTool(0);
 
    /*fading_speed=200;
    fading_started=false;
@@ -795,7 +825,7 @@ void setup()
 
   // loads data from EEPROM if available else uses defaults (and resets step acceleration rate)
   Config_RetrieveSettings();
-  
+
   //test
   //Config_StoreSettings();
 
@@ -805,7 +835,7 @@ void setup()
   st_init();    // Initialize stepper, this enables interrupts!
   setup_photpin();
   servo_init();
-  
+
   FabtotumIO_init();
 
   lcd_init();
@@ -818,28 +848,6 @@ void setup()
   #ifdef DIGIPOT_I2C
     digipot_i2c_init();
   #endif
-  
-  //initialize smart endstop check
-    if((READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
-  {
-    min_x_endstop_triggered=true;
-  }
-      
-  if((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING))
-  {
-    max_x_endstop_triggered=true;
-  }
-
-  if((READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING))
-  {
-    min_y_endstop_triggered=true;
-  }
-  
-  if((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING))      
-  {
-    max_y_endstop_triggered=true;
-  }
-  
 }
 
 
@@ -1160,7 +1168,7 @@ static void axis_is_at_home(int axis) {
   current_position[axis] = base_home_pos(axis) + add_homeing[axis];
   min_pos[axis] =          base_min_pos(axis) + add_homeing[axis];
   max_pos[axis] =          base_max_pos(axis) + add_homeing[axis];
-  
+
   if(axis==Z_AXIS && home_Z_reverse){current_position[axis] = (Z_MAX_POS+Z_PROBE_OFFSET_FROM_EXTRUDER);}
   if(axis==X_AXIS && x_axis_endstop_sel){current_position[axis] = (X_MAX_POS);}
 }
@@ -1270,7 +1278,7 @@ static void run_fast_z_probe(float feedrateProbing) {
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
 static void run_fast_external_z_endstop() {
     plan_bed_level_matrix.set_to_identity();
-    
+
     // This function expects the feedrate to have been set externally.
     //feedrate = homing_feedrate[Z_AXIS];
 
@@ -1413,12 +1421,12 @@ static float probe_pt_no_engz(float x, float y, float z_before, bool engage_z_fl
   do_blocking_move_to(current_position[X_AXIS], current_position[Y_AXIS], z_before);
   //do_blocking_move_to(x - X_PROBE_OFFSET_FROM_EXTRUDER, y - Y_PROBE_OFFSET_FROM_EXTRUDER, current_position[Z_AXIS]);
   do_blocking_move_to(x + X_PROBE_OFFSET_FROM_EXTRUDER, y + Y_PROBE_OFFSET_FROM_EXTRUDER, current_position[Z_AXIS]);
-  
+
   if(engage_z_flag)
     {
       engage_z_probe();   // Engage Z Servo endstop if available
     }
-    
+
   run_z_probe();
   float measured_z = current_position[Z_AXIS];
   //retract_z_probe();
@@ -1444,13 +1452,13 @@ static void homeaxis(int axis) {
       axis==Z_AXIS ? HOMEAXIS_DO(Z) :
       0) {
     int axis_home_dir = home_dir(axis);
-    
+
     if(home_Z_reverse && axis==Z_AXIS)
     {axis_home_dir =axis_home_dir *-1;}
-    
+
     if(x_axis_endstop_sel && axis==X_AXIS)
     {axis_home_dir =axis_home_dir *-1;}
-    
+
 #ifdef DUAL_X_CARRIAGE
     if (axis == X_AXIS)
       axis_home_dir = x_home_dir(active_extruder);
@@ -1475,12 +1483,12 @@ static void homeaxis(int axis) {
 
     destination[axis] = 1.5 * max_length(axis) * axis_home_dir;
     feedrate = homing_feedrate[axis];
-    
+
     if(home_Z_reverse && axis==Z_AXIS)              //speedup G27 (reversed Z homing)
     { // Movement of Z downwards to endstops...
 	feedrate = homing_feedrate[axis]*6;
     }
-    
+
     plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
     if (!home_Z_reverse && axis==Z_AXIS) set_amb_color_fading(false,true,false,fading_speed);
@@ -1582,7 +1590,7 @@ void refresh_cmd_timeout(void)
       current_position[Z_AXIS]+=retract_zlift;
       plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
       //prepare_move();
-      current_position[E_AXIS]-=(retract_length+retract_recover_length)/volumetric_multiplier[active_extruder]; 
+      current_position[E_AXIS]-=(retract_length+retract_recover_length)/volumetric_multiplier[active_extruder];
       plan_set_e_position(current_position[E_AXIS]);
       float oldFeedrate = feedrate;
       feedrate=retract_recover_feedrate*60;
@@ -1661,7 +1669,7 @@ void process_commands()
         retract(false);
       break;
       #endif //FWRETRACT
-      
+
     case 27: //G27 Home all Axis one at a time explicit without Zprobe
       z_probe_activation=false;
       home_Z_reverse= true;
@@ -1671,15 +1679,15 @@ void process_commands()
   #ifdef ENABLE_AUTO_BED_LEVELING
         plan_bed_level_matrix.set_to_identity();  //Reset the plane ("erase" all leveling data)
   #endif //ENABLE_AUTO_BED_LEVELING
-  
+
         store_last_amb_color();
-        set_amb_color(0,255,0);       
-        
+        set_amb_color(0,255,0);
+
         saved_feedrate = feedrate;
         saved_feedmultiply = feedmultiply;
         feedmultiply = 100;
         previous_millis_cmd = millis();
-  
+
         enable_endstops(true);
         
         /*if((READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)&&(!home_Z_reverse)){
@@ -1690,14 +1698,14 @@ void process_commands()
          st_synchronize();
          }
          */
-         
+
         for(int8_t i=0; i < NUM_AXIS; i++) {
           destination[i] = current_position[i];
         }
         feedrate = 0.0;
-  
+
         home_all_axis = !((code_seen(axis_codes[X_AXIS])) || (code_seen(axis_codes[Y_AXIS])) || (code_seen(axis_codes[Z_AXIS])));
-  
+
         //#if Z_HOME_DIR > 0                      // If homing away from BED do Z first
         if (Z_HOME_DIR > 0 || home_Z_reverse)
         if((home_all_axis) || (code_seen(axis_codes[Z_AXIS]))) {
@@ -1705,21 +1713,21 @@ void process_commands()
         }
         //#endif
         if(Stopped){break;}
-  
+
         #ifdef QUICK_HOME
         if((home_all_axis)||( code_seen(axis_codes[X_AXIS]) && code_seen(axis_codes[Y_AXIS])) )  //first diagonal move
         {
           zeroed_far_from_home_x=false;
           zeroed_far_from_home_y=false;
           current_position[X_AXIS] = 0;current_position[Y_AXIS] = 0;
-  
+
          #ifndef DUAL_X_CARRIAGE
           int x_axis_home_dir = home_dir(X_AXIS);
          #else
           int x_axis_home_dir = x_home_dir(active_extruder);
           extruder_duplication_enabled = false;
          #endif
-  
+
           plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
           destination[X_AXIS] = 1.5 * max_length(X_AXIS) * x_axis_home_dir;destination[Y_AXIS] = 1.5 * max_length(Y_AXIS) * home_dir(Y_AXIS);
           feedrate = homing_feedrate[X_AXIS];
@@ -1732,7 +1740,7 @@ void process_commands()
           }
           plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate/60, active_extruder);
           st_synchronize();
-  
+
           axis_is_at_home(X_AXIS);
           axis_is_at_home(Y_AXIS);
           plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
@@ -1742,15 +1750,15 @@ void process_commands()
           feedrate = 0.0;
           st_synchronize();
           endstops_hit_on_purpose();
-  
+
           current_position[X_AXIS] = destination[X_AXIS];
           current_position[Y_AXIS] = destination[Y_AXIS];
           current_position[Z_AXIS] = destination[Z_AXIS];
         }
         #endif
-        
+
         if(Stopped){break;}
-        
+
         if((home_all_axis) || (code_seen(axis_codes[X_AXIS])))
         {
           zeroed_far_from_home_x=false;
@@ -1770,29 +1778,29 @@ void process_commands()
           HOMEAXIS(X);
         #endif
         }
-  
+
         if(Stopped){break;}
-        
+
         if((home_all_axis) || (code_seen(axis_codes[Y_AXIS]))) {
           zeroed_far_from_home_y=false;
           HOMEAXIS(Y);
         }
-  
+
         if(code_seen(axis_codes[X_AXIS]))
         {
           if(code_value_long() != 0) {
             current_position[X_AXIS]=code_value()+add_homeing[0];
           }
         }
-  
+
         if(code_seen(axis_codes[Y_AXIS])) {
           if(code_value_long() != 0) {
             current_position[Y_AXIS]=code_value()+add_homeing[1];
           }
         }
-        
+
         if(Stopped){break;}
-        
+
         if(!home_Z_reverse){
         #if Z_HOME_DIR < 0                      // If homing towards BED do Z last
           #ifndef Z_SAFE_HOMING
@@ -1814,7 +1822,7 @@ void process_commands()
               destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
               feedrate = XY_TRAVEL_SPEED;
               current_position[Z_AXIS] = 0;
-  
+
               plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
               plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
               st_synchronize();
@@ -1831,14 +1839,14 @@ void process_commands()
                 && (current_position[X_AXIS]+X_PROBE_OFFSET_FROM_EXTRUDER <= X_MAX_POS) \
                 && (current_position[Y_AXIS]+Y_PROBE_OFFSET_FROM_EXTRUDER >= Y_MIN_POS) \
                 && (current_position[Y_AXIS]+Y_PROBE_OFFSET_FROM_EXTRUDER <= Y_MAX_POS)) {
-  
+
                 current_position[Z_AXIS] = 0;
                 plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
                 destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
                 feedrate = max_feedrate[Z_AXIS];
                 plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
                 st_synchronize();
-  
+
                 HOMEAXIS(Z);
               } else if (!((axis_known_position[X_AXIS]) && (axis_known_position[Y_AXIS]))) {
                   LCD_MESSAGEPGM(MSG_POSITION_UNKNOWN);
@@ -1852,9 +1860,9 @@ void process_commands()
             }
           #endif
         #endif
-  
-  
-  
+
+
+
         if(code_seen(axis_codes[Z_AXIS])) {
           if(code_value_long() != 0) {
             current_position[Z_AXIS]=code_value()+add_homeing[2];
@@ -1866,12 +1874,12 @@ void process_commands()
           }
         #endif
         plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
-  
-  
+
+
         #ifdef ENDSTOPS_ONLY_FOR_HOMING
           enable_endstops(false);
         #endif
-  
+
         feedrate = saved_feedrate;
         feedmultiply = saved_feedmultiply;
         previous_millis_cmd = millis();
@@ -1879,7 +1887,7 @@ void process_commands()
         }
       z_probe_activation=true;
       home_Z_reverse=false;
-      
+
       restore_last_amb_color();
       
       
@@ -1913,9 +1921,9 @@ void process_commands()
             #endif
 
             store_last_amb_color();
-            set_amb_color(0,255,0); 
-            
-        
+            set_amb_color(0,255,0);
+
+
             // Prevent user from running a G29 without first homing in X and Y
             if (! (axis_known_position[X_AXIS] && axis_known_position[Y_AXIS]) )
             {
@@ -1957,7 +1965,7 @@ void process_commands()
             // "B" vector of Z points
             double eqnBVector[AUTO_BED_LEVELING_GRID_POINTS*AUTO_BED_LEVELING_GRID_POINTS];
 
-        
+
             int probePointCounter = 0;
             bool zig = true;
             bool engage_z_flag=true;
@@ -1986,25 +1994,25 @@ void process_commands()
                 {
                   // raise before probing
                   z_before = Z_RAISE_BEFORE_PROBING;
-                  
+
                 } else
                 {
                   // raise extruder
                   z_before = current_position[Z_AXIS] + Z_RAISE_BETWEEN_PROBINGS;
                 }
-                
+
                 if(Stopped)
                     {
                       break;
                     }
                 float measured_z=0;
-                    
+
                 for(int avg_measured_z=0; avg_measured_z<AVG_MEASURED_Z_MAX;avg_measured_z++)
                     {
                     measured_z = probe_pt_no_engz(xProbe, yProbe, z_before,engage_z_flag)+measured_z;
                     engage_z_flag=false;
                     }
-                    
+
 
                 eqnBVector[probePointCounter] = measured_z/AVG_MEASURED_Z_MAX;
 
@@ -2021,8 +2029,8 @@ void process_commands()
             retract_z_probe();
             plan_buffer_line(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS], 5, active_extruder);
             st_synchronize();
-                  
-            
+
+
 
             // solve lsq problem
             double *plane_equation_coefficients = qr_solve(AUTO_BED_LEVELING_GRID_POINTS*AUTO_BED_LEVELING_GRID_POINTS, 3, eqnAMatrix, eqnBVector);
@@ -2079,7 +2087,7 @@ void process_commands()
             plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
           }
         }
-        
+
         restore_last_amb_color();
         if(Stopped)
                     {
@@ -2090,23 +2098,23 @@ void process_commands()
     case 30: // G30 Single Z Probe
         {
           if(!Stopped){
-            
+
             //engage_z_probe(); // Engage Z Servo endstop if available
 
 
             float feedRateUp = homing_feedrate[Z_AXIS];
             float feedRateDown = homing_feedrate[Z_AXIS];
-            
+
             if (code_seen('U')) {
                 // UP Value Feed Rate
                 feedRateUp = code_value();
             }
-          
+
             if (code_seen('D')) {
               // Down Value (Bed Retract) Feed Rate
               feedRateDown = code_value();
             }
-            
+
 
 
             st_synchronize();
@@ -2114,11 +2122,11 @@ void process_commands()
             setup_for_endstop_move();
 
             feedrate = feedRateUp; //homing_feedrate[Z_AXIS];
-          
+
             SERIAL_PROTOCOLPGM(" Feedrate: ");
             SERIAL_PROTOCOL(feedrate);
             SERIAL_PROTOCOLPGM(" ");
-          
+
             run_fast_z_probe(feedrate);
             SERIAL_PROTOCOLPGM(MSG_BED);
             SERIAL_PROTOCOLPGM(" X: ");
@@ -2143,20 +2151,20 @@ void process_commands()
 	     // It does nothing unless the probe is enabled first with M746 S1
         {
           if(!Stopped && enable_secure_switch_zprobe){
-            
+
             st_synchronize();
-            
+
             setup_for_external_z_endstop_move();
- 
+
 	    if (code_seen('S')) {
 	      feedrate = code_value();
-	      
+
 	      if(feedrate > 200 ) // ignore the user, greater than 200 for probing is considered to be dangerous (the tool will crash badly)
 		feedrate = 200;
 	    }
 	    else
 	      feedrate = homing_feedrate[Z_AXIS];
-          
+
             run_fast_external_z_endstop();
             SERIAL_PROTOCOLPGM(MSG_BED);
             SERIAL_PROTOCOLPGM(" X: ");
@@ -2170,7 +2178,7 @@ void process_commands()
             clean_up_after_endstop_move();
           }
         }
-        break;        
+        break;
 #endif //ENDSTOP_Z_PROBING
     case 90: // G90
       relative_mode = false;
@@ -2401,11 +2409,11 @@ void process_commands()
       if(installed_head_id<2)
         #ifdef SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE
           if(auto_fan_on_temp_change)
-	    fanSpeed=255; //set fan on by default  
+	    fanSpeed=255; //set fan on by default
         #else
-            fanSpeed=255; //set fan on by default on V1 heads    
-        #endif      
-       
+            fanSpeed=255; //set fan on by default on V1 heads
+        #endif
+
       inactivity=false;
       if (code_seen('S')) setTargetHotend(code_value(), tmp_extruder);
 #ifdef DUAL_X_CARRIAGE
@@ -2491,13 +2499,13 @@ void process_commands()
         if(installed_head_id<2)
         #ifdef SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE
           if(auto_fan_on_temp_change)
-	    fanSpeed=255; //set fan on by default  
+	    fanSpeed=255; //set fan on by default
         #else
-            fanSpeed=255; //set fan on by default on V1 heads    
-        #endif  
-              
+            fanSpeed=255; //set fan on by default on V1 heads
+        #endif
+
       inactivity=false;
-      
+
       #ifdef AUTOTEMP
         autotemp_enabled=false;
       #endif
@@ -2870,6 +2878,7 @@ void process_commands()
         tmp_extruder = active_extruder;
         if(code_seen('T')) {
           tmp_extruder = code_value();
+          tmp_extruder = tool_extruder_mapping[tmp_extruder];
           if(tmp_extruder >= EXTRUDERS) {
             SERIAL_ECHO_START;
             SERIAL_ECHO(MSG_M200_INVALID_EXTRUDER);
@@ -2934,7 +2943,7 @@ void process_commands()
 		if(code_seen('S')) {
 			delta_segments_per_second= code_value();
 		}
-		
+
 		recalc_delta_settings(delta_radius, delta_diagonal_rod);
 		break;
     case 666: // M666 set delta endstop adjustemnt
@@ -3211,14 +3220,14 @@ void process_commands()
     case 240: // M240  Triggers a camera by emulating a Canon RC-1 : http://www.doc-diy.net/photo/rc-1_hacked/
      {
      	#ifdef CHDK
-       
+
          SET_OUTPUT(CHDK);
          WRITE(CHDK, HIGH);
          chdkHigh = millis();
          chdkActive = true;
-       
+
        #else
-     	
+
       	#if defined(PHOTOGRAPH_PIN) && PHOTOGRAPH_PIN > -1
 	const uint8_t NUM_PULSES=16;
 	const float PULSE_LENGTH=0.01524;
@@ -3564,7 +3573,7 @@ void process_commands()
         if (code_value()<=0) LaserSoftPwm=0;
         else if (code_value()>=0xFF) LaserSoftPwm=MAX_PWM;
         else {LaserSoftPwm=(unsigned int)(code_value()/2);}
-        
+
         //write_LaserSoftPwm_t(LaserSoftPwm);
       }
     }
@@ -3578,7 +3587,7 @@ void process_commands()
         if (code_value()<=0 || code_value()==0) RedSoftPwm=0;
         else if (code_value()>=255) RedSoftPwm=MAX_PWM;
         else {RedSoftPwm=(unsigned int)(code_value()/2);}
-        
+
         //write_RedSoftPwm_t(RedSoftPwm);
       }
     }
@@ -3592,7 +3601,7 @@ void process_commands()
         if (code_value()<=0) GreenSoftPwm=0;
         else if (code_value()>=255) GreenSoftPwm=MAX_PWM;
         else {GreenSoftPwm=(unsigned int)(code_value()/2);}
-        
+
         //write_GreenSoftPwm_t(GreenSoftPwm);
       }
     }
@@ -3606,7 +3615,7 @@ void process_commands()
         if (code_value()<=0) BlueSoftPwm=0;
         else if (code_value()>=255) BlueSoftPwm=MAX_PWM;
         else {BlueSoftPwm=(unsigned int)(code_value()/2);}
-        
+
         //write_BlueSoftPwm_t(BlueSoftPwm);
       }
     }
@@ -3628,7 +3637,7 @@ void process_commands()
         if (code_value()<=0) HeadLightSoftPwm=0;
         else if (code_value()>=0xFF) HeadLightSoftPwm=MAX_PWM;
         else {HeadLightSoftPwm=(unsigned int)(code_value()/2);}
-        
+
         //write_HeadLightSoftPwm_t(HeadLightSoftPwm);
         /*
         String STR_TCCR5A = String(TCCR5A);
@@ -3638,7 +3647,7 @@ void process_commands()
       }
     }
     break;
-    
+
     case 710: //M710 write and store in eeprom calibrated z_probe offset length
     {
       float value;
@@ -3668,10 +3677,10 @@ void process_commands()
           SERIAL_PROTOCOL(MSG_ZPROBE_ZOFFSET " : ");
           SERIAL_PROTOCOLLN(zprobe_zoffset);
       }
-      
+
       break;
     }
-    
+
     case 711: // M711 - write and store in eeprom calibrated zprobe extended angle
     {
       int value;
@@ -3693,7 +3702,7 @@ void process_commands()
       Config_StoreSettings();
       break;
     }
-    
+
     case 712: // M712 - write and store in eeprom calibrated zprobe retacted angle
     {
       int value;
@@ -3715,7 +3724,7 @@ void process_commands()
       Config_StoreSettings();
       break;
     }
-    
+
     case 714: // M714 - alternate the X axis endstop (M714 S0 use standard X axis endstop, M714 S1 use X axis max endstop)
     {
       int value;
@@ -3745,7 +3754,7 @@ void process_commands()
       }
       break;
     }
-    
+
     case 720:// M720 - 24VDC head power ON
     {
       int servo_index = 0;
@@ -3841,7 +3850,7 @@ void process_commands()
 
     }
     break;
-    
+
     case 729: // M729 - RASPBERRY SLEEP
     {
       Stopped = true;
@@ -3892,7 +3901,7 @@ void process_commands()
        //while(1){}
     }
     break;
-    
+
     case 730:   // M730 - READ LAST ERROR CODE
     {
       RPI_ERROR_ACK_OFF();
@@ -3901,7 +3910,7 @@ void process_commands()
       SERIAL_PROTOCOLLN(ERROR_CODE);
     }
     break;
-    
+
     case 731:   // M731 - Disable kill on Door Open
     {
       enable_door_kill=false;
@@ -3911,8 +3920,8 @@ void process_commands()
       restore_last_amb_color();
     }
     break;
-    
-    case 732:   // M732 - setting of permanent door kill 
+
+    case 732:   // M732 - setting of permanent door kill
     {
       int value;
       if (code_seen('S'))
@@ -3986,7 +3995,7 @@ void process_commands()
       }
     }
     break;
-    
+
     case 3: // M3 S[RPM] SPINDLE ON - Clockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
       {
         inactivity=false;
@@ -4024,7 +4033,7 @@ void process_commands()
             servos[servo_index].write(servo_position);
             _delay_ms(500);
            }
-        
+
         if (code_seen('S')) {
           rpm = code_value();
           if(rpm<=RPM_SPINDLE_MIN)
@@ -4057,7 +4066,7 @@ void process_commands()
         }
       }
       break;
-      
+
    case 4: // M4 S[RPM] SPINDLE ON - CounterClockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
       {
         
@@ -4079,7 +4088,7 @@ void process_commands()
         int servo_position = SERVO_SPINDLE_ZERO;
         float rpm_1=0;
         enable_endstops(false);
-        
+
         if(!MILL_MOTOR_STATUS())
             {
             if ((servo_index >= 0) && (servo_index < NUM_SERVOS))
@@ -4096,7 +4105,7 @@ void process_commands()
             servos[servo_index].write(servo_position);
             _delay_ms(500);
            }
-           
+
         if (code_seen('S')) {
           rpm = code_value();
           if(rpm<=RPM_SPINDLE_MIN)
@@ -4129,7 +4138,7 @@ void process_commands()
         }
       }
       break;
-      
+
    case 5: // M5 SPINDLE OFF
       {
         //wait
@@ -4146,7 +4155,7 @@ void process_commands()
         int servo_index = 0;
         int servo_position = SERVO_SPINDLE_ZERO;
         enable_endstops(true);
-        
+
         if(MILL_MOTOR_STATUS())
             {
             MILL_MOTOR_OFF();
@@ -4156,7 +4165,7 @@ void process_commands()
          servos[servo_index].detach();
       }
       break;
-       
+
     case 6: // M6 S[PWM] LASER ON (provisional code)
       {
         inactivity=false;
@@ -4164,7 +4173,7 @@ void process_commands()
         int servo_position = SERVO_SPINDLE_ZERO;
         float pwm_1=0;
         enable_endstops(false);
-        
+
         if(!MILL_MOTOR_STATUS())
             {
             if ((servo_index >= 0) && (servo_index < NUM_SERVOS))
@@ -4175,15 +4184,15 @@ void process_commands()
 		  MILL_MOTOR_ON();
           SERVO1_ON();
           fanSpeed=255;
-          
+
 		  //_delay_ms(2000);
           //servos[servo_index].write(SERVO_SPINDLE_ARM);
           //_delay_ms(1000);
           //servos[servo_index].write(servo_position);
           //_delay_ms(500);
-          
+
 		  }
-        
+
         if (code_seen('S')) {
           int pwm = code_value();
           if(pwm<=0)
@@ -4193,16 +4202,16 @@ void process_commands()
         }
 
          SERIAL_PROTOCOL(MSG_OK);
-         //SERIAL_PROTOCOL("Laser On!");		  
+         //SERIAL_PROTOCOL("Laser On!");
       }
       break;
-	    
+
    case 7: // M7 LASER OFF
       {
         int servo_index = 0;
         int servo_position = SERVO_SPINDLE_ZERO;
         enable_endstops(true);
-        
+
         if(MILL_MOTOR_STATUS())
             {
             MILL_MOTOR_OFF();
@@ -4219,28 +4228,28 @@ void process_commands()
         SERIAL_PROTOCOLLN((WIRE_END_STATUS()?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
       }
       break;
-      
+
    case 741: // M741 - read DOOR_OPEN sensor
       {
         //SERIAL_PROTOCOLPGM(MSG_DOOR_OPEN);
         SERIAL_PROTOCOLLN((!DOOR_OPEN_STATUS()?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
       }
       break;
-      
+
    case 742: // M742 - read REEL_LENS_OPEN sensor
       {
         //SERIAL_PROTOCOLPGM(MSG_REEL_LENS_OPEN);
         SERIAL_PROTOCOLLN((REEL_LENS_OPEN_STATUS()?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
       }
       break;
-      
+
    case 743: // M743 - read SECURE_SWITCH sensor
       {
         //SERIAL_PROTOCOLPGM(MSG_SECURE_SWITCH);
         SERIAL_PROTOCOLLN((SECURE_SW_STATUS()?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
       }
       break;
-      
+
     case 744: // M744 - read HOT_BED placed in place
       {
         //SERIAL_PROTOCOLPGM(MSG_HOT_BED_PLACED);
@@ -4250,10 +4259,10 @@ void process_commands()
         {SERIAL_PROTOCOLLN(MSG_ENDSTOP_OPEN);}
       }
       break;
-      
+
     case 745:  // M745 - read Head placed in place
       {
-        
+
         if(head_placed)
         {SERIAL_PROTOCOLLN(MSG_ENDSTOP_HIT);}
         else
@@ -4264,7 +4273,7 @@ void process_commands()
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
     case 746:   // M746 - setting of an endstop sensor, to be used as an external endstop zprobe.
 		//
-		// The actual pin is provided by EXTERNAL_ENDSTOP_Z_PROBING_PIN macro, which defaults to pin 71 
+		// The actual pin is provided by EXTERNAL_ENDSTOP_Z_PROBING_PIN macro, which defaults to pin 71
 		// (in totumduino's silk screen "Secure_sw", see also M743).
 		//
 		// M746 S1 to enable this functionality.
@@ -4275,7 +4284,7 @@ void process_commands()
 		// you will have undesirable behaviour (only during the time a Z probe is done, so during homing, G30 and G38).
 		//
 		// A possible probe is an electrical continuity probe between a copper cad (for making PCBs) and the mill (that in the hybrid head is to GND), like this:
-		// 
+		//
 		// |  | (secure_sw)
 		// |  \------------------------------+----- attach this to copper clad (via a metal washer to which the wire is soldered?)
 		// \-----------------------/\/\/\/---|
@@ -4308,8 +4317,8 @@ void process_commands()
       }
     }
     break;
-#endif      
-      
+#endif
+
     case 747:   // M747 - Set logic. e.g. M747 X1
     {
       int value;
@@ -4399,7 +4408,7 @@ void process_commands()
         SERIAL_PROTOCOLLN("");
       }
       break;
-      
+
     case 751: // M751 - read voltage monitor 24VDC input supply (ANALOG V)
       {
         SERIAL_PROTOCOLPGM("V_24V:");
@@ -4407,7 +4416,7 @@ void process_commands()
         SERIAL_PROTOCOLLN(" V");
       }
       break;
-      
+
     case 752: // M752 - read voltage monitor 5VDC input supply (ANALOG V)
       {
         SERIAL_PROTOCOLPGM("V_5V:");
@@ -4415,7 +4424,7 @@ void process_commands()
         SERIAL_PROTOCOLLN(" V");
       }
       break;
-    
+
     case 753: // M753 - read current monitor input supply (ANALOG A)
       {
         SERIAL_PROTOCOLPGM("Isinked:");
@@ -4423,7 +4432,7 @@ void process_commands()
         SERIAL_PROTOCOLLN(" A");
       }
       break;
-      
+
     case 754 : // M754
       if(setTargetedHotend(105)){
         break;
@@ -4446,7 +4455,7 @@ void process_commands()
         SERIAL_PROTOCOLLN("");
       return;
       break;
-      
+
 
     case 756 :  // M756 - ERROR GENERATOR
       {
@@ -4459,24 +4468,24 @@ void process_commands()
         ERROR_CODE=int(value);
       }
       
-      RPI_ERROR_ACK_ON();    
+      RPI_ERROR_ACK_ON(); 
 
       }
       break;
-      
-      
+
+
     case 760 :  // M760 - read FABtotum Personal Fabricator Main Controller serial ID
       {
         SERIAL_PROTOCOLLN(fab_serial_code);
       }
       break;
-      
+
     case 761 :  // M761 - read FABtotum Personal Fabricator Main Controller control code of serial ID
       {
         SERIAL_PROTOCOLLN(fab_control_serial_code);
       }
       break;
-      
+
     case 762 :  // M762 - read FABtotum Personal Fabricator Main Controller board version number
       {
         float fab_board_version_dotted;
@@ -4487,7 +4496,7 @@ void process_commands()
         SERIAL_PROTOCOLLN("");
       }
       break;
-      
+
     case 763 :  // M763 - read FABtotum Personal Fabricator Main Controller production batch number
       {
         if (code_seen('S')) {
@@ -4533,7 +4542,7 @@ void process_commands()
         BEEP_OFF()
       }
       break;
-     
+
     case 782 :  // M782 - read Head product ID
       {
          SERIAL_PROTOCOL("Head Product ID: ");
@@ -4541,39 +4550,39 @@ void process_commands()
          SERIAL_PROTOCOLLN(String_Head);
       }
       break;
-      
-    
+
+
     case 784 :  // M784 - read Head Serial ID
       {
         String String_Head = String(SERIAL_HEAD_6,HEX);
-        
+
          SERIAL_PROTOCOL("Head Serial ID: ");
          SERIAL_PROTOCOL(String_Head);
-         
+
          String_Head = String(SERIAL_HEAD_5,HEX);
          SERIAL_PROTOCOL(String_Head);
-         
+
          String_Head = String(SERIAL_HEAD_4,HEX);
          SERIAL_PROTOCOL(String_Head);
-         
+
          String_Head = String(SERIAL_HEAD_3,HEX);
          SERIAL_PROTOCOL(String_Head);
-         
+
          String_Head = String(SERIAL_HEAD_2,HEX);
          SERIAL_PROTOCOL(String_Head);
-         
+
          String_Head = String(SERIAL_HEAD_1,HEX);
          SERIAL_PROTOCOL(String_Head);
-         
+
          String_Head = String(SERIAL_HEAD_7,HEX);
- 
+
          SERIAL_PROTOCOL(" CRC: ");
-         SERIAL_PROTOCOLLN(String_Head);         
+         SERIAL_PROTOCOLLN(String_Head);
       }
       break;
-   
+
     case 785: {
-      //PRISM UV MODULE ON/OFF 
+      //PRISM UV MODULE ON/OFF
       if (code_seen('S')) {
           int PRISM_UV=code_value();
           if (PRISM_UV==1){
@@ -4582,7 +4591,7 @@ void process_commands()
           }
           if (PRISM_UV==0){
               PRISM = false;
-              SERIAL_PROTOCOL("PRISM UV OFF!");  
+              SERIAL_PROTOCOL("PRISM UV OFF!");
           }
       }else{
               SERIAL_PROTOCOL("Usage: M785 S[0-1]");
@@ -4680,9 +4689,72 @@ void process_commands()
       }
       break;
 
+    /*case 793: // M794 P1|P0 - Enable disable
+      {
+        if (code_seen('S')) {
+          installed_head_id = code_value_long();
+        }
+        SERIAL_PROTOCOLLN(installed_head_id);
+      }
+      break;*/
 
+    case 563: // M563 [Px] [Dy] - Define tool or swap definitions
+      {
+         // Select target (logical) tool
+         unsigned long target_tool;
+        if (code_seen('P')) {
+          target_tool = code_value_long();
+       } else {
+          target_tool = active_tool;
 
-    
+         // Output tool definitions
+         SERIAL_ECHOLNPGM("");
+         for (target_tool = 0; target_tool < EXTRUDERS; target_tool++)
+         {
+            if (target_tool == active_tool) {
+               SERIAL_ECHOPGM(" * ");
+            } else {
+              SERIAL_ECHOPGM("   ");
+           }
+            SERIAL_ECHOPAIR("T", (unsigned long)target_tool);
+            SERIAL_ECHOPAIR(": drive:", (unsigned long)tool_extruder_mapping[target_tool]);
+            if (tool_twi_support[target_tool]) {
+              SERIAL_ECHOPGM(" / twi:on");
+           } else {
+              SERIAL_ECHOPGM(" / twi:off");
+           }
+            SERIAL_ECHOLNPGM("");
+         }
+         return;
+       }
+
+       // Assign drive
+       uint8_t drive;
+        if (code_seen('D')) {
+          drive = code_value_long();
+           //tool_extruder_mapping[target_tool] = tmp_extruder;
+        } else /*if (target_tool != active_tool)*/ {
+           drive = active_extruder;
+           /*tool_extruder_mapping[active_tool] = tool_extruder_mapping[target_tool];
+           tool_extruder_mapping[target_tool] = active_extruder;*/
+        }
+
+        bool twi;
+        if (code_seen('S')) {
+           twi = code_value_long()==1 ? true : false;
+        } else {
+           twi = !head_is_dummy;
+        }
+
+        defineTool(target_tool, drive, 0, twi);
+
+        // Reselect activ tool to reload definition
+        loadTool(active_tool);
+        //active_extruder = tool_extruder_mapping[active_tool];
+
+      }
+      break;
+
 #ifdef THERMISTOR_HOTSWAP
     case 800:   // M800 - changes/reads the thermistor of extruder0 type index
 		//
@@ -4691,7 +4763,7 @@ void process_commands()
 		// M800 returns the current extruder0 type index (0=type 169, 1=type 11,...)
     {
       int value;
-      
+
       if (code_seen('S'))
       {
         value = code_value();
@@ -4700,7 +4772,7 @@ void process_commands()
           extruder_0_thermistor_index=value;
 	  CRITICAL_SECTION_START
 	  heater_ttbl_map[0] = thermistors_map[extruder_0_thermistor_index];
-	  heater_ttbllen_map[0] = thermistors_map_len[extruder_0_thermistor_index]; 
+	  heater_ttbllen_map[0] = thermistors_map_len[extruder_0_thermistor_index];
 	  CRITICAL_SECTION_END
         }
       }
@@ -4737,19 +4809,19 @@ void process_commands()
       int value;
           SERIAL_PROTOCOLLN(THERMISTOR_HOTSWAP_SUPPORTED_TYPES_AS_STRING);
     }
-    break;    
-    
-#endif     
+    break;
+
+#endif
 
 #ifdef THERMISTOR_INPUT_HOTSWAP
     case 803:   // M803 - changes/reads the current extruder0 thermistor input
 		//
 		// M803 S1 changes input of current extruder0 to thermistor1
-		// M803 S0 changes input of current extruder0 to thermistor0      
+		// M803 S0 changes input of current extruder0 to thermistor0
 		// M803 returns the current input of extruder0
     {
       int value;
-      
+
       if (code_seen('S'))
       {
         value = code_value();
@@ -4763,18 +4835,18 @@ void process_commands()
 	SERIAL_PROTOCOLLN_F(extruder_0_thermistor_input_index,DEC);
       }
     }
-    break;    
+    break;
 #endif
 
 #ifdef SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE
     case 804:   // M804 - changes/reads the current automatic fan on temp change configuration.
 		//
 		// M804 S1 enables this automatic fan (default is enabled)
-		// M804 S0 disables this automatic fan      
+		// M804 S0 disables this automatic fan
 		// M804 returns the current setting 1/0 (enabled/disabled)
     {
       int value;
-      
+
       if (code_seen('S'))
       {
         value = code_value();
@@ -4786,11 +4858,11 @@ void process_commands()
 	SERIAL_PROTOCOLLN_F((auto_fan_on_temp_change==false?0:1),DEC);
       }
     }
-    break;        
+    break;
 #endif
-    
-      
-      
+
+
+
    case 998: // M998: Restart after being killed
       {
       triggered_kill=false;
@@ -4800,7 +4872,7 @@ void process_commands()
       RPI_ERROR_ACK_OFF();
       }
     break;
-    
+
     case 999: // M999: Restart after being stopped
       {
       Stopped = false;
@@ -4817,6 +4889,7 @@ void process_commands()
   else if(code_seen('T'))
   {
     tmp_extruder = code_value();
+    tmp_extruder = loadTool(tmp_extruder);
     if(tmp_extruder >= EXTRUDERS) {
       SERIAL_ECHO_START;
       SERIAL_ECHO("T");
@@ -4897,12 +4970,12 @@ void process_commands()
         // Set the new active extruder and position
         active_extruder = tmp_extruder;
       #endif //else DUAL_X_CARRIAGE
-#ifdef DELTA 
+#ifdef DELTA
 
   calculate_delta(current_position); // change cartesian kinematic  to  delta kinematic;
    //sent position to plan_set_position();
   plan_set_position(delta[X_AXIS], delta[Y_AXIS], delta[Z_AXIS],current_position[E_AXIS]);
-            
+
 #else
         plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
 
@@ -5010,9 +5083,9 @@ void clamp_to_software_endstops(float target[3])
 void recalc_delta_settings(float radius, float diagonal_rod)
 {
 	 delta_tower1_x= -SIN_60*radius; // front left tower
-	 delta_tower1_y= -COS_60*radius;	   
+	 delta_tower1_y= -COS_60*radius;
 	 delta_tower2_x=  SIN_60*radius; // front right tower
-	 delta_tower2_y= -COS_60*radius;	   
+	 delta_tower2_y= -COS_60*radius;
 	 delta_tower3_x= 0.0;                  // back middle tower
 	 delta_tower3_y= radius;
 	 delta_diagonal_rod_2= sq(diagonal_rod);
@@ -5227,10 +5300,10 @@ void handle_status_leds(void) {
 
 void manage_inactivity()
 {
-  
+
   if (max_steppers_inactive_time){
     if( (millis() - previous_millis_cmd) >  max_steppers_inactive_time){
-        if(blocks_queued() == false) {  
+        if(blocks_queued() == false) {
             //steppers disabled
             disable_x();
             disable_y();
@@ -5241,13 +5314,13 @@ void manage_inactivity()
         }
     }
   }
-  
+
   if(max_inactive_time)  {
     if( (millis() - previous_millis_cmd) >  max_inactive_time )
     {
-      if(blocks_queued() == false) {          
+      if(blocks_queued() == false) {
         if (inactivity == false){
- 
+
          //steppers disabled
           disable_x();
           disable_y();
@@ -5255,22 +5328,22 @@ void manage_inactivity()
           disable_e0();
           disable_e1();
           disable_e2();
-          
+
           // disable heating & motors
           disable_heater();
           MILL_MOTOR_OFF();
-          SERVO1_OFF();                   
+          SERVO1_OFF();
           rpm=0;
-            
+
           // warning
           RPI_ERROR_ACK_ON();
-          ERROR_CODE=ERROR_IDLE_SAFETY;       
+          ERROR_CODE=ERROR_IDLE_SAFETY;
           inactivity=true;
         }
       }
     }
   }
-  
+
   #ifdef CHDK //Check if pin should be set to LOW after M240 set it to HIGH
     if (chdkActive)
     {
@@ -5279,7 +5352,7 @@ void manage_inactivity()
       WRITE(CHDK, LOW);
     }
   #endif
-  
+
   #if defined(KILL_PIN) && KILL_PIN > -1
     if( 0 == READ(KILL_PIN) )
       kill();
@@ -5320,7 +5393,7 @@ void manage_inactivity()
       if (PRISM==false){
       handle_status_leds();
       }else{
-     digitalWrite(STAT_LED_RED, 0);    
+     digitalWrite(STAT_LED_RED, 0);
       }
   #endif
   check_axes_activity();
@@ -5424,8 +5497,8 @@ void manage_secure_endstop()
       ERROR_CODE=ERROR_Y_MIN_ENDSTOP;
     }
   }
- 
- 
+
+
 }
 void manage_fab_soft_pwm()
 {
@@ -5444,14 +5517,14 @@ void manage_fab_soft_pwm()
       if(BlueSoftPwm>0)BLUE_ON();
       FabSoftPwm_TMR=0;
     }
-     
+
 }
 void set_amb_color(unsigned int red,unsigned int green,unsigned int blue)
 {
       RedSoftPwm=red;
       GreenSoftPwm=green;
       BlueSoftPwm=blue;
-      
+
       /*write_RedSoftPwm_t(RedSoftPwm);
       write_GreenSoftPwm_t(GreenSoftPwm);
       write_BlueSoftPwm_t(BlueSoftPwm);*/
@@ -5460,15 +5533,15 @@ void set_amb_color(unsigned int red,unsigned int green,unsigned int blue)
 void set_amb_color_fading(bool red_bool,bool green_bool,bool blue_bool,unsigned int fading_speed_in)
 {
       set_amb_color(0,0,0);
-      
+
       red_fading=red_bool;
       green_fading=green_bool;
       blue_fading=blue_bool;
-      
+
       /*write_red_fading(red_bool);
       write_green_fading(green_bool);
       write_blue_fading(blue_bool);*/
-      
+
       fading_speed=fading_speed_in;
       //write_fading_speed(fading_speed_in);
 }
@@ -5485,7 +5558,7 @@ void restore_last_amb_color()
       RedSoftPwm=RedSoftPwm_old;
       GreenSoftPwm=GreenSoftPwm_old;
       BlueSoftPwm=BlueSoftPwm_old;
-      
+
       /*write_RedSoftPwm_t(RedSoftPwm);
       write_GreenSoftPwm_t(GreenSoftPwm);
       write_BlueSoftPwm_t(BlueSoftPwm);*/
@@ -5502,7 +5575,7 @@ void manage_amb_color_fading()
   {
     fading_started=true;
   if(led_update_cycles>fading_speed)
-      {  
+      {
       if(slope)
         {
           if(red_fading) {RedSoftPwm=RedSoftPwm+1;}
@@ -5517,12 +5590,12 @@ void manage_amb_color_fading()
         }
       if(((RedSoftPwm==MAX_PWM || RedSoftPwm==0) && red_fading) || ((GreenSoftPwm==MAX_PWM || GreenSoftPwm==0) && green_fading) || ((BlueSoftPwm==MAX_PWM || BlueSoftPwm==0) && blue_fading))
         {slope=!slope;}
-           
+
       led_update_cycles=0;
       }
    led_update_cycles=led_update_cycles+1;
   }
-  if(!red_fading && !green_fading && !blue_fading && fading_started)           
+  if(!red_fading && !green_fading && !blue_fading && fading_started)
     {
       led_update_cycles=0;
       fading_started=false;
@@ -5566,12 +5639,12 @@ void Read_Head_Info(bool force=false)
 }
 
 char I2C_read(byte i2c_register)
-{  
+{
   char byte_read;
   Wire.beginTransmission(SERIAL_ID_ADDR);      //starts communication
   Wire.write(i2c_register);                         //Sends the register we wish to read
   Wire.endTransmission();
-  
+
   Wire.requestFrom(SERIAL_ID_ADDR, 1);    // request 1 bytes from slave device SERIAL_ID_ADDR
   i2c_pre_millis=millis();
   while(Wire.available()==0 && !(i2c_timeout))
@@ -5581,18 +5654,18 @@ char I2C_read(byte i2c_register)
              i2c_timeout=true;
            }
     }   // slave may send less than requested
-  
+
     if(i2c_timeout)
       {
         return('?');      // return a byte as character
-      } 
+      }
     else
       {
         byte_read=Wire.read();
         return(byte_read);      // return a byte as character
       }
-      
-    
+
+
 }
 
 void kill_by_door()
@@ -5602,7 +5675,7 @@ void kill_by_door()
   MILL_MOTOR_OFF();
   SERVO1_OFF();                   //disable milling motor
   rpm=0;
-  
+
   //cli(); // Stop interrupts
   disable_heater();
 
@@ -5612,9 +5685,9 @@ void kill_by_door()
   disable_e0();
   disable_e1();
   disable_e2();
-  
+
   set_amb_color(MAX_PWM,0,0);
-  
+
   triggered_kill=true;
   Stopped = true;
 
@@ -5626,7 +5699,7 @@ void kill_by_door()
   LCD_ALERTMESSAGEPGM(MSG_KILLED);
   suicide();
   //while(1) { /* Intentionally left empty */ } // Wait for reset
-  
+
   RPI_ERROR_ACK_ON();
   ERROR_CODE=ERROR_DOOR_OPEN;
   
@@ -5653,7 +5726,7 @@ void kill()
   MILL_MOTOR_OFF();
   SERVO1_OFF();                   //disable milling motor
   rpm=0;
-  
+
   //cli(); // Stop interrupts
   disable_heater();
 
@@ -5663,9 +5736,9 @@ void kill()
   disable_e0();
   disable_e1();
   disable_e2();
-  
+
   set_amb_color(MAX_PWM,0,0);
-  
+
   triggered_kill=true;
   Stopped = true;
   quickStop();
@@ -5679,7 +5752,7 @@ void kill()
   LCD_ALERTMESSAGEPGM(MSG_KILLED);
   suicide();
   //while(1) { /* Intentionally left empty */ } // Wait for reset
-  
+
   RPI_ERROR_ACK_ON();
   ERROR_CODE=ERROR_KILLED;
   
@@ -5697,7 +5770,7 @@ void Stop()
     SERIAL_ERRORLNPGM(MSG_ERR_STOPPED);
     LCD_MESSAGEPGM(MSG_STOPPED);
   }
-  
+
   RPI_ERROR_ACK_ON();
   ERROR_CODE=ERROR_STOPPED;
 }
@@ -5778,6 +5851,7 @@ bool setTargetedHotend(int code){
   tmp_extruder = active_extruder;
   if(code_seen('T')) {
     tmp_extruder = code_value();
+    tmp_extruder = tool_extruder_mapping[tmp_extruder];
     if(tmp_extruder >= EXTRUDERS) {
       SERIAL_ECHO_START;
       switch(code){
@@ -5803,4 +5877,3 @@ bool setTargetedHotend(int code){
   }
   return false;
 }
-

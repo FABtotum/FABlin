@@ -85,7 +85,7 @@
 // #define MACHINE_UUID "00000000-0000-0000-0000-000000000000"
 
 // This defines the number of extruders
-#define EXTRUDERS 1
+#define EXTRUDERS 3
 
 //// The following define selects which power supply you have. Please choose the one that matches your setup
 // 1 = ATX
@@ -149,7 +149,7 @@
 //********** configuration for thermistor type HOTSWAP ********************//
 #define THERMISTOR_HOTSWAP
 
-#ifdef THERMISTOR_HOTSWAP 
+#ifdef THERMISTOR_HOTSWAP
 // START: This are auxiliary macros supporting up to ELEVEN (0-10) tables
 #define CONCAT(A,B)         A ## B
 #define EXPAND_CONCAT(A,B)  CONCAT(A, B)
@@ -175,7 +175,7 @@
 // START: This are auxiliary macros
 #define xstr(s) str(s)
 #define str(s) #s
-     
+
 #define THERMISTOR_HOTSWAP_SUPPORTED_TYPES_AS_STRING xstr(THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
 
 #define ORREP1(PTH_TYPE) PTH_TYPE == ARGN(0, THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
@@ -279,7 +279,7 @@
     //#define  DEFAULT_Kp 22.2
     //#define  DEFAULT_Ki 1.05
     //#define  DEFAULT_Kd 170
-    
+
     #define  DEFAULT_Kp 15
     #define  DEFAULT_Ki 5
     #define  DEFAULT_Kd 30
@@ -373,11 +373,11 @@
 
 // The pullups are needed if you directly connect a mechanical endswitch between the signal and ground pins.
 extern bool X_MIN_ENDSTOP_INVERTING;
-extern bool Y_MIN_ENDSTOP_INVERTING; 
-extern bool Z_MIN_ENDSTOP_INVERTING; 
-extern bool X_MAX_ENDSTOP_INVERTING; 
-extern bool Y_MAX_ENDSTOP_INVERTING; 
-extern bool Z_MAX_ENDSTOP_INVERTING; 
+extern bool Y_MIN_ENDSTOP_INVERTING;
+extern bool Z_MIN_ENDSTOP_INVERTING;
+extern bool X_MAX_ENDSTOP_INVERTING;
+extern bool Y_MAX_ENDSTOP_INVERTING;
+extern bool Z_MAX_ENDSTOP_INVERTING;
 //#define DISABLE_MAX_ENDSTOPS
 //#define DISABLE_MIN_ENDSTOPS
 
@@ -465,7 +465,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 //    #define RIGHT_PROBE_BED_POSITION 155
 //    #define BACK_PROBE_BED_POSITION 95
 //    #define FRONT_PROBE_BED_POSITION -58
-    
+
     // set the rectangle in which to probe
     #define LEFT_PROBE_BED_POSITION 20
     #define RIGHT_PROBE_BED_POSITION 198
