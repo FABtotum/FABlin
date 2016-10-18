@@ -388,6 +388,10 @@ unsigned int plateconn_board_version=0;
 unsigned int hotplate_board_version=0;
 unsigned int general_assembly_version=0;
 unsigned int installed_head_id=0;
+
+bool head_is_dummy = false;  // Signals head is Dummy (does not support I²C), depending on installed head id
+bool head_placed = false;
+
 //===========================================================================
 //=============================Private Variables=============================
 //===========================================================================
@@ -493,7 +497,6 @@ byte SERIAL_HEAD_5=0;
 byte SERIAL_HEAD_6=0;
 byte SERIAL_HEAD_7=0;
 
-bool head_placed=false;
 
 unsigned long i2c_pre_millis=0;
 bool i2c_timeout=false;
@@ -653,105 +656,103 @@ void servo_init()
 
 void FabtotumIO_init()
 {
-BEEP_ON();
+   BEEP_ON()
 
-pinMode(RED_PIN,OUTPUT);
-pinMode(GREEN_PIN,OUTPUT);
-SET_OUTPUT(BLUE_PIN);
-pinMode(HOT_LED_PIN,OUTPUT);
-pinMode(DOOR_OPEN_PIN,INPUT);
-pinMode(HEAD_LIGHT_PIN,OUTPUT);
-pinMode(LASER_GATE_PIN,OUTPUT);
-pinMode(MILL_MOTOR_ON_PIN,OUTPUT);
-pinMode(NOT_SERVO1_ON_PIN,OUTPUT);
-pinMode(NOT_SERVO2_ON_PIN,OUTPUT);
+   pinMode(RED_PIN,OUTPUT);
+   pinMode(GREEN_PIN,OUTPUT);
+   SET_OUTPUT(BLUE_PIN);
+   pinMode(HOT_LED_PIN,OUTPUT);
+   pinMode(DOOR_OPEN_PIN,INPUT);
+   pinMode(HEAD_LIGHT_PIN,OUTPUT);
+   pinMode(LASER_GATE_PIN,OUTPUT);
+   pinMode(MILL_MOTOR_ON_PIN,OUTPUT);
+   pinMode(NOT_SERVO1_ON_PIN,OUTPUT);
+   pinMode(NOT_SERVO2_ON_PIN,OUTPUT);
 
-//setting analog as input
-pinMode(MAIN_CURRENT_SENSE_PIN,INPUT);
-pinMode(MON_5V_PIN,INPUT);
-pinMode(MON_24V_PIN,INPUT);
-pinMode(PRESSURE_ANALOG_PIN,INPUT);
+   //setting analog as input
+   pinMode(MAIN_CURRENT_SENSE_PIN,INPUT);
+   pinMode(MON_5V_PIN,INPUT);
+   pinMode(MON_24V_PIN,INPUT);
+   pinMode(PRESSURE_ANALOG_PIN,INPUT);
 
-pinMode(NOT_REEL_LENS_OPEN_PIN,OUTPUT);
+   pinMode(NOT_REEL_LENS_OPEN_PIN,OUTPUT);
 
-//POWER MABNAHGEMENT
-pinMode(51, OUTPUT);  //set external PSU shutdown pin (Optional on I2C)
-digitalWrite(51, HIGH);
+   //fastio init
+   // SET_INPUT(IO)  ; SET_OUTPUT(IO);
+   SET_INPUT(WIRE_END_PIN);
+   SET_OUTPUT(NOT_RASPI_PWR_ON_PIN);
+   SET_INPUT(NOT_SECURE_SW_PIN);
+   SET_OUTPUT(NOT_REEL_LENS_OPEN_PIN);
+   SET_OUTPUT(LIGHT_SIGN_ON_PIN);
+   SET_OUTPUT(RPI_RECOVERY_PIN);
 
-//fastio init
-// SET_INPUT(IO)  ; SET_OUTPUT(IO);
-SET_INPUT(WIRE_END_PIN);
-SET_OUTPUT(NOT_RASPI_PWR_ON_PIN);
-SET_INPUT(NOT_SECURE_SW_PIN);
-SET_OUTPUT(NOT_REEL_LENS_OPEN_PIN);
-SET_OUTPUT(LIGHT_SIGN_ON_PIN);
-SET_OUTPUT(RPI_RECOVERY_PIN);
+   //set output
+   RED_OFF();
+   GREEN_OFF();
+   BLUE_OFF();
+   analogWrite(BLUE_PIN,255);
 
+   //analogWrite(HEATER_0_PIN,0);
 
-//set output
-RED_OFF();
-GREEN_OFF();
-BLUE_OFF();
-analogWrite(BLUE_PIN,255);
+   HOT_LED_OFF();
 
-//analogWrite(HEATER_0_PIN,0);
+   HEAD_LIGHT_OFF();
+   LASER_GATE_OFF();
 
-HOT_LED_OFF();
+   MILL_MOTOR_OFF();
 
-HEAD_LIGHT_OFF();
-LASER_GATE_OFF();
+   SERVO1_OFF();
+   SERVO2_OFF();
 
-MILL_MOTOR_OFF();
+   RASPI_PWR_ON();
 
-SERVO1_OFF();
-SERVO2_OFF();
+   LIGHT_SIGN_ON();
 
-RASPI_PWR_ON();
+   //TCCR1A= _BV(COM1A1) | _BV(COM1B1) | _BV(WGM10);
+   //TCCR1B= _BV(WGM12) | _BV(CS11) | _BV(CS10);
 
-LIGHT_SIGN_ON();
+   FabSoftPwm_TMR=0;
+   FabSoftPwm_LMT=MAX_PWM;
+   HeadLightSoftPwm=0;
+   LaserSoftPwm=0;
+   RedSoftPwm=0;
+   GreenSoftPwm=0;
+   BlueSoftPwm=0;
 
-//TCCR1A= _BV(COM1A1) | _BV(COM1B1) | _BV(WGM10);
-//TCCR1B= _BV(WGM12) | _BV(CS11) | _BV(CS10);
+   servos[0].write(SERVO_SPINDLE_ZERO);       //set Zero POS for SERVO1  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
+   servos[1].write(950);        //set Zero POS for SERVO2  (servo probe)
 
-FabSoftPwm_TMR=0;
-FabSoftPwm_LMT=MAX_PWM;
-HeadLightSoftPwm=0;
-LaserSoftPwm=0;
-RedSoftPwm=0;
-GreenSoftPwm=0;
-BlueSoftPwm=0;
+   triggered_kill=false;
+   enable_door_kill=true;
+   rpm = 0;
 
-servos[0].write(SERVO_SPINDLE_ZERO);       //set Zero POS for SERVO1  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
-servos[1].write(950);        //set Zero POS for SERVO2  (servo probe)
+   switch (installed_head_id)
+   {
+            // Direct-drive?
+      case 3:  // Milling V2
+         head_is_dummy = true;
+         break;
+      default:
+         head_is_dummy = false;
+         Wire.begin();
+   }
 
-triggered_kill=false;
-enable_door_kill=true;
-rpm = 0;
-/*fading_speed=200;
-fading_started=false;
-led_update_cycles=0;
-red_fading=false;
-green_fading=false;
-blue_fading=false;
-slope=true;*/
+   /*fading_speed=200;
+   fading_started=false;
+   led_update_cycles=0;
+   red_fading=false;
+   green_fading=false;
+   blue_fading=false;
+   slope=true;*/
+   set_amb_color(0,0,0);
+   set_amb_color_fading(true,true,false,fading_speed);
 
-set_amb_color(0,0,0);
-set_amb_color_fading(true,true,false,fading_speed);
-
-
-Read_Head_Info();
-
-if (!silent){
-  _delay_ms(50);
-  BEEP_OFF();
-  _delay_ms(30);
-  BEEP_ON();
-  _delay_ms(50);
-  BEEP_OFF();
-}
-
-
-
+   _delay_ms(50);
+   BEEP_OFF()
+   _delay_ms(30);
+   BEEP_ON()
+   _delay_ms(50);
+   BEEP_OFF()
 }
 
 void setup()
@@ -4495,43 +4496,41 @@ void process_commands()
         SERIAL_PROTOCOLLN(fab_batch_number);
       }
       break;
-      
+
     case 764 :  // M764 - read FABtotum Personal Fabricator Main Controller control code of production batch number
       {
         SERIAL_PROTOCOLLN(fab_control_batch_number);
       }
       break;
-      
+
     case 765 :  // M765 - read FABtotum Personal Fabricator Firmware Version
       {
          SERIAL_PROTOCOLLN(STRING_BUILD_VERSION);
       }
       break;
-    
+
     case 766 :  // M766 - read FABtotum Personal Fabricator Firmware Build Date and Time
       {
          SERIAL_PROTOCOLLN(STRING_BUILD_DATE);
       }
       break;
-      
+
     case 767 :  // M767 - read FABtotum Personal Fabricator Firmware Update Author
       {
          SERIAL_PROTOCOLLN(STRING_CONFIG_H_AUTHOR);
       }
       break;
-      
+
     case 779 :  // M779 - force head ID reading after reset /for testing purpose only
       {
-         Read_Head_Info();
-      
-        if (!silent){
-          _delay_ms(50);
-          BEEP_OFF()
-          _delay_ms(30);
-          BEEP_ON()
-          _delay_ms(50);
-          BEEP_OFF()
-          }
+         Read_Head_Info(true);
+
+        _delay_ms(50);
+        BEEP_OFF()
+        _delay_ms(30);
+        BEEP_ON()
+        _delay_ms(50);
+        BEEP_OFF()
       }
       break;
      
@@ -5532,37 +5531,39 @@ void manage_amb_color_fading()
 }
 
 
-void Read_Head_Info()
+void Read_Head_Info(bool force=false)
 {
-  Wire.begin();        // join i2c bus (address optional for master)
-  
-  SERIAL_HEAD_0=I2C_read(SERIAL_N_FAM_DEV_CODE);
-  SERIAL_HEAD_1=I2C_read(SERIAL_N_0);
-  SERIAL_HEAD_2=I2C_read(SERIAL_N_1);
-  SERIAL_HEAD_3=I2C_read(SERIAL_N_2);
-  SERIAL_HEAD_4=I2C_read(SERIAL_N_3);
-  SERIAL_HEAD_5=I2C_read(SERIAL_N_4);
-  SERIAL_HEAD_6=I2C_read(SERIAL_N_5);
-  SERIAL_HEAD_7=I2C_read(SERIAL_N_CRC);
-  
-  i2c_timeout=false;
-  
-  if(SERIAL_HEAD_0==63 && SERIAL_HEAD_1==63 && SERIAL_HEAD_2==63 && SERIAL_HEAD_3==63 && SERIAL_HEAD_4==63 && SERIAL_HEAD_5==63 && SERIAL_HEAD_6==63 && SERIAL_HEAD_7==63)
-    {
-       head_placed=false;
-    }
-  else
-    {
-       head_placed=true;
-    }  
-    
-    /* installed_head_id!=0{
-    head_placed=true;
-    }else{
-    head_placed=false;
-    }*/
+   // Dummy heads can't be read...
+   if (head_is_dummy)
+   {
+      // ...unless you force it
+      if (force) {
+         Wire.begin();
+      } else {
+         return;
+      }
+   }
 
-}  
+   SERIAL_HEAD_0=I2C_read(SERIAL_N_FAM_DEV_CODE);
+   SERIAL_HEAD_1=I2C_read(SERIAL_N_0);
+   SERIAL_HEAD_2=I2C_read(SERIAL_N_1);
+   SERIAL_HEAD_3=I2C_read(SERIAL_N_2);
+   SERIAL_HEAD_4=I2C_read(SERIAL_N_3);
+   SERIAL_HEAD_5=I2C_read(SERIAL_N_4);
+   SERIAL_HEAD_6=I2C_read(SERIAL_N_5);
+   SERIAL_HEAD_7=I2C_read(SERIAL_N_CRC);
+
+   i2c_timeout=false;
+
+   if(SERIAL_HEAD_0==63 && SERIAL_HEAD_1==63 && SERIAL_HEAD_2==63 && SERIAL_HEAD_3==63 && SERIAL_HEAD_4==63 && SERIAL_HEAD_5==63 && SERIAL_HEAD_6==63 && SERIAL_HEAD_7==63)
+   {
+      head_placed=false;
+   }
+   else
+   {
+      head_placed=true;
+   }
+}
 
 char I2C_read(byte i2c_register)
 {  

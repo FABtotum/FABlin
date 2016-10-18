@@ -205,7 +205,7 @@ void refresh_cmd_timeout(void);
 
 void manage_fab_soft_pwm(void);
 
-void Read_Head_Info();
+void Read_Head_Info(bool);
 char I2C_read(byte i2c_register);
 
 #ifdef FAST_PWM_FAN
@@ -264,6 +264,7 @@ extern unsigned long stoptime;
 
 extern unsigned int ERROR_CODE;
 
+extern bool head_is_dummy;
 extern bool head_placed;
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
