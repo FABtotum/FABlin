@@ -8,7 +8,26 @@ The changes made are focused on multipurpose personal fabrication and hardware c
 
 Supported G-codes: http://forum.fabtotum.cc/showthread.php?1364-Supported-Gcodes
 
-## Changelog
+
+Compiling
+---------
+
+### with Arduino IDE
+Now FABlin requires the custom _SmartComm_ module, stored inside libraries. To correctly compile the firmware with Arduino you must set the folder where this repository is checked out as Arduino's sketchbook folder inside Arudino's preferences. Alternatively you can manually copy the [FABlin/libraries/SmartComm](libraries/SmartComm) folder into your current sketchbook's libraries folder.
+
+For further info refer to https://www.arduino.cc/en/Guide/Environment#toc7.
+
+
+Changelog
+---------
+
+### Version: 1.0.0096 (development)
+* Support for configurable communication with mounted heads
+* New g-codes:
+  - `M563` Configure tools
+  - `M575` Set communication interface parameters
+  - `M790` Send one or multiple commands to the head
+
 ### Version: 1.0.0095.1 - 2016-05-02
 * Fixed a bug with timing when using M3,M4,M5
 * Subtractive gcodes will not require a G4 before M5 or after M3 and M4 like before..
@@ -24,7 +43,7 @@ Supported G-codes: http://forum.fabtotum.cc/showthread.php?1364-Supported-Gcodes
 * Fixed G28 inability to probe the center of the work-area when z_max_endstop is triggered
 * Sounds alerts revamp to be more clear, silent mode can be triggered on some commands that usually emit sound.
 *  M735 S1-0 enable /disable silent mode (less beeps all around)
-* If door safety is enabled, opening the door will trigger an instant emergency stop of all movement and routines, reverting the unit to a safe situation. Door safety can still be enabled or disabled from the FABUI’s settings>hardware menu.
+* If door safety is enabled, opening the door will trigger an instant emergency stop of all movement and routines, reverting the unit to a safe situation. Door safety can still be enabled or disabled from the FABUIâ€™s settings>hardware menu.
 * Inactivity timer changed to 10 minutes for longer heating times.
 * Fan management for V1 and V2 heads (SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE behaviour modified: V2 heads won't have mandatory auto-cooling unless wanted, while V1 will have auto-cooling unless configured as disabled.) This reduces the heating time with V2 heads while avoiding clogging due to prolonged overheating in V1 heads.
 * Added optional external power supply shutdown procedure (M786).
