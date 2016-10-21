@@ -1642,11 +1642,11 @@ inline void forward_command (uint8_t interface, const char* line)
          return;
 
       case 4:
-         if (!Serial4.isListening()) {
+         if (!SmartHead.isListening()) {
             error = true;
             break;
          }
-         Serial4.write(line);
+         SmartHead.write(line);
          return;
 
       default:
@@ -2777,7 +2777,7 @@ void process_commands()
       #endif
       #ifdef ULTIPANEL
         powersupply = false;
-        LCD_MESSAGEPGM(MACHINE_NAME" "MSG_OFF".");
+        LCD_MESSAGEPGM(MACHINE_NAME " " MSG_OFF ".");
         lcd_update();
       #endif
 	  break;
@@ -4826,13 +4826,13 @@ void process_commands()
               #define E1_ENABLE_PIN      30
              */
              
-            #define X_STEP_PIN         26
+            /*#define X_STEP_PIN         26
             #define X_DIR_PIN          28
             #define X_ENABLE_PIN       24
 
             #define Y_STEP_PIN         36
             #define Y_DIR_PIN          34
-            #define Y_ENABLE_PIN       30
+            #define Y_ENABLE_PIN       30*/
             
             
             axis_steps_per_unit[0]=177.78; 
@@ -4840,13 +4840,13 @@ void process_commands()
             
           }
               //disable 5th axis
-              #define X_STEP_PIN         54
+              /*#define X_STEP_PIN         54
               #define X_DIR_PIN          55
               #define X_ENABLE_PIN       38
               
               #define Y_STEP_PIN         60
               #define Y_DIR_PIN          61
-              #define Y_ENABLE_PIN       56
+              #define Y_ENABLE_PIN       56*/
               
               axis_steps_per_unit[0]=72.58;
               axis_steps_per_unit[1]=72.58;
