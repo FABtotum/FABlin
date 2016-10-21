@@ -14,12 +14,11 @@ Compiling
 
 ### with Arduino IDE
 
-Now FABlin requires the custom _SmartComm_ module, stored inside
-libraries. To correctly compile the firmware with Arduino you must set
-the folder where this repository is checked out as Arduino's sketchbook
-folder inside Arduino's preferences. Alternatively you can manually
-copy the [FABlin/libraries/SmartComm](libraries/SmartComm) folder into
-your current sketchbook's libraries folder.
+To correctly compile the firmware with Arduino you
+must set the folder where this repository is checked out as Arduino's
+sketchbook folder inside Arduino's preferences. Alternatively you can
+manually copy the [FABlin/libraries/SmartComm](libraries/SmartComm)
+folder into your current sketchbook's libraries folder.
 
 For further info refer to
 https://www.arduino.cc/en/Guide/Environment#toc7.
