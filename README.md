@@ -8,7 +8,50 @@ The changes made are focused on multipurpose personal fabrication and hardware c
 
 Supported G-codes: http://forum.fabtotum.cc/showthread.php?1364-Supported-Gcodes
 
-## Changelog
+
+Compiling
+---------
+
+### with Arduino IDE
+
+Now FABlin requires the custom _SmartComm_ module, stored inside 
+libraries. To correctly compile the firmware with Arduino you must set 
+the folder where this repository is checked out as Arduino's sketchbook 
+folder inside Arduino's preferences. Alternatively you can manually 
+copy the [FABlin/libraries/SmartComm](libraries/SmartComm) folder into 
+your current sketchbook's libraries folder.
+
+For further info refer to 
+https://www.arduino.cc/en/Guide/Environment#toc7.
+
+
+### with PlatformIO
+
+A default `platformio.ini` file with correct directories definitions is 
+now included in the repository. To compile the firmware simply run:
+
+  platformio run
+
+To directly flash the firmware onto TOTUMduino, run:
+
+  platformio run -t program
+
+`platformio.ini` has a default definition for using an AVRISP-mk2 usb 
+programmer. To flash or upload the firmware through other means refer 
+to [platformio 
+documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
+
+
+Changelog
+---------
+
+### Version: 1.0.0096 (development)
+* Support for configurable communication with mounted heads
+* New g-codes:
+  - `M563` Configure tools
+  - `M575` Set communication interface parameters
+  - `M790` Send one or multiple commands to the head
+
 ### Version: 1.0.0095.1 - 2016-05-02
 * Fixed a bug with timing when using M3,M4,M5
 * Subtractive gcodes will not require a G4 before M5 or after M3 and M4 like before..
