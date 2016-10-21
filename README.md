@@ -13,9 +13,33 @@ Compiling
 ---------
 
 ### with Arduino IDE
-Now FABlin requires the custom _SmartComm_ module, stored inside libraries. To correctly compile the firmware with Arduino you must set the folder where this repository is checked out as Arduino's sketchbook folder inside Arudino's preferences. Alternatively you can manually copy the [FABlin/libraries/SmartComm](libraries/SmartComm) folder into your current sketchbook's libraries folder.
 
-For further info refer to https://www.arduino.cc/en/Guide/Environment#toc7.
+Now FABlin requires the custom _SmartComm_ module, stored inside
+libraries. To correctly compile the firmware with Arduino you must set
+the folder where this repository is checked out as Arduino's sketchbook
+folder inside Arduino's preferences. Alternatively you can manually
+copy the [FABlin/libraries/SmartComm](libraries/SmartComm) folder into
+your current sketchbook's libraries folder.
+
+For further info refer to
+https://www.arduino.cc/en/Guide/Environment#toc7.
+
+
+### with PlatformIO
+
+A default `platformio.ini` file with correct directories definitions is
+now included in the repository. To compile the firmware simply run:
+
+  platformio run
+
+To directly flash the firmware onto TOTUMduino, run:
+
+  platformio run -t program
+
+`platformio.ini` has a default definition for using an AVRISP-mk2 usb
+programmer. To flash or upload the firmware through other means refer
+to [platformio
+documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
 
 
 Changelog
@@ -54,7 +78,7 @@ Changelog
    * ERROR_LONG_EXTRUSION 124 (when extruding too much!)
 * Added command M793 to set the installed head version (dev only).
 
-   to set it:    
+   to set it:
     M793 S1  (V1 print+mill)
     M793 S2  (V2 print only)
     M793 S3  (V2 milling only)

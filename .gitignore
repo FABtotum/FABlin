@@ -7,3 +7,4 @@ applet/
 *.orig
 *.rej
 *.bak
+.piolibdeps
