@@ -15,7 +15,7 @@
 // User-specified version info of this build to display in [Pronterface, etc] terminal window during
 // startup. Implementation of an idea by Prof Braino to inform user that any changes made to this
 // build by the user have been successfully uploaded into firmware.
-#define STRING_BUILD_VERSION  "V 1.0.0095.1"
+#define STRING_BUILD_VERSION  "V 1.0.0095.2"
 #define STRING_BUILD_DATE __DATE__ " " __TIME__ // build date and time
 #define STRING_CONFIG_H_AUTHOR "FABteam" // Who made the changes.
 
@@ -503,7 +503,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
                                         // Be sure you have this distance over your Z_MAX_POS in case
 
   #define XY_TRAVEL_SPEED 10000         // X and Y axis travel speed between probes, in mm/min
-
+  #define XY_SLOW_FEEDRATE 50
   #define Z_RAISE_BEFORE_PROBING 42    //How much the extruder will be raised before traveling to the first probing point.
   #define Z_RAISE_BETWEEN_PROBINGS 5  //How much the extruder will be raised when traveling from between next probing points
 
