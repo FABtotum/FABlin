@@ -45,12 +45,8 @@ documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
 Changelog
 ---------
 
-### Version: 1.0.0096 (development)
-* Support for configurable communication with mounted heads
-* New g-codes:
-  - `M563` Configure tools
-  - `M575` Set communication interface parameters
-  - `M790` Send one or multiple commands to the head
+### Version: 1.0.0096 (release candidate 1)
+* Fixed bed hitting the bottom during G27 / G28
 
 ### Version: 1.0.0095.1 - 2016-05-02
 * Fixed a bug with timing when using M3,M4,M5
