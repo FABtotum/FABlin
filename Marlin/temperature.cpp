@@ -263,6 +263,7 @@ void PID_autotune(float temp, int extruder, int ncycles)
 
  for(;;) {
 
+    while (!temp_meas_ready);
     if(temp_meas_ready == true) { // temp sample ready
       updateTemperaturesFromRawValues();
 
