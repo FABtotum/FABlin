@@ -1,6 +1,34 @@
 Revision history
 ================
 
+Rev 1.0.0095.1 (2016-05-02)
+---------------------------
+- Fixed a bug with timing when using M3,M4,M5
+- Subtractive gcodes will not require a G4 before M5 or after M3 and M4 like before..
+  M3,M4 and M5 will in fact start spinning after 1.5 seconds the last movement operation is completed.
+  This allows to use some standard Gcode Posts processors instead of manually editing the code with pauses
+
+Rev 1.0.0095 (2016-04-22)
+-------------------------
+- Default Baud rate changed to 250000 bps.
+- General Error management & Endstop management revamp.
+- Changed sound notifications
+- Moved G28 homing position to the effective center of the build area point of rotation when setting the screws.The point is in the center of the print area in the V2 heated bed.
+- Fixed G28 inability to probe the center of the work-area when z_max_endstop is triggered
+- Sounds alerts revamp to be more clear, silent mode can be triggered on some commands that usually emit sound.
+  - M735 S1-0 enable /disable silent mode (less beeps all around)
+- If door safety is enabled, opening the door will trigger an instant emergency stop of all movement and routines, reverting the unit to a safe situation. Door safety can still be enabled or disabled from the FABUIs settings>hardware menu.
+- Inactivity timer changed to 10 minutes for longer heating times.
+- Fan management for V1 and V2 heads (SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE behaviour modified: V2 heads won't have mandatory auto-cooling unless wanted, while V1 will have auto-cooling unless configured as disabled.) This reduces the heating time with V2 heads while avoiding clogging due to prolonged overheating in V1 heads.
+- Added optional external power supply shutdown procedure (M786).
+- Added new error codes. Min_temp extrusion now is triggered on the FABUI as well:
+  - ERROR_AMBIENT_TEMP 122 (when ambient temp is < extruder_0_mintemp
+  - ERROR_EXTRUDE_MINTEMP 123 (when cold extrusion is triggered, M302 S0
+  - to disable)
+  - ERROR_LONG_EXTRUSION 124 (when extruding too much!)
+- Added command M793 to set the installed head version (dev only).
+  - All codes related to the head have been discontinued in favour of a single ID.
+
 Rev 1.0.007 (26/01/2015)
 -----------------------
 - review of Autobed leveling procedure. Fixing of probed points' X and Y coordinates signs
