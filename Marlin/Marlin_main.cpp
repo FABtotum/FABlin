@@ -4754,8 +4754,22 @@ void process_commands()
     break;
     case 802:   // M802 - returns supported thermistor types by index
     {
-      int value;
-          SERIAL_PROTOCOLLN(THERMISTOR_HOTSWAP_SUPPORTED_TYPES_AS_STRING);
+      if (code_seen('P'))
+      {
+        unsigned short tidx = code_value_long();
+        short (*table)[][2] = (short (*)[][2])(thermistors_map[tidx]);
+        // Dump table at pos P
+        for (unsigned int row = 0; row < thermistors_map_len[tidx]; row++)
+        {
+          SERIAL_ECHO((short)pgm_read_word(&(*table)[row][0]));
+          SERIAL_ECHOPGM(", ");
+          SERIAL_ECHOLN((short)pgm_read_word(&(*table)[row][1]));
+        }
+      }
+      else
+      {
+        SERIAL_PROTOCOLLN(THERMISTOR_HOTSWAP_SUPPORTED_TYPES_AS_STRING);
+      }
     }
     break;    
     
