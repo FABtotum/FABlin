@@ -27,6 +27,7 @@
     http://reprap.org/pipermail/reprap-dev/2011-May/003323.html
  */
 
+#include <errno.h>
 #include "Marlin.h"
 
 #ifdef ENABLE_AUTO_BED_LEVELING
