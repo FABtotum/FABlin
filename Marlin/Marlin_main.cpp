@@ -1597,6 +1597,7 @@ void process_commands()
 {
   unsigned long codenum; //throw away variable
   char *starpos = NULL;
+  char saved_monitor_secure_endstop;
 #ifdef ENABLE_AUTO_BED_LEVELING
   float x_tmp, y_tmp, z_tmp, real_z;
 #endif
@@ -1675,11 +1676,13 @@ void process_commands()
         store_last_amb_color();
         set_amb_color(0,255,0);       
         
+        saved_monitor_secure_endstop = monitor_secure_endstop;
         saved_feedrate = feedrate;
         saved_feedmultiply = feedmultiply;
         feedmultiply = 100;
         previous_millis_cmd = millis();
   
+        monitor_secure_endstop = false;
         enable_endstops(true);
         
         /*if((READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)&&(!home_Z_reverse)){
@@ -1918,7 +1921,7 @@ void process_commands()
 
        st_synchronize();
        enable_endstops(true);
-       
+       monitor_secure_endstop = saved_monitor_secure_endstop;
 
       break;
 
