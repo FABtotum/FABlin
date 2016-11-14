@@ -122,8 +122,6 @@ void Config_StoreSettings()
 void Config_PrintSettings()
 {  // Always have this function, even with EEPROM_SETTINGS disabled, the current values will be shown
 
-    unsigned long BaudRate=BAUDRATE;
-    
     //SERIAL_ECHO_START;
     SERIAL_ECHOLNPGM("FABtotum TOTUMDUINO");
     SERIAL_ECHOPAIR(" Batch Number: ", (unsigned long)fab_batch_number);
@@ -131,6 +129,7 @@ void Config_PrintSettings()
 
     SERIAL_ECHOLNPGM("FABlin");
     SERIAL_ECHOLNPGM(" Version: " STRING_BUILD_VERSION);
+    SERIAL_ECHOPAIR(" Baudrate: ", (unsigned long)BAUDRATE); 
     //SERIAL_ECHO_START;
 
     SERIAL_ECHOLNPGM("Steps per unit:");
