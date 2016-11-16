@@ -45,5 +45,12 @@ documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
 Changelog
 ---------
 
-### Version: 1.0.0096 (release candidate 1)
-* Fixed bed hitting the bottom during G27 / G28
+### Version: 1.0.0096
+
+- Fixed G27/G28 behaviour near axis limits and silenced verbose error messages
+- Updated default thermistor table for the extruder
+- Changed M503 and other diagnostic outputs
+- Fixed G29 hitting Y endstop
+
+
+For complete changelog, see [ChangeLog](ChangeLog.txt).
