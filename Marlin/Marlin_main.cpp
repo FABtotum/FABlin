@@ -1898,25 +1898,18 @@ void process_commands()
         feedmultiply = saved_feedmultiply;
         previous_millis_cmd = millis();
         endstops_hit_on_purpose();
-
-        z_probe_activation=true;
-        home_Z_reverse=false;
-      
-        restore_last_amb_color();
       
         enable_endstops(false);
 
-        //Z movement move to 50 if g27 just happened.
-        if ( (home_all_axis && !z_probe_activation) || code_seen(axis_codes[X_AXIS]) || code_seen(axis_codes[Y_AXIS]) )
+        // Move away from the endstops only if doing G28 (without parameters!)
+        if (!(z_probe_activation && !code_seen(axis_codes[X_AXIS]) && !code_seen(axis_codes[X_AXIS])))
         {
-          if (x_axis_endstop_sel) {
-            destination[X_AXIS] = current_position[X_AXIS]-2; 
-            destination[Y_AXIS] = current_position[Y_AXIS]+2; 
-          }
-          else {
-            destination[X_AXIS] = current_position[X_AXIS]+2; 
-            destination[Y_AXIS] = current_position[Y_AXIS]+2;
-          } 
+          if (x_axis_endstop_sel)
+            destination[X_AXIS] = current_position[X_AXIS]-2;
+          else
+            destination[X_AXIS] = current_position[X_AXIS]+2;
+
+          destination[Y_AXIS] = current_position[Y_AXIS]+2; 
           destination[Z_AXIS] = current_position[Z_AXIS]; 
           destination[E_AXIS] = current_position[E_AXIS];    
           feedrate = max_feedrate[Z_AXIS];
@@ -1929,6 +1922,10 @@ void process_commands()
 
           st_synchronize();
         }
+
+        z_probe_activation=true;
+        home_Z_reverse=false;
+        restore_last_amb_color();
         enable_endstops(true);
         monitor_secure_endstop = saved_monitor_secure_endstop;
       }
