@@ -17,9 +17,9 @@
 #include <avr/eeprom.h>
 #include <avr/interrupt.h>
 
-
 #include "fastio.h"
 #include "Configuration.h"
+#include "Configuration_heads.h"
 #include "pins.h"
 
 #ifndef AT90USB
@@ -311,6 +311,8 @@ extern unsigned int hotplate_board_version;
 extern unsigned int general_assembly_version;
 extern unsigned int installed_head_id;
 
+extern uint8_t working_mode;
+
 //FABtotum IO definition
 #define RED_ON()	WRITE(RED_PIN,LOW)
 #define RED_OFF()	WRITE(RED_PIN,HIGH)
@@ -320,6 +322,7 @@ extern unsigned int installed_head_id;
 #define BLUE_OFF()	WRITE(BLUE_PIN,HIGH)
 
 #define MAX_PWM         127
+#define PWM_SCALE (256/(MAX_PWM+1))
 
 #define HOT_LED_ON()	WRITE(HOT_LED_PIN,HIGH)
 #define HOT_LED_OFF()	WRITE(HOT_LED_PIN,LOW)
@@ -422,5 +425,10 @@ extern unsigned int installed_head_id;
 #define I2C_MAX_TIMEOUT 1000
 
 #define AVG_MEASURED_Z_MAX     1
+
+#define WORKING_MODE_FFF   1
+#define WORKING_MODE_LASER 2
+#define WORKING_MODE_CNC   3
+#define MACHINE_MODE_SCAN  4
 
 #endif

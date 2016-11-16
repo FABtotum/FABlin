@@ -27,7 +27,9 @@
     http://reprap.org/pipermail/reprap-dev/2011-May/003323.html
  */
 
+
 #include <errno.h>
+#include <Wire.h>
 #include "Marlin.h"
 
 #ifdef ENABLE_AUTO_BED_LEVELING
@@ -48,7 +50,6 @@
 #include "language.h"
 #include "pins_arduino.h"
 #include "math.h"
-#include "Wire.h"
 
 #ifdef BLINKM
 #include "BlinkM.h"
@@ -330,6 +331,7 @@ float extruder_offset[NUM_EXTRUDER_OFFSETS][EXTRUDERS] = {
 #endif
 uint8_t active_extruder = 0;
 int fanSpeed=0;
+
 #ifdef SERVO_ENDSTOPS
   int servo_endstops[] = SERVO_ENDSTOPS;
   int servo_endstop_angles[] = SERVO_ENDSTOP_ANGLES;
@@ -427,12 +429,11 @@ unsigned long stoptime=0;
 
 static uint8_t tmp_extruder;
 
-
-bool Stopped=false;
-
 #if NUM_SERVOS > 0
   Servo servos[NUM_SERVOS];
 #endif
+
+bool Stopped=false;
 
 bool CooldownNoWait = true;
 bool target_direction;
@@ -444,7 +445,7 @@ boolean chdkActive = false;
 #endif
 
 unsigned int LaserSoftPwm;
-unsigned int FabSoftPwm_TMR;
+//unsigned int FabSoftPwm_TMR;
 unsigned int HeadLightSoftPwm;
 unsigned int FabSoftPwm_LMT;
 unsigned int RedSoftPwm;
@@ -511,6 +512,12 @@ uint8_t extruder_0_thermistor_index = THERMISTOR_HOTSWAP_DEFAULT_INDEX;
 #ifdef SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE
 bool auto_fan_on_temp_change = true;
 #endif
+
+uint8_t working_mode = WORKING_MODE_FFF;
+
+uint8_t laser_powah = 0;
+bool laser_force = false;
+
 
 //===========================================================================
 //=============================Routines======================================
@@ -714,7 +721,7 @@ LIGHT_SIGN_ON();
 //TCCR1A= _BV(COM1A1) | _BV(COM1B1) | _BV(WGM10);
 //TCCR1B= _BV(WGM12) | _BV(CS11) | _BV(CS10);
 
-FabSoftPwm_TMR=0;
+//FabSoftPwm_TMR=0;
 FabSoftPwm_LMT=MAX_PWM;
 HeadLightSoftPwm=0;
 LaserSoftPwm=0;
@@ -1592,6 +1599,72 @@ void refresh_cmd_timeout(void)
     }
   } //retract
 #endif //FWRETRACT
+
+void working_mode_change (uint8_t new_mode, bool reset = false)
+{
+  if (new_mode == working_mode && !reset)
+    return;
+
+   // Deinit previous mode
+   switch (working_mode)
+   {
+      case WORKING_MODE_LASER:
+        laser_force = false;
+        laser_powah = 0;
+         // Disable supplementary +24v power for fabtotum laser head
+         if (installed_head_id == FAB_HEADS_laser_ID) {
+           WRITE(HEATER_0_PIN, 0);
+           //enable_heater();
+         }
+         break;
+   }
+
+   // Init new mode
+   switch (new_mode)
+   {
+      case WORKING_MODE_LASER:
+         // Laser tools use servo 0 pwm, in the future this may be configurable
+         servos[0].detach();
+         MILL_MOTOR_OFF();
+
+         // Enable supplementary +24v power for fabtotum laser head
+         if (installed_head_id == FAB_HEADS_laser_ID) {
+            disable_heater();
+            WRITE(HEATER_0_PIN, 1);
+         }
+         
+         //SET_OUTPUT(LED_PIN);
+         break;
+
+      case WORKING_MODE_CNC:
+         servo_init();
+         break;
+   }
+   
+   working_mode = new_mode;
+}
+
+void working_mode_echo ()
+{
+  switch (working_mode)
+  {
+    case WORKING_MODE_FFF:
+      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_FFF);
+      break;
+
+    case WORKING_MODE_LASER:
+      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_LASER);
+      break;
+
+    case WORKING_MODE_CNC:
+      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_CNC);
+      break;
+
+    default:
+      SERIAL_ECHOPAIR(MSG_WORKING_MODE, (unsigned long)working_mode);
+      SERIAL_ECHOLNPGM(""); 
+  }
+}
 
 void process_commands()
 {
@@ -3320,6 +3393,38 @@ void process_commands()
     }
     break;
 #endif
+
+    case 450:
+    {
+      if (code_seen('S')) {
+        working_mode_change(code_value());
+      }
+
+      working_mode_echo();
+    }
+    break;
+
+    case 451:
+    {
+      working_mode_change(WORKING_MODE_FFF);
+      working_mode_echo();
+    }
+    break;
+
+    case 452: // M452 Set Laser mode
+    {
+      working_mode_change(WORKING_MODE_LASER);
+      working_mode_echo();
+    }
+    break;
+
+    case 453:
+    {
+      working_mode_change(WORKING_MODE_CNC);
+      working_mode_echo();
+    }
+    break;
+
     case 500: // M500 Store settings in EEPROM
     {
         Config_StoreSettings();
@@ -4015,8 +4120,29 @@ void process_commands()
       }
     }
     break;
-    
+
     case 3: // M3 S[RPM] SPINDLE ON - Clockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
+      if (working_mode == WORKING_MODE_LASER)
+      {
+        st_synchronize();
+        laser_force = false;
+        if (code_seen('S'))
+        {
+          long input = code_value_long() / PWM_SCALE;
+          if (input > MAX_PWM) {
+            laser_powah = MAX_PWM;
+          } else if (input < 0) {
+            laser_powah = 0;
+          } else {
+            laser_powah = input;
+          }
+        }
+        else
+        {
+          laser_powah = MAX_PWM;
+        }
+      }
+      else
       {
         inactivity=false;
         int servo_index = 0;
@@ -4088,6 +4214,26 @@ void process_commands()
       break;
       
    case 4: // M4 S[RPM] SPINDLE ON - CounterClockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
+      if (working_mode == WORKING_MODE_LASER)
+      {
+        if (code_seen('S'))
+        {
+          long input = code_value_long() / PWM_SCALE;
+          if (input > MAX_PWM) {
+            laser_powah = MAX_PWM;
+          } else if (input < 0) {
+            laser_powah = 0;
+          } else {
+            laser_powah = input;
+          }
+        }
+        else
+        {
+          laser_powah = MAX_PWM;
+        }
+        laser_force = true;
+      }
+      else
       {
         
         
@@ -4160,6 +4306,13 @@ void process_commands()
       break;
       
    case 5: // M5 SPINDLE OFF
+    if (working_mode == WORKING_MODE_LASER)
+    {   
+      st_synchronize();
+      laser_force = false;
+      laser_powah = 0;
+    }
+    else
       {
         //wait
         codenum=1500;       
@@ -4701,11 +4854,25 @@ void process_commands()
       }
     }
     break;
-      
+
     case 793: // M793 - Set/read installed head soft ID
       {
         if (code_seen('S')) {
           installed_head_id = code_value_long();
+          // Forcefully reset mode...
+          switch (installed_head_id)
+          {
+            case FAB_HEADS_laser_ID:
+              working_mode_change(WORKING_MODE_LASER, true);
+              break;
+
+            case FAB_HEADS_mill_v2_ID:
+              working_mode_change(WORKING_MODE_CNC, true);
+              break;
+
+            default:
+              working_mode_change(WORKING_MODE_FFF, true);
+          }
         }
         SERIAL_PROTOCOLLN(installed_head_id);
       }
@@ -5409,11 +5576,11 @@ void manage_inactivity()
      enable_door_kill=true;                    // REARM the killing process if the user closes the front door
     }
 
-
  manage_secure_endstop();
  manage_fab_soft_pwm();                        // manage light
  manage_amb_color_fading();                    // manage ligth fading
 
+  //manage_head();
 }
 
 
@@ -5472,24 +5639,43 @@ void manage_secure_endstop()
  
  
 }
+
 void manage_fab_soft_pwm()
 {
-  FabSoftPwm_TMR=FabSoftPwm_TMR+1;
-  if(FabSoftPwm_TMR>LaserSoftPwm && LaserSoftPwm<MAX_PWM) LASER_GATE_OFF();
-  if(FabSoftPwm_TMR>HeadLightSoftPwm && HeadLightSoftPwm<MAX_PWM) HEAD_LIGHT_OFF();
-  if(FabSoftPwm_TMR>RedSoftPwm && RedSoftPwm<MAX_PWM) RED_OFF();
-  if(FabSoftPwm_TMR>GreenSoftPwm && GreenSoftPwm<MAX_PWM) GREEN_OFF();
-  if(FabSoftPwm_TMR>BlueSoftPwm && BlueSoftPwm<MAX_PWM) BLUE_OFF();
-  if(FabSoftPwm_TMR>FabSoftPwm_LMT)
-    {
-      if(LaserSoftPwm>0)LASER_GATE_ON();
-      if(HeadLightSoftPwm>0)HEAD_LIGHT_ON();
-      if(RedSoftPwm>0)RED_ON();
-      if(GreenSoftPwm>0)GREEN_ON();
-      if(BlueSoftPwm>0)BLUE_ON();
-      FabSoftPwm_TMR=0;
+  static unsigned int FabSoftPwm_TMR = 0;
+
+  bool do_laser = laser_force;
+
+  if (FabSoftPwm_TMR == 0)
+  {
+    if (!do_laser && working_mode == WORKING_MODE_LASER) {
+      if (blocks_queued()) {
+         if (current_block->steps_x != 0 || current_block->steps_y != 0) {
+           do_laser = true;
+         }
+      }
     }
-     
+    if (do_laser && laser_powah > 0) WRITE(SERVO0_PIN,1);
+
+    if(LaserSoftPwm>0)LASER_GATE_ON();
+    if(HeadLightSoftPwm>0)HEAD_LIGHT_ON();
+    if(RedSoftPwm>0)RED_ON();
+    if(GreenSoftPwm>0)GREEN_ON();
+    if(BlueSoftPwm>0)BLUE_ON();
+  }
+  else
+  {
+    if (!do_laser || (FabSoftPwm_TMR > laser_powah)) WRITE(SERVO0_PIN,0);
+
+    if(FabSoftPwm_TMR>LaserSoftPwm && LaserSoftPwm<MAX_PWM) LASER_GATE_OFF();
+    if(FabSoftPwm_TMR>HeadLightSoftPwm && HeadLightSoftPwm<MAX_PWM) HEAD_LIGHT_OFF();
+    if(FabSoftPwm_TMR>RedSoftPwm && RedSoftPwm<MAX_PWM) RED_OFF();
+    if(FabSoftPwm_TMR>GreenSoftPwm && GreenSoftPwm<MAX_PWM) GREEN_OFF();
+    if(FabSoftPwm_TMR>BlueSoftPwm && BlueSoftPwm<MAX_PWM) BLUE_OFF();
+  }
+
+  if (++FabSoftPwm_TMR > FabSoftPwm_LMT)
+    FabSoftPwm_TMR = 0;
 }
 void set_amb_color(unsigned int red,unsigned int green,unsigned int blue)
 {
