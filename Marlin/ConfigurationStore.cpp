@@ -129,8 +129,8 @@ void Config_PrintSettings()
 
     SERIAL_ECHOLNPGM("FABlin");
     SERIAL_ECHOLNPGM(" Version: " STRING_BUILD_VERSION);
-    SERIAL_ECHOPAIR(" Baudrate: ", (unsigned long)BAUDRATE); 
-    //SERIAL_ECHO_START;
+    SERIAL_ECHOPAIR(" Baudrate: ", (unsigned long)BAUDRATE);
+    SERIAL_ECHOLN("");
 
     SERIAL_ECHOLNPGM("Steps per unit:");
     //SERIAL_ECHO_START;
