@@ -675,10 +675,10 @@ pinMode(NOT_SERVO1_ON_PIN,OUTPUT);
 pinMode(NOT_SERVO2_ON_PIN,OUTPUT);
 
 //setting analog as input
-pinMode(MAIN_CURRENT_SENSE_PIN,INPUT);
-pinMode(MON_5V_PIN,INPUT);
-pinMode(MON_24V_PIN,INPUT);
-pinMode(PRESSURE_ANALOG_PIN,INPUT);
+pinMode(analogInputToDigitalPin(MAIN_CURRENT_SENSE_PIN), INPUT);
+pinMode(analogInputToDigitalPin(MON_5V_PIN), INPUT);
+pinMode(analogInputToDigitalPin(MON_24V_PIN), INPUT);
+pinMode(analogInputToDigitalPin(PRESSURE_ANALOG_PIN), INPUT);
 
 pinMode(NOT_REEL_LENS_OPEN_PIN,OUTPUT);
 
