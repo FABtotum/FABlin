@@ -39,5 +39,10 @@ documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
 Changelog
 ---------
 
-### Version: 1.0.0096 (release candidate 1)
-* Fixed bed hitting the bottom during G27 / G28
+### Version: 1.0.0096 (release candidate 2)
+- Fixed G27/G28 behaviour near axis limits and silenced verbose error messages
+- Fixed G29 hitting Y endstop
+- Changed M503 and other diagnostic outputs
+- Fixed THERMISTOR_INPUT_HOTSWAP feature
+
+For complete changelog, see [ChangeLog](ChangeLog.txt).
