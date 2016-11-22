@@ -4919,9 +4919,10 @@ void process_commands()
         value = code_value();
         if(value>=0)
         {
-	  CRITICAL_SECTION_START
-	  maxttemp[0] = value;
-	  CRITICAL_SECTION_END
+          maxttemp[0] = value;
+          CRITICAL_SECTION_START
+          heater_0_init_maxtemp(value);
+          CRITICAL_SECTION_END
         }
       }
       else

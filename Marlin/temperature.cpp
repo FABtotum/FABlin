@@ -756,6 +756,19 @@ static void updateTemperaturesFromRawValues()
     CRITICAL_SECTION_END;
 }
 
+void heater_0_init_maxtemp (int16_t value)
+{
+#ifdef HEATER_0_MAXTEMP
+  while(analog2temp(maxttemp_raw[0], 0) > value) {
+#if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
+    maxttemp_raw[0] -= OVERSAMPLENR;
+#else
+    maxttemp_raw[0] += OVERSAMPLENR;
+#endif
+  }
+#endif
+}
+
 void tp_init()
 {
 #if (MOTHERBOARD == 80) && ((TEMP_SENSOR_0==-1)||(TEMP_SENSOR_1==-1)||(TEMP_SENSOR_2==-1)||(TEMP_SENSOR_BED==-1))
