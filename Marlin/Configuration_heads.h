@@ -5,6 +5,8 @@
  * Definitions for FABtotum Heads.
  */
 
+#define HEADS 5
+
 // 0 .. 99 are reserved
 #define FAB_HEADS_default_ID     0
 #define FAB_HEADS_default_DRIVE  0
