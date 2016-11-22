@@ -1173,7 +1173,7 @@ ISR(TIMER0_COMPB_vect)
   #endif
 
   // FABtotum laser head uses heater line for supplementary +24v dc power source
-  if (working_mode == WORKING_MODE_FFF)
+  if (working_mode <= WORKING_MODE_FFF)
   {
 
   if(pwm_count == 0){
