@@ -426,9 +426,11 @@ extern uint8_t working_mode;
 
 #define AVG_MEASURED_Z_MAX     1
 
-#define WORKING_MODE_FFF   1
-#define WORKING_MODE_LASER 2
-#define WORKING_MODE_CNC   3
-#define MACHINE_MODE_SCAN  4
+#define WORKING_MODE_HYBRID 0
+#define WORKING_MODE_FFF    1
+#define WORKING_MODE_LASER  2
+#define WORKING_MODE_CNC    3
+#define MACHINE_MODE_SCAN   4
+#define MACHINE_MODE_SLA    5
 
 #endif
