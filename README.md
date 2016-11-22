@@ -3,10 +3,12 @@ FABlin Firmware
 ==========================
 FABtotum Marlin Derivate Firmware.
 
-This is the FABlin, a Marlin Derivate Firmware. Marlin was originally created by Erik Zalm (https://github.com/ErikZalm/Marlin)
-The changes made are focused on multipurpose personal fabrication and hardware characteristics of the FABtotum Personal Fabricator such as 3D/4 Axis milling, 3D/4 axis scanning, Touch-probing and the Totumduino Board I/Os capabilities.
-
-Supported G-codes: http://forum.fabtotum.cc/showthread.php?1364-Supported-Gcodes
+This is the FABlin, a Marlin Derivate Firmware. Marlin was originally 
+created by Erik Zalm (https://github.com/ErikZalm/Marlin) The changes 
+made are focused on multipurpose personal fabrication and hardware 
+characteristics of the FABtotum Personal Fabricator such as 3D/4 Axis 
+milling, 3D/4 axis scanning, Touch-probing and the Totumduino Board 
+I/Os capabilities.
 
 
 Compiling
@@ -39,10 +41,10 @@ documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
 Changelog
 ---------
 
-### Version: 1.0.0096 (release candidate 2)
+### Version: 1.0.0096
 - Fixed G27/G28 behaviour near axis limits and silenced verbose error messages
 - Fixed G29 hitting Y endstop
 - Changed M503 and other diagnostic outputs
-- Fixed THERMISTOR_INPUT_HOTSWAP feature
+- Fixed THERMISTOR_INPUT_HOTSWAP interference with heaters management
 
 For complete changelog, see [ChangeLog](ChangeLog.txt).
