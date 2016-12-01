@@ -200,6 +200,22 @@ void manage_inactivity();
 #define INVALID_EXTRUDER_1 (INVALID_EXTRUDER | 1)
 #define INVALID_EXTRUDER_2 (INVALID_EXTRUDER | 2)
 
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+   #if defined(EXTERNAL_ENDSTOP_Z_ENABLE_PIN) && (EXTERNAL_ENDSTOP_Z_ENABLE_PIN > -1)
+      #define ENABLE_SECURE_SWITCH_ZPROBE() do { \
+         digitalWrite(EXTERNAL_ENDSTOP_Z_ENABLE_PIN, !EXTERNAL_ENDSTOP_Z_ENABLE_INVERTING); \
+         enable_secure_switch_zprobe=true; \
+      } while (0)
+
+      #define DISABLE_SECURE_SWITCH_ZPROBE() do { \
+         enable_secure_switch_zprobe=false; \
+         digitalWrite(EXTERNAL_ENDSTOP_Z_ENABLE_PIN, EXTERNAL_ENDSTOP_Z_ENABLE_INVERTING); \
+      } while (0)
+   #else
+      #define ENABLE_SECURE_SWITCH_ZPROBE() do { enable_secure_switch_zprobe=true; } while (0)
+      #define DISABLE_SECURE_SWITCH_ZPROBE() do { enable_secure_switch_zprobe=false; } while (0)
+   #endif
+#endif
 
 enum AxisEnum {X_AXIS=0, Y_AXIS=1, Z_AXIS=2, E_AXIS=3};
 

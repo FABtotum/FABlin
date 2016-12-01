@@ -438,8 +438,10 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 //#undef EXTERNAL_ENDSTOP_Z_PROBING
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
- #define EXTERNAL_ENDSTOP_Z_PROBING_PIN 71
- #define EXTERNAL_Z_ENDSTOP_INVERTING true
+ #define EXTERNAL_ENDSTOP_Z_PROBING_PIN 6
+ #define EXTERNAL_ENDSTOP_Z_INVERTING   0
+ #define EXTERNAL_ENDSTOP_Z_ENABLE_PIN 25
+ #define EXTERNAL_ENDSTOP_Z_ENABLE_INVERTING 1
 #endif
 
 #define WIRE_END_INVERTING true
@@ -827,14 +829,14 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 // leaving it undefined or defining as 0 will disable the servo subsystem
 // If unsure, leave commented / disabled
 //
-#define NUM_SERVOS 2 // Servo index starts with 0 for M280 command
+#define NUM_SERVOS 1 // Servo index starts with 0 for M280 command
 
 // Servo Endstops
 //
 // This allows for servo actuated endstops, primary usage is for the Z Axis to eliminate calibration or bed height changes.
 // Use M206 command to correct for switch height offset to actual nozzle height. Store that setting with M500.
 //
-#define SERVO_ENDSTOPS {-1, -1, 1} // Servo index for X, Y, Z. Disable with -1
+#define SERVO_ENDSTOPS {-1, -1, -1} // Servo index for X, Y, Z. Disable with -1
 #define SERVO_ENDSTOP_ANGLES {0,0, 0,0, 127,26} // X,Y,Z Axis Extend and Retract angles
 
 //

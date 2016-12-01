@@ -716,9 +716,13 @@ void servo_init()
   }
   #endif
 
-  #if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
-  delay(PROBE_SERVO_DEACTIVATION_DELAY);
-  servos[servo_endstops[Z_AXIS]].detach();
+  #ifdef SERVO_ENDSTOPS
+  if (servo_endstops[Z_AXIS] > -1) {
+    #if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
+    delay(PROBE_SERVO_DEACTIVATION_DELAY);
+    #endif
+    servos[servo_endstops[Z_AXIS]].detach();
+  }
   #endif
 }
 
@@ -896,12 +900,53 @@ void FabtotumHeads_init ()
  */
 void StopTool ()
 {
+//<<<<<<< 2155cb7ec812e3daeea95055cdea392090fb8fec
    #if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
       // Shut down +24V line if FABtotum DirectDrive head is present
       //if (installed_head_id==FAB_HEADS_direct_ID) {
          MILL_MOTOR_OFF();
       //}
    #endif
+/*=======
+BEEP_ON();
+
+pinMode(RED_PIN,OUTPUT);
+pinMode(GREEN_PIN,OUTPUT);
+SET_OUTPUT(BLUE_PIN);
+pinMode(HOT_LED_PIN,OUTPUT);
+pinMode(DOOR_OPEN_PIN,INPUT);
+pinMode(HEAD_LIGHT_PIN,OUTPUT);
+pinMode(LASER_GATE_PIN,OUTPUT);
+pinMode(MILL_MOTOR_ON_PIN,OUTPUT);
+pinMode(NOT_SERVO1_ON_PIN,OUTPUT);
+#if (NUM_SERVOS > 1)
+pinMode(NOT_SERVO2_ON_PIN,OUTPUT);
+#endif
+
+//setting analog as input
+pinMode(MAIN_CURRENT_SENSE_PIN,INPUT);
+pinMode(MON_5V_PIN,INPUT);
+pinMode(MON_24V_PIN,INPUT);
+#ifdef PRESSURE_ANALOG_PIN
+pinMode(analogInputToDigitalPin(PRESSURE_ANALOG_PIN),INPUT);
+#endif
+
+pinMode(NOT_REEL_LENS_OPEN_PIN,OUTPUT);
+
+//POWER MABNAHGEMENT
+pinMode(51, OUTPUT);  //set external PSU shutdown pin (Optional on I2C)
+digitalWrite(51, HIGH);
+
+//fastio init
+// SET_INPUT(IO)  ; SET_OUTPUT(IO);
+SET_INPUT(WIRE_END_PIN);
+SET_OUTPUT(NOT_RASPI_PWR_ON_PIN);
+SET_INPUT(NOT_SECURE_SW_PIN);
+SET_OUTPUT(NOT_REEL_LENS_OPEN_PIN);
+SET_OUTPUT(LIGHT_SIGN_ON_PIN);
+SET_OUTPUT(RPI_RECOVERY_PIN);
+
+>>>>>>> Statically configured IRSD z-probe:*/
 
    fanSpeed = 0;
 
@@ -951,7 +996,7 @@ void FabtotumIO_init()
    BLUE_OFF();
    analogWrite(BLUE_PIN,255);
    RPI_ERROR_ACK_OFF();
-   
+
    //analogWrite(HEATER_0_PIN,0);
 
    HOT_LED_OFF();
@@ -959,7 +1004,11 @@ void FabtotumIO_init()
    HEAD_LIGHT_OFF();
    LASER_GATE_OFF();
 
-   MILL_MOTOR_OFF();
+  MILL_MOTOR_OFF();
+  SERVO1_OFF();
+#if (NUM_SERVOS > 1)
+  SERVO2_OFF();
+#endif
 
    SERVO1_OFF();
    SERVO2_OFF();
@@ -979,8 +1028,10 @@ void FabtotumIO_init()
    GreenSoftPwm=0;
    BlueSoftPwm=0;
 
-   servos[0].write(SERVO_SPINDLE_ZERO);       //set Zero POS for SERVO1  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
-   servos[1].write(950);        //set Zero POS for SERVO2  (servo probe)
+  servos[0].write(SERVO_SPINDLE_ZERO);       //set Zero POS for SERVO1  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
+  #if NUM_SERVOS > 1
+  servos[1].write(950);        //set Zero POS for SERVO2  (servo probe)
+  #endif
 
    triggered_kill=false;
    enable_door_kill=true;
@@ -1017,8 +1068,17 @@ void FabtotumIO_init()
 
   z_endstop_bug_workaround = fab_batch_number >= 3? 255 : 0;
 
-  // SmartHead is configured as Two-Wire bus by default
-  //SmartHead.wire(true);
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+  // Configure pins
+  #if defined(EXTERNAL_ENDSTOP_Z_ENABLE_PIN) && (EXTERNAL_ENDSTOP_Z_ENABLE_PIN > -1)
+  pinMode(EXTERNAL_ENDSTOP_Z_ENABLE_PIN, OUTPUT);
+  #endif
+  pinMode(EXTERNAL_ENDSTOP_Z_PROBING_PIN, INPUT);
+
+  ENABLE_SECURE_SWITCH_ZPROBE();
+
+  enable_external_z_endstop(false);
+#endif
 }
 
 void setup()
@@ -1030,7 +1090,7 @@ void setup()
   SERIAL_ECHO_START;*/
 
   // Check startup - does nothing if bootloader sets MCUSR to 0
-  
+
   byte mcu = MCUSR;
   #if MOTHERBOARD != 25
   // turn output off for totumduino
@@ -1643,44 +1703,56 @@ static void clean_up_after_endstop_move() {
     previous_millis_cmd = millis();
 }
 
-static void engage_z_probe() {
-    // Engage Z Servo endstop if enabled
-    #ifdef SERVO_ENDSTOPS
-    if (servo_endstops[Z_AXIS] > -1) {
-      SERVO2_ON();
-    //_delay_ms(500);
-#if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
-        servos[servo_endstops[Z_AXIS]].attach(0);
-#endif
-        servos[servo_endstops[Z_AXIS]].write(servo_endstop_angles[Z_AXIS * 2]);
-#if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
-        delay(PROBE_SERVO_DEACTIVATION_DELAY);
-        servos[servo_endstops[Z_AXIS]].detach();
-#endif
-    _delay_ms(500);
-    SERVO2_OFF();
-    }
-    #endif
-}
-
-static void retract_z_probe() {
-    // Retract Z Servo endstop if enabled
-    #ifdef SERVO_ENDSTOPS
-    if (servo_endstops[Z_AXIS] > -1) {
+static void engage_z_probe()
+{
+  // Engage Z Servo endstop if enabled
+ #ifdef SERVO_ENDSTOPS
+  if (servo_endstops[Z_AXIS] > -1) {
     SERVO2_ON();
     //_delay_ms(500);
 #if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
-        servos[servo_endstops[Z_AXIS]].attach(0);
+    servos[servo_endstops[Z_AXIS]].attach(0);
 #endif
-        servos[servo_endstops[Z_AXIS]].write(servo_endstop_angles[Z_AXIS * 2 + 1]);
+    servos[servo_endstops[Z_AXIS]].write(servo_endstop_angles[Z_AXIS * 2]);
 #if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
-        delay(PROBE_SERVO_DEACTIVATION_DELAY);
-        servos[servo_endstops[Z_AXIS]].detach();
+    delay(PROBE_SERVO_DEACTIVATION_DELAY);
+    servos[servo_endstops[Z_AXIS]].detach();
 #endif
-     _delay_ms(500);
-     SERVO2_OFF();
-    }
-    #endif
+    _delay_ms(500);
+    SERVO2_OFF();
+  }
+#endif
+
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+  enable_secure_switch_zprobe = true;
+  enable_external_z_endstop(true);
+#endif
+}
+
+static void retract_z_probe()
+{
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+  enable_external_z_endstop (false);
+#endif
+
+  // Retract Z Servo endstop if enabled
+#ifdef SERVO_ENDSTOPS
+  if (servo_endstops[Z_AXIS] > -1)
+  {
+    SERVO2_ON();
+    //_delay_ms(500);
+#if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
+    servos[servo_endstops[Z_AXIS]].attach(0);
+#endif
+    servos[servo_endstops[Z_AXIS]].write(servo_endstop_angles[Z_AXIS * 2 + 1]);
+#if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
+    delay(PROBE_SERVO_DEACTIVATION_DELAY);
+    servos[servo_endstops[Z_AXIS]].detach();
+#endif
+   _delay_ms(500);
+   SERVO2_OFF();
+  }
+#endif
 }
 
 /// Probe bed height at position (x,y), returns the measured z value
@@ -3386,6 +3458,10 @@ void process_commands()
         SERIAL_PROTOCOLPGM(MSG_Z_MIN);
         SERIAL_PROTOCOLLN(((READ(Z_MIN_PIN)^Z_MIN_ENDSTOP_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
       #endif
+      #if defined(EXTERNAL_ENDSTOP_Z_PROBING_PIN) && (EXTERNAL_ENDSTOP_Z_PROBING_PIN > -1)
+        SERIAL_PROTOCOLPGM("external_z_min: ");
+        SERIAL_PROTOCOLLN(((READ(EXTERNAL_ENDSTOP_Z_PROBING_PIN)^EXTERNAL_ENDSTOP_Z_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
+      #endif
       #if defined(Z_MAX_PIN) && Z_MAX_PIN > -1
         SERIAL_PROTOCOLPGM(MSG_Z_MAX);
         SERIAL_PROTOCOLLN(((READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
@@ -3731,35 +3807,35 @@ void process_commands()
         byte beeps = code_value();
         byte dur = 5;
         byte pause = 5;
-        
+
         if( code_seen('D') )
         {
           dur = code_value();
           if(dur < 1)
             dur = 1;
         }
-        
+
         if( code_seen('P') )
         {
           pause = code_value();
           if(pause < 1)
             pause = 1;
         }
-        
+
         if(beeps > 10)
           beeps = 10;
         if(beeps < 1)
           beeps = 1;
-        
+
         byte dd;
-        
+
         while(beeps--)
         {
           BEEP_ON()
           dd = dur;
           while(dd--)
             _delay_ms(10);
-            
+
           BEEP_OFF()
           dd = pause;
           while(dd--)
@@ -4016,7 +4092,7 @@ void process_commands()
       } else {
         twi = false;
       }
- 
+
       if (codes_seen)
       {
         tools.define(target_tool, drive, heater, twi);
@@ -4046,7 +4122,7 @@ void process_commands()
           }
         }
       }
-    }  
+    }
     break;
 
     case 564:
@@ -4586,7 +4662,7 @@ void process_commands()
     }
     break;
 
-
+#if (NUM_SERVOS > 1)
     case 724:// M724 - 5VDC SERVO_2 power ON
     {
       SERVO2_ON();
@@ -4597,7 +4673,7 @@ void process_commands()
       SERVO2_OFF();
     }
     break;
-
+#endif
 
     case 726:// M726 - 5VDC RASPBERRY PI power ON
     {
@@ -5043,11 +5119,11 @@ void process_commands()
         value = code_value();
         if(value>=1)
         {
-          enable_secure_switch_zprobe=true;
+          ENABLE_SECURE_SWITCH_ZPROBE();
         }
         else
         {
-          enable_secure_switch_zprobe=false;
+          DISABLE_SECURE_SWITCH_ZPROBE();
         }
       }
       else
