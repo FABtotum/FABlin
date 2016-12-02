@@ -49,6 +49,10 @@
 
 #include "WString.h"
 
+#ifdef IRSD
+#include "irsd.h"
+#endif
+
 #ifdef AT90USB
    #ifdef BTENABLED
          #define MYSERIAL bt
@@ -200,21 +204,26 @@ void manage_inactivity();
 #define INVALID_EXTRUDER_1 (INVALID_EXTRUDER | 1)
 #define INVALID_EXTRUDER_2 (INVALID_EXTRUDER | 2)
 
+// Macros for driving various external probes
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
-   #if defined(EXTERNAL_ENDSTOP_Z_ENABLE_PIN) && (EXTERNAL_ENDSTOP_Z_ENABLE_PIN > -1)
+
+   #define ENABLE_SECURE_SWITCH_ZPROBE() do { enable_secure_switch_zprobe=true; } while (0)
+   #define DISABLE_SECURE_SWITCH_ZPROBE() do { enable_secure_switch_zprobe=false; } while (0)
+
+   #if defined(IRSD)
+      #undef ENABLE_SECURE_SWITCH_ZPROBE
       #define ENABLE_SECURE_SWITCH_ZPROBE() do { \
-         digitalWrite(EXTERNAL_ENDSTOP_Z_ENABLE_PIN, !EXTERNAL_ENDSTOP_Z_ENABLE_INVERTING); \
+         irsd_enable(); \
          enable_secure_switch_zprobe=true; \
       } while (0)
 
+      #undef DISABLE_SECURE_SWITCH_ZPROBE
       #define DISABLE_SECURE_SWITCH_ZPROBE() do { \
          enable_secure_switch_zprobe=false; \
-         digitalWrite(EXTERNAL_ENDSTOP_Z_ENABLE_PIN, EXTERNAL_ENDSTOP_Z_ENABLE_INVERTING); \
+         irsd_disable(); \
       } while (0)
-   #else
-      #define ENABLE_SECURE_SWITCH_ZPROBE() do { enable_secure_switch_zprobe=true; } while (0)
-      #define DISABLE_SECURE_SWITCH_ZPROBE() do { enable_secure_switch_zprobe=false; } while (0)
    #endif
+
 #endif
 
 enum AxisEnum {X_AXIS=0, Y_AXIS=1, Z_AXIS=2, E_AXIS=3};

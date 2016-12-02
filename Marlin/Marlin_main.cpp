@@ -77,6 +77,11 @@
   #include "Laser.h"
 #endif
 
+#ifdef IRSD
+#include "irsd.h"
+#endif
+
+
 // look here for descriptions of G-codes: http://linuxcnc.org/handbook/gcode/g-code.html
 // http://objects.reprap.org/wiki/Mendel_User_Manual:_RepRapGCodes
 
@@ -1068,16 +1073,16 @@ void FabtotumIO_init()
 
   z_endstop_bug_workaround = fab_batch_number >= 3? 255 : 0;
 
+  // Init IRSD unit if installed
+#ifdef IRSD
+  irsd_init();
+#endif
+
+  // Init external probe if configured
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
-  // Configure pins
-  #if defined(EXTERNAL_ENDSTOP_Z_ENABLE_PIN) && (EXTERNAL_ENDSTOP_Z_ENABLE_PIN > -1)
-  pinMode(EXTERNAL_ENDSTOP_Z_ENABLE_PIN, OUTPUT);
-  #endif
   pinMode(EXTERNAL_ENDSTOP_Z_PROBING_PIN, INPUT);
-
-  ENABLE_SECURE_SWITCH_ZPROBE();
-
   enable_external_z_endstop(false);
+  ENABLE_SECURE_SWITCH_ZPROBE();
 #endif
 }
 
