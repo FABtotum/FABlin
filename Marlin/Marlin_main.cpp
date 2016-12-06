@@ -920,9 +920,9 @@ void poweroff_rqs(){
 
 void check_power_btn(){
   //check if pin is high
-  if (READ(PWR_IN_PIN)) {
+  /*if (READ(PWR_IN_PIN)) {
     poweroff_rqs();
-}
+}*/
 }
 
 
