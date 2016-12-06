@@ -71,7 +71,6 @@ probe- 1111
  * Max tools number is statically set to 3 at present.
  * 
  */
-// TODO: maybe *inline* this, or does the compiler know better?
 void tools_s::define(uint8_t tool, unsigned int drive, unsigned int heater, bool twi)
 {
    tool_extruder_mapping[tool] = drive;

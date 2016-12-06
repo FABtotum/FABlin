@@ -140,7 +140,7 @@
 #define TEMP_SENSOR_BED 1
 
 //********** configuration for thermistor INPUT HOTSWAP ********************//
-#define THERMISTOR_INPUT_HOTSWAP
+//#define THERMISTOR_INPUT_HOTSWAP
 
 #ifdef THERMISTOR_INPUT_HOTSWAP
 #define THERMISTOR_HOTSWAP_INPUT_DEFAULT_INDEX 0
