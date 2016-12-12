@@ -330,13 +330,6 @@ extern unsigned int installed_head_id;
 
 extern uint8_t working_mode;
 
-typedef struct tool_s {
-   uint8_t mode = 0;
-   uint8_t heaters = 1;
-   int16_t mintemp = HEATER_0_MINTEMP;
-   int16_t maxtemp = HEATER_0_MAXTEMP;
-} tool_t;
-
 //FABtotum IO definition
 #define RED_ON()	WRITE(RED_PIN,LOW)
 #define RED_OFF()	WRITE(RED_PIN,HIGH)

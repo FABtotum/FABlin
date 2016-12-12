@@ -763,7 +763,7 @@ void working_mode_echo ()
 
 void tool_change (uint8_t id)
 {
-   installed_head = &(available_heads[id]);
+   installed_head = &(tools.factory[id]);
    installed_head_id = id;
 
    // Forcefully reset mode...
@@ -783,21 +783,49 @@ void tool_change (uint8_t id)
 
 void FabtotumHeads_init ()
 {
-   available_heads[FAB_HEADS_hybrid_ID].mode = 0;
-   available_heads[FAB_HEADS_hybrid_ID].heaters = 1;
-   available_heads[FAB_HEADS_hybrid_ID].maxtemp = 235;
+   // Factory heads definitions
+   tools.factory[FAB_HEADS_hybrid_ID].mode = WORKING_MODE_HYBRID;
+   tools.factory[FAB_HEADS_hybrid_ID].extruders= 1;
+   tools.factory[FAB_HEADS_hybrid_ID].heaters  = 1;
+   tools.factory[FAB_HEADS_hybrid_ID].maxtemp = 235;
+   tools.factory[FAB_HEADS_hybrid_ID].serial  = 1;
 
-   available_heads[FAB_HEADS_print_v2_ID].mode = WORKING_MODE_FFF;
-   available_heads[FAB_HEADS_print_v2_ID].heaters = 1;
+   tools.factory[FAB_HEADS_print_v2_ID].mode = WORKING_MODE_FFF;
+   tools.factory[FAB_HEADS_print_v2_ID].extruders= 1;
+   tools.factory[FAB_HEADS_print_v2_ID].heaters  = 1;
+   tools.factory[FAB_HEADS_print_v2_ID].serial  = 0;
 
-   available_heads[FAB_HEADS_mill_v2_ID].mode = WORKING_MODE_CNC;
-   available_heads[FAB_HEADS_mill_v2_ID].heaters = 0;
+   tools.factory[FAB_HEADS_mill_v2_ID].mode = WORKING_MODE_CNC;
+   tools.factory[FAB_HEADS_mill_v2_ID].extruders= 0;
+   tools.factory[FAB_HEADS_mill_v2_ID].heaters  = 0;
+   tools.factory[FAB_HEADS_mill_v2_ID].serial  = 0;
 
-   available_heads[FAB_HEADS_laser_ID].mode = WORKING_MODE_LASER;
-   available_heads[FAB_HEADS_laser_ID].heaters = 0;
-   available_heads[FAB_HEADS_laser_ID].maxtemp = 65;
+   tools.factory[FAB_HEADS_laser_ID].mode = WORKING_MODE_LASER;
+   tools.factory[FAB_HEADS_laser_ID].extruders= 0;
+   tools.factory[FAB_HEADS_laser_ID].heaters  = 0;
+   tools.factory[FAB_HEADS_laser_ID].maxtemp = 65;
+   tools.factory[FAB_HEADS_laser_ID].serial  = 0;
 
    tool_change(installed_head_id);
+
+   // Default user tool definitions
+   tools.define(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+   tools.define(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_5th_axis_SMART);
+   tools.define(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
+
+   // Particular tool configurations
+   switch (installed_head_id)
+   {
+      case FAB_HEADS_direct_ID:
+         tools.define(0, FAB_HEADS_direct_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
+         tools.define(2, FAB_HEADS_default_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+         break;
+      case FAB_HEADS_mill_v2_ID:
+         tools.define(0, -1, FAB_HEADS_default_HEATER, FAB_HEADS_mill_v2_SMART);
+   }
+
+   // Load starting tool (T0)
+   tools.change(0);
 }
 
 void FabtotumIO_init()
@@ -876,29 +904,6 @@ servos[1].write(950);        //set Zero POS for SERVO2  (servo probe)
 triggered_kill=false;
 enable_door_kill=true;
 rpm = 0;
-
-  // Default tool definitions
-  tools.define(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-  tools.define(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_5th_axis_SMART);
-  tools.define(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
-
-  // Particular tool definitions
-  // TODO: move these in an in-memory table of factory-supported heads and load
-  //       definitions accordingly
-  switch (installed_head_id)
-  {
-    case FAB_HEADS_direct_ID:
-       tools.define(0, FAB_HEADS_direct_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
-       tools.define(2, FAB_HEADS_default_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-       break;
-    case FAB_HEADS_mill_v2_ID:
-       tools.define(0, -1, FAB_HEADS_default_HEATER, FAB_HEADS_mill_v2_SMART);
-    /*default:
-       defineTool(0, 0, 0, true);*/
-  }
-
-  // Load starting tool (T0)
-  tools.load(0);
 
 /*fading_speed=200;
 fading_started=false;
@@ -4573,7 +4578,7 @@ void process_commands()
         tools.define(target_tool, drive, 0, twi);
 
         // Reselect active tool to possibly reload its definition
-        tools.load(active_tool);
+        tools.change(active_tool);
 
       }
       break;
@@ -5300,7 +5305,7 @@ void process_commands()
   else if(code_seen('T'))
   {
     tmp_extruder = code_value();
-    tmp_extruder = tools.load(tmp_extruder);
+    tmp_extruder = tools.change(tmp_extruder);
     if(tmp_extruder >= EXTRUDERS) {
       SERIAL_ECHO_START;
       SERIAL_ECHO("T");
