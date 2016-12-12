@@ -688,8 +688,8 @@ void working_mode_change (uint8_t new_mode, bool reset = false)
    {
       case WORKING_MODE_LASER:
          // Laser tools use servo 0 pwm, in the future this may be configurable
+         SERVO1_ON();
          servos[0].detach();
-         MILL_MOTOR_OFF();
 
          // Enable supplementary +24v power for fabtotum laser head
          if (installed_head_id == FAB_HEADS_laser_ID) {
@@ -701,6 +701,7 @@ void working_mode_change (uint8_t new_mode, bool reset = false)
          break;
 
       case WORKING_MODE_CNC:
+      case WORKING_MODE_HYBRID:
          servo_init();
          break;
    }
