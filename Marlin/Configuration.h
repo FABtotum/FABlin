@@ -15,7 +15,7 @@
 // User-specified version info of this build to display in [Pronterface, etc] terminal window during
 // startup. Implementation of an idea by Prof Braino to inform user that any changes made to this
 // build by the user have been successfully uploaded into firmware.
-#define STRING_BUILD_VERSION  "V 1.0.0096.1"
+#define STRING_BUILD_VERSION  "V 1.0.0096.2"
 #define STRING_BUILD_DATE __DATE__ " " __TIME__ // build date and time
 #define STRING_CONFIG_H_AUTHOR "FABteam" // Who made the changes.
 
@@ -149,7 +149,7 @@
 //********** configuration for thermistor type HOTSWAP ********************//
 #define THERMISTOR_HOTSWAP
 
-#ifdef THERMISTOR_HOTSWAP 
+#ifdef THERMISTOR_HOTSWAP
 // START: This are auxiliary macros supporting up to ELEVEN (0-10) tables
 #define CONCAT(A,B)         A ## B
 #define EXPAND_CONCAT(A,B)  CONCAT(A, B)
@@ -175,7 +175,7 @@
 // START: This are auxiliary macros
 #define xstr(s) str(s)
 #define str(s) #s
-     
+
 #define THERMISTOR_HOTSWAP_SUPPORTED_TYPES_AS_STRING xstr(THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
 
 #define ORREP1(PTH_TYPE) PTH_TYPE == ARGN(0, THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
@@ -279,7 +279,7 @@
     //#define  DEFAULT_Kp 22.2
     //#define  DEFAULT_Ki 1.05
     //#define  DEFAULT_Kd 170
-    
+
     #define  DEFAULT_Kp 15
     #define  DEFAULT_Ki 5
     #define  DEFAULT_Kd 30
@@ -373,11 +373,11 @@
 
 // The pullups are needed if you directly connect a mechanical endswitch between the signal and ground pins.
 extern bool X_MIN_ENDSTOP_INVERTING;
-extern bool Y_MIN_ENDSTOP_INVERTING; 
-extern bool Z_MIN_ENDSTOP_INVERTING; 
-extern bool X_MAX_ENDSTOP_INVERTING; 
-extern bool Y_MAX_ENDSTOP_INVERTING; 
-extern bool Z_MAX_ENDSTOP_INVERTING; 
+extern bool Y_MIN_ENDSTOP_INVERTING;
+extern bool Z_MIN_ENDSTOP_INVERTING;
+extern bool X_MAX_ENDSTOP_INVERTING;
+extern bool Y_MAX_ENDSTOP_INVERTING;
+extern bool Z_MAX_ENDSTOP_INVERTING;
 //#define DISABLE_MAX_ENDSTOPS
 //#define DISABLE_MIN_ENDSTOPS
 
@@ -465,7 +465,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 //    #define RIGHT_PROBE_BED_POSITION 155
 //    #define BACK_PROBE_BED_POSITION 95
 //    #define FRONT_PROBE_BED_POSITION -58
-    
+
     // set the rectangle in which to probe
     #define LEFT_PROBE_BED_POSITION 20
     #define RIGHT_PROBE_BED_POSITION 198
@@ -498,7 +498,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
   #define X_PROBE_OFFSET_FROM_EXTRUDER -17
   #define Y_PROBE_OFFSET_FROM_EXTRUDER -61.5
   #define Z_PROBE_OFFSET_FROM_EXTRUDER -31.65
-  
+
   #define Z_RAISE_BEFORE_HOMING 42       // (in mm) Raise Z before homing (G28) for Probe Clearance.
                                         // Be sure you have this distance over your Z_MAX_POS in case
 
@@ -528,7 +528,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
   #ifdef Z_SAFE_HOMING
 
    #define Z_SAFE_HOMING_X_POINT (85.5)    // X point for Z homing when homing all axis (G28)
-   #define Z_SAFE_HOMING_Y_POINT (57.5)    // Y point for Z homing when homing all axis (G28) 
+   #define Z_SAFE_HOMING_Y_POINT (57.5)    // Y point for Z homing when homing all axis (G28)
 
   #endif
 
