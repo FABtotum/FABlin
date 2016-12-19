@@ -5056,6 +5056,7 @@ void process_commands()
       FlushSerialRequestResend();
       restore_last_amb_color();
       RPI_ERROR_ACK_OFF();
+      Read_Head_Info();
       }
     break;
     }
@@ -5809,33 +5810,33 @@ void Read_Head_Info()
   SERIAL_HEAD_5=I2C_read(SERIAL_N_4);
   SERIAL_HEAD_6=I2C_read(SERIAL_N_5);
   SERIAL_HEAD_7=I2C_read(SERIAL_N_CRC);
-  
+
   i2c_timeout=false;
-  
-  if(SERIAL_HEAD_0==63 && SERIAL_HEAD_1==63 && SERIAL_HEAD_2==63 && SERIAL_HEAD_3==63 && SERIAL_HEAD_4==63 && SERIAL_HEAD_5==63 && SERIAL_HEAD_6==63 && SERIAL_HEAD_7==63)
+
+  if (installed_head_id <= 1)
+  {
+    if(SERIAL_HEAD_0==63 && SERIAL_HEAD_1==63 && SERIAL_HEAD_2==63 && SERIAL_HEAD_3==63 && SERIAL_HEAD_4==63 && SERIAL_HEAD_5==63 && SERIAL_HEAD_6==63 && SERIAL_HEAD_7==63)
     {
        head_placed=false;
     }
-  else
+    else
     {
        head_placed=true;
-    }  
-    
-    /* installed_head_id!=0{
+    }
+  }
+  else
+  {
     head_placed=true;
-    }else{
-    head_placed=false;
-    }*/
-
-}  
+  }
+}
 
 char I2C_read(byte i2c_register)
-{  
+{
   char byte_read;
   Wire.beginTransmission(SERIAL_ID_ADDR);      //starts communication
   Wire.write(i2c_register);                         //Sends the register we wish to read
   Wire.endTransmission();
-  
+
   Wire.requestFrom(SERIAL_ID_ADDR, 1);    // request 1 bytes from slave device SERIAL_ID_ADDR
   i2c_pre_millis=millis();
   while(Wire.available()==0 && !(i2c_timeout))
