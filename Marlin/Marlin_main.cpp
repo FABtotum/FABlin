@@ -5953,7 +5953,15 @@ void kill()
 void Stop()
 {
   store_last_amb_color();
+
+  // Disable any possible output to the head
   disable_heater();
+  MILL_MOTOR_OFF();
+  #ifdef FAST_PWM_FAN
+  setPwmFrequency(FAN_PIN, 0);
+  #endif
+  fanSpeed = 0;
+
   set_amb_color(MAX_PWM,MAX_PWM,0);
   if(Stopped == false) {
     Stopped = true;
