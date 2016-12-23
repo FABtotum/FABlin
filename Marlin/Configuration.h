@@ -559,7 +559,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 
 #define DEFAULT_AXIS_STEPS_PER_UNIT   {72.5811,72.5811,2133.333,3048.1593}  //  steps per unit for fabtotum e=1914.5295 steps/mm with MK7 ----> MK8 e=2961.833
 
-#define DEFAULT_MAX_FEEDRATE          {550, 550, 15, 12}    // (mm/sec)  E0 was 2MM/SEC
+#define DEFAULT_MAX_FEEDRATE          {250, 250, 15, 12}    // (mm/sec)  E0 was 2MM/SEC
 #define DEFAULT_MAX_ACCELERATION      {10000,10000,50,100}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for Skeinforge 40+, for older versions raise them a lot.
 
 #define DEFAULT_ACCELERATION          4000    // X, Y, Z and E max acceleration in mm/s^2 for printing moves  (was 5000)
