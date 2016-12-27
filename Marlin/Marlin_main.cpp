@@ -518,8 +518,10 @@ tool_t  available_heads[HEADS];
 
 uint8_t working_mode = WORKING_MODE_HYBRID;
 
-uint8_t laser_powah = 0;
-bool laser_force = false;
+namespace Laser
+{
+  uint8_t power = 0;
+}
 
 static unsigned short int z_endstop_bug_workaround = 0;
 
@@ -673,8 +675,7 @@ void working_mode_change (uint8_t new_mode, bool reset = false)
    switch (working_mode)
    {
       case WORKING_MODE_LASER:
-        laser_force = false;
-        laser_powah = 0;
+        Laser::power = 0;
          // Disable supplementary +24v power for fabtotum laser head
          if (installed_head_id == FAB_HEADS_laser_ID) {
            WRITE(HEATER_0_PIN, 0);
@@ -2532,6 +2533,46 @@ void process_commands()
         }
       }
      break;
+
+    /**
+     * M60 - Set laser power
+     *
+     * If no power lavel specified laser will be set to max.
+     *
+     * @param int S laser level (0-255)
+     *
+     */
+    case 60:
+    {
+      if (code_seen('S'))
+      {
+        long input = code_value_long() / PWM_SCALE;
+        if (input > MAX_PWM) {
+          Laser::power = MAX_PWM;
+        } else if (input < 0) {
+          Laser::power = 0;
+        } else {
+          Laser::power = input;
+        }
+      }
+      else
+      {
+        Laser::power = MAX_PWM;
+      }
+    }
+    break;
+
+    /**
+     * M61 - Close laser
+     *
+     * Laser power is set to 0.
+     */
+    case 61:
+    {
+      Laser::power = 0;
+    }
+    break;
+
     case 104: // M104
       if(setTargetedHotend(104)){
         break;
@@ -4158,27 +4199,6 @@ void process_commands()
     break;
 
     case 3: // M3 S[RPM] SPINDLE ON - Clockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
-      if (working_mode == WORKING_MODE_LASER)
-      {
-        st_synchronize();
-        laser_force = false;
-        if (code_seen('S'))
-        {
-          long input = code_value_long() / PWM_SCALE;
-          if (input > MAX_PWM) {
-            laser_powah = MAX_PWM;
-          } else if (input < 0) {
-            laser_powah = 0;
-          } else {
-            laser_powah = input;
-          }
-        }
-        else
-        {
-          laser_powah = MAX_PWM;
-        }
-      }
-      else
       {
         inactivity=false;
         int servo_index = 0;
@@ -4250,26 +4270,6 @@ void process_commands()
       break;
 
    case 4: // M4 S[RPM] SPINDLE ON - CounterClockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
-      if (working_mode == WORKING_MODE_LASER)
-      {
-        if (code_seen('S'))
-        {
-          long input = code_value_long() / PWM_SCALE;
-          if (input > MAX_PWM) {
-            laser_powah = MAX_PWM;
-          } else if (input < 0) {
-            laser_powah = 0;
-          } else {
-            laser_powah = input;
-          }
-        }
-        else
-        {
-          laser_powah = MAX_PWM;
-        }
-        laser_force = true;
-      }
-      else
       {
 
 
@@ -4342,13 +4342,6 @@ void process_commands()
       break;
 
    case 5: // M5 SPINDLE OFF
-    if (working_mode == WORKING_MODE_LASER)
-    {
-      st_synchronize();
-      laser_force = false;
-      laser_powah = 0;
-    }
-    else
       {
         //wait
         codenum=1500;
@@ -4375,7 +4368,7 @@ void process_commands()
       }
       break;
 
-    case 6: // M6 S[PWM] LASER ON (provisional code)
+    /*case 6: // M6 S[PWM] LASER ON (provisional code)
       {
         inactivity=false;
         int servo_index = 0;
@@ -4429,7 +4422,7 @@ void process_commands()
            }
          servos[servo_index].detach();
       }
-      break;
+      break;*/
 
    case 740: // M740 - read WIRE_END sensor
       {
@@ -5676,18 +5669,9 @@ void manage_fab_soft_pwm()
 {
   static unsigned int FabSoftPwm_TMR = 0;
 
-  bool do_laser = laser_force;
-
   if (FabSoftPwm_TMR == 0)
   {
-    if (!do_laser && working_mode == WORKING_MODE_LASER) {
-      if (blocks_queued()) {
-         if (current_block->steps_x != 0 || current_block->steps_y != 0) {
-           do_laser = true;
-         }
-      }
-    }
-    if (do_laser && laser_powah > 0) WRITE(SERVO0_PIN,1);
+    if (Laser::power > 0) WRITE(SERVO0_PIN,1);
 
     if(LaserSoftPwm>0)LASER_GATE_ON();
     if(HeadLightSoftPwm>0)HEAD_LIGHT_ON();
@@ -5697,7 +5681,7 @@ void manage_fab_soft_pwm()
   }
   else
   {
-    if (!do_laser || (FabSoftPwm_TMR > laser_powah)) WRITE(SERVO0_PIN,0);
+    if (/*!do_laser || (*/FabSoftPwm_TMR > Laser::power/*)*/) WRITE(SERVO0_PIN,0);
 
     if(FabSoftPwm_TMR>LaserSoftPwm && LaserSoftPwm<MAX_PWM) LASER_GATE_OFF();
     if(FabSoftPwm_TMR>HeadLightSoftPwm && HeadLightSoftPwm<MAX_PWM) HEAD_LIGHT_OFF();
