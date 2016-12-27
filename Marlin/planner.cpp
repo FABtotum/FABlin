@@ -610,7 +610,7 @@ block->steps_x = labs((target[X_AXIS]-position[X_AXIS]) - (target[Y_AXIS]-positi
     return; 
   }
 
-#define MAX_FAN_SPEED_NZ 0
+#define MAX_FAN_SPEED_NZ 127
 
   if (fanSpeed > MAX_FAN_SPEED_NZ && position[Z_AXIS] > target[Z_AXIS]) {
     block->fan_speed = MAX_FAN_SPEED_NZ;
