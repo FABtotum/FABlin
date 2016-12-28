@@ -521,6 +521,9 @@ uint8_t working_mode = WORKING_MODE_HYBRID;
 namespace Laser
 {
   uint8_t power = 0;
+  bool    synchronized = false;
+
+  inline void parseSetPowerCmd (void);
 }
 
 static unsigned short int z_endstop_bug_workaround = 0;
@@ -2535,7 +2538,7 @@ void process_commands()
      break;
 
     /**
-     * M60 - Set laser power
+     * M60 - Set laser power immediately
      *
      * If no power lavel specified laser will be set to max.
      *
@@ -2543,35 +2546,35 @@ void process_commands()
      *
      */
     case 60:
-    {
-      if (code_seen('S'))
-      {
-        long input = code_value_long() / PWM_SCALE;
-        if (input > MAX_PWM) {
-          Laser::power = MAX_PWM;
-        } else if (input < 0) {
-          Laser::power = 0;
-        } else {
-          Laser::power = input;
-        }
-      }
-      else
-      {
-        Laser::power = MAX_PWM;
-      }
-    }
-    break;
+      Laser::synchronized = false;
+      Laser::parseSetPowerCmd();
+      break;
 
     /**
-     * M61 - Close laser
+     * M61 - Set laser power synchronically
+     *
+     * Any machine movement is finished, and then laser level is set.
+     * If no power level is specified level is set to maximum (255).
+     *
+     * @param int S laser level (0-255)
+     *
+     */
+    case 61:
+      Laser::synchronized = true;
+      st_synchronize();
+      Laser::parseSetPowerCmd();
+      break;
+
+    /**
+     * M62 - Close laser
      *
      * Laser power is set to 0.
      */
-    case 61:
-    {
+    case 62:
+      if (Laser::synchronized)
+        st_synchronize();
       Laser::power = 0;
-    }
-    break;
+      break;
 
     case 104: // M104
       if(setTargetedHotend(104)){
@@ -6057,3 +6060,24 @@ bool setTargetedHotend(int code){
   return false;
 }
 
+namespace Laser
+{
+  inline void parseSetPowerCmd ()
+  {
+    if (code_seen('S'))
+    {
+      long input = code_value_long() / PWM_SCALE;
+      if (input > MAX_PWM) {
+        power = MAX_PWM;
+      } else if (input < 0) {
+        power = 0;
+      } else {
+        power = input;
+      }
+    }
+    else
+    {
+      power = MAX_PWM;
+    }
+  }
+}
