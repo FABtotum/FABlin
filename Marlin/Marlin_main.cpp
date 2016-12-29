@@ -778,7 +778,8 @@ void FabtotumHeads_init ()
 
    available_heads[FAB_HEADS_laser_ID].mode = WORKING_MODE_LASER;
    available_heads[FAB_HEADS_laser_ID].heaters = 0;
-   available_heads[FAB_HEADS_laser_ID].maxtemp = 65;
+   available_heads[FAB_HEADS_laser_ID].thtable = 3;
+   available_heads[FAB_HEADS_laser_ID].maxtemp = 70;
 
    tool_change(installed_head_id);
 }
