@@ -271,6 +271,11 @@ extern bool enable_secure_switch_zprobe;
 #endif
 
 #ifdef THERMISTOR_HOTSWAP
+namespace ThermistorHotswap
+{
+  void setTable (const unsigned short);
+}
+
 extern int maxttemp[EXTRUDERS];
 #ifdef TEMP_SENSOR_1_AS_REDUNDANT
 extern void *heater_ttbl_map[2];
@@ -316,6 +321,7 @@ extern uint8_t working_mode;
 typedef struct tool_s {
    uint8_t mode = 0;
    uint8_t heaters = 1;
+   uint8_t thtable = THERMISTOR_HOTSWAP_DEFAULT_INDEX;
    int16_t mintemp = HEATER_0_MINTEMP;
    int16_t maxtemp = HEATER_0_MAXTEMP;
 } tool_t;
