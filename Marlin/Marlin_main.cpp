@@ -749,7 +749,12 @@ void tool_change (uint8_t id)
 
    // Update heaters max temp
 #if (EXTRUDERS > 0)
-   if (installed_head->maxtemp > installed_head->mintemp) {
+  if (installed_head->maxtemp > installed_head->mintemp)
+  {
+    // Activate custom thermistor table
+    // Important: do this before changing max temp cause we need correct raw values
+    ThermistorHotswap::setTable(installed_head->thtable);
+
       maxttemp[0] = installed_head->maxtemp;
       CRITICAL_SECTION_START
       heater_0_init_maxtemp(installed_head->maxtemp);
@@ -1705,6 +1710,22 @@ void refresh_cmd_timeout(void)
     }
   } //retract
 #endif //FWRETRACT
+
+#ifdef THERMISTOR_HOTSWAP
+
+void ThermistorHotswap::setTable (const unsigned short value)
+{
+  if (value >= 0 && value < THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN)
+  {
+    extruder_0_thermistor_index=value;
+    CRITICAL_SECTION_START
+    heater_ttbl_map[0] = thermistors_map[extruder_0_thermistor_index];
+    heater_ttbllen_map[0] = thermistors_map_len[extruder_0_thermistor_index];
+    CRITICAL_SECTION_END
+  }
+}
+
+#endif // defined(THERMISTOR_HOTSWAP)
 
 void process_commands()
 {
@@ -4912,14 +4933,7 @@ void process_commands()
       if (code_seen('S'))
       {
         value = code_value();
-        if(value>=0 && value<THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN)
-        {
-          extruder_0_thermistor_index=value;
-	  CRITICAL_SECTION_START
-	  heater_ttbl_map[0] = thermistors_map[extruder_0_thermistor_index];
-	  heater_ttbllen_map[0] = thermistors_map_len[extruder_0_thermistor_index];
-	  CRITICAL_SECTION_END
-        }
+        ThermistorHotswap::setTable(value);
       }
       else
       {
