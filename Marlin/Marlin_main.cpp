@@ -541,6 +541,10 @@ bool auto_fan_on_temp_change = true;
 void forward_command(uint8_t, const char*);
 static int8_t forward_commands_to = -1;      // What communication line to forward to
 static bool   feedback_responses  = false;  // Wether to feed back responses on main serial line
+
+tool_t* installed_head;
+tool_t  available_heads[HEADS];
+
 uint8_t working_mode = WORKING_MODE_HYBRID;
 
 uint8_t laser_powah = 0;
@@ -685,6 +689,115 @@ void servo_init()
   delay(PROBE_SERVO_DEACTIVATION_DELAY);
   servos[servo_endstops[Z_AXIS]].detach();
   #endif
+}
+
+void working_mode_change (uint8_t new_mode, bool reset = false)
+{
+  if (new_mode == working_mode && !reset)
+    return;
+
+   // Deinit previous mode
+   switch (working_mode)
+   {
+      case WORKING_MODE_LASER:
+        laser_force = false;
+        laser_powah = 0;
+         // Disable supplementary +24v power for fabtotum laser head
+         if (installed_head_id == FAB_HEADS_laser_ID) {
+           WRITE(HEATER_0_PIN, 0);
+           //enable_heater();
+         }
+         break;
+   }
+
+   // Init new mode
+   switch (new_mode)
+   {
+      case WORKING_MODE_LASER:
+         // Laser tools use servo 0 pwm, in the future this may be configurable
+         servos[0].detach();
+         MILL_MOTOR_OFF();
+
+         // Enable supplementary +24v power for fabtotum laser head
+         if (installed_head_id == FAB_HEADS_laser_ID) {
+            disable_heater();
+            WRITE(HEATER_0_PIN, 1);
+         }
+
+         //SET_OUTPUT(LED_PIN);
+         break;
+
+      case WORKING_MODE_CNC:
+         servo_init();
+         break;
+   }
+
+   working_mode = new_mode;
+}
+
+void working_mode_echo ()
+{
+  switch (working_mode)
+  {
+    case WORKING_MODE_HYBRID:
+      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_HYBRID);
+      break;
+
+    case WORKING_MODE_FFF:
+      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_FFF);
+      break;
+
+    case WORKING_MODE_LASER:
+      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_LASER);
+      break;
+
+    case WORKING_MODE_CNC:
+      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_CNC);
+      break;
+
+    default:
+      SERIAL_ECHOPAIR(MSG_WORKING_MODE, (unsigned long)working_mode);
+      SERIAL_ECHOLNPGM("");
+  }
+}
+
+void tool_change (uint8_t id)
+{
+   installed_head = &(available_heads[id]);
+   installed_head_id = id;
+
+   // Forcefully reset mode...
+   working_mode_change(installed_head->mode, true);
+
+   // Update heaters max temp
+#if (EXTRUDERS > 0)
+   if (installed_head->maxtemp > installed_head->mintemp) {
+      maxttemp[0] = installed_head->maxtemp;
+      CRITICAL_SECTION_START
+      heater_0_init_maxtemp(installed_head->maxtemp);
+      CRITICAL_SECTION_END
+   }
+#endif
+
+}
+
+void FabtotumHeads_init ()
+{
+   available_heads[FAB_HEADS_hybrid_ID].mode = 0;
+   available_heads[FAB_HEADS_hybrid_ID].heaters = 1;
+   available_heads[FAB_HEADS_hybrid_ID].maxtemp = 235;
+
+   available_heads[FAB_HEADS_print_v2_ID].mode = WORKING_MODE_FFF;
+   available_heads[FAB_HEADS_print_v2_ID].heaters = 1;
+
+   available_heads[FAB_HEADS_mill_v2_ID].mode = WORKING_MODE_CNC;
+   available_heads[FAB_HEADS_mill_v2_ID].heaters = 0;
+
+   available_heads[FAB_HEADS_laser_ID].mode = WORKING_MODE_LASER;
+   available_heads[FAB_HEADS_laser_ID].heaters = 0;
+   available_heads[FAB_HEADS_laser_ID].maxtemp = 65;
+
+   tool_change(installed_head_id);
 }
 
 void FabtotumIO_init()
@@ -859,6 +972,7 @@ void setup()
   servo_init();
 
   FabtotumIO_init();
+  FabtotumHeads_init();
 
   lcd_init();
   _delay_ms(1000);	// wait 1sec to display the splash screen
@@ -1639,72 +1753,6 @@ void refresh_cmd_timeout(void)
     }
   } //retract
 #endif //FWRETRACT
-
-void working_mode_change (uint8_t new_mode, bool reset = false)
-{
-  if (new_mode == working_mode && !reset)
-    return;
-
-   // Deinit previous mode
-   switch (working_mode)
-   {
-      case WORKING_MODE_LASER:
-        laser_force = false;
-        laser_powah = 0;
-         // Disable supplementary +24v power for fabtotum laser head
-         if (installed_head_id == FAB_HEADS_laser_ID) {
-           WRITE(HEATER_0_PIN, 0);
-           //enable_heater();
-         }
-         break;
-   }
-
-   // Init new mode
-   switch (new_mode)
-   {
-      case WORKING_MODE_LASER:
-         // Laser tools use servo 0 pwm, in the future this may be configurable
-         servos[0].detach();
-         MILL_MOTOR_OFF();
-
-         // Enable supplementary +24v power for fabtotum laser head
-         if (installed_head_id == FAB_HEADS_laser_ID) {
-            disable_heater();
-            WRITE(HEATER_0_PIN, 1);
-         }
-
-         //SET_OUTPUT(LED_PIN);
-         break;
-
-      case WORKING_MODE_CNC:
-         servo_init();
-         break;
-   }
-
-   working_mode = new_mode;
-}
-
-void working_mode_echo ()
-{
-  switch (working_mode)
-  {
-    case WORKING_MODE_FFF:
-      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_FFF);
-      break;
-
-    case WORKING_MODE_LASER:
-      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_LASER);
-      break;
-
-    case WORKING_MODE_CNC:
-      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_CNC);
-      break;
-
-    default:
-      SERIAL_ECHOPAIR(MSG_WORKING_MODE, (unsigned long)working_mode);
-      SERIAL_ECHOLNPGM("");
-  }
-}
 
 inline void forward_command (uint8_t interface, const char* line)
 {
@@ -5085,27 +5133,14 @@ void process_commands()
    } break;
 
     case 793: // M793 - Set/read installed head soft ID
-      {
-        if (code_seen('S')) {
-          installed_head_id = code_value_long();
-          // Forcefully reset mode...
-          switch (installed_head_id)
-          {
-            case FAB_HEADS_laser_ID:
-              working_mode_change(WORKING_MODE_LASER, true);
-              break;
-
-            case FAB_HEADS_mill_v2_ID:
-              working_mode_change(WORKING_MODE_CNC, true);
-              break;
-
-            default:
-              working_mode_change(WORKING_MODE_FFF, true);
-          }
-        }
-        SERIAL_PROTOCOLLN(installed_head_id);
+    {
+      if (code_seen('S')) {
+        uint8_t id = code_value_long();
+        tool_change(id);
       }
-      break;
+      SERIAL_PROTOCOLLN(installed_head_id);
+    }
+    break;
 
     /*case 793: // M794 P1|P0 - Enable disable
       {
@@ -5154,9 +5189,10 @@ void process_commands()
         value = code_value();
         if(value>=0)
         {
-	  CRITICAL_SECTION_START
-	  maxttemp[0] = value;
-	  CRITICAL_SECTION_END
+          maxttemp[0] = value;
+          CRITICAL_SECTION_START
+          heater_0_init_maxtemp(value);
+          CRITICAL_SECTION_END
         }
       }
       else

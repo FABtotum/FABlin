@@ -70,11 +70,13 @@
 #define MSG_MARLIN "Marlin"
 #define MSG_MARLIN_FABTOTUM "Marlin for FABtotum Personal Fabricator"
 
-#define MSG_WORKING_MODE "Machine Mode:"
-#define MSG_WORKING_MODE_FFF "FFF"
-#define MSG_WORKING_MODE_LASER "Laser"
-#define MSG_WORKING_MODE_CNC "CNC"
-
+#define MSG_WORKING_MODE "Working Mode:"
+#define MSG_WORKING_MODE_HYBRID "Hybrid"
+#define MSG_WORKING_MODE_FFF    "FFF"
+#define MSG_WORKING_MODE_LASER  "Laser"
+#define MSG_WORKING_MODE_CNC    "CNC"
+#define MSG_WORKING_MODE_SCAN   "Scan"
+#define MSG_WORKING_MODE_SLA    "SLA"
 
 
 #if LANGUAGE_CHOICE == 1

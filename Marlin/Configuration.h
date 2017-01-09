@@ -215,13 +215,13 @@
 
 // this sets the default thermistor type and temperature for initialization purposes
 #define TEMP_SENSOR_0 ARGN(THERMISTOR_HOTSWAP_DEFAULT_INDEX,THERMISTOR_HOTSWAP_SUPPORTED_TYPES)
-#define HEATER_0_MAXTEMP 260 //V1 235, V2 260
+#define HEATER_0_MAXTEMP 275 //V1 235, V2 275
 // END: This are auxiliary macros
 #else
 // When temperature exceeds max temp, your heater will be switched off.
 // This feature exists to protect your hotend from overheating accidentally, but *NOT* from thermistor short/failure!
 // You should use MINTEMP for thermistor short/failure protection.
-#define HEATER_0_MAXTEMP 260
+#define HEATER_0_MAXTEMP 275
 // Temperature sensor type as defined above
 #define TEMP_SENSOR_0 169 // 169 is default FAB Rev 1 thermistor | 11 is the typical 100K NTC beta=3950
 
@@ -498,7 +498,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
   #define X_PROBE_OFFSET_FROM_EXTRUDER -17
   #define Y_PROBE_OFFSET_FROM_EXTRUDER -61.5
   #define Z_PROBE_OFFSET_FROM_EXTRUDER -31.65
-  
+
   #define Z_RAISE_BEFORE_HOMING 42       // (in mm) Raise Z before homing (G28) for Probe Clearance.
                                         // Be sure you have this distance over your Z_MAX_POS in case
 
@@ -528,7 +528,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
   #ifdef Z_SAFE_HOMING
 
    #define Z_SAFE_HOMING_X_POINT (85.5)    // X point for Z homing when homing all axis (G28)
-   #define Z_SAFE_HOMING_Y_POINT (57.5)    // Y point for Z homing when homing all axis (G28) 
+   #define Z_SAFE_HOMING_Y_POINT (57.5)    // Y point for Z homing when homing all axis (G28)
 
   #endif
 

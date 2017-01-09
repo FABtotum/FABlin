@@ -756,6 +756,19 @@ static void updateTemperaturesFromRawValues()
     CRITICAL_SECTION_END;
 }
 
+void heater_0_init_maxtemp (int16_t value)
+{
+#ifdef HEATER_0_MAXTEMP
+  while(analog2temp(maxttemp_raw[0], 0) > value) {
+#if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
+    maxttemp_raw[0] -= OVERSAMPLENR;
+#else
+    maxttemp_raw[0] += OVERSAMPLENR;
+#endif
+  }
+#endif
+}
+
 void tp_init()
 {
 #if (MOTHERBOARD == 80) && ((TEMP_SENSOR_0==-1)||(TEMP_SENSOR_1==-1)||(TEMP_SENSOR_2==-1)||(TEMP_SENSOR_BED==-1))
@@ -973,8 +986,10 @@ void disable_heater()
   #endif
      
   #if defined(TEMP_1_PIN) && TEMP_1_PIN > -1
-    target_temperature[1]=0;
-    soft_pwm[1]=0;
+    #if (EXTRUDERS > 1)
+      target_temperature[1]=0;
+      soft_pwm[1]=0;
+    #endif
     #if defined(HEATER_1_PIN) && HEATER_1_PIN > -1 
       WRITE(HEATER_1_PIN,LOW);
     #endif
@@ -1171,7 +1186,7 @@ ISR(TIMER0_COMPB_vect)
   #endif
 
   // FABtotum laser head uses heater line for supplementary +24v dc power source
-  if (working_mode == WORKING_MODE_FFF)
+  if (working_mode <= WORKING_MODE_FFF)
   {
 
   if(pwm_count == 0){
@@ -1391,7 +1406,10 @@ ISR(TIMER0_COMPB_vect)
     if (!temp_meas_ready) //Only update the raw values if they have been read. Else we could be updating them during reading.
     {
       
-      #ifdef THERMISTOR_INPUT_HOTSWAP
+      #ifdef THERMISTOR_INPUT_HOTSWAP      
+         #if (TEMP_1_PIN < 0)
+         #error "THERMISTOR_INPUT_HOTSWAP needs both TEMP_0 and TEMP_1 to be defined"
+         #endif
       current_temperature_raw[0] = ((extruder_0_thermistor_input_index == 1)?raw_temp_1_value:raw_temp_0_value);
       #else
       current_temperature_raw[0] = raw_temp_0_value;
