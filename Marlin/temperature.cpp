@@ -33,6 +33,7 @@
 #include "ultralcd.h"
 #include "temperature.h"
 #include "watchdog.h"
+#include "Configuration_heads.h"
 
 //===========================================================================
 //=============================public variables============================
@@ -263,6 +264,7 @@ void PID_autotune(float temp, int extruder, int ncycles)
 
  for(;;) {
 
+    while (!temp_meas_ready);
     if(temp_meas_ready == true) { // temp sample ready
       updateTemperaturesFromRawValues();
 
@@ -1167,7 +1169,11 @@ ISR(TIMER0_COMPB_vect)
   #if HEATER_BED_PIN > -1
   static unsigned char soft_pwm_b;
   #endif
-  
+
+  // FABtotum laser head uses heater line for supplementary +24v dc power source
+  if (working_mode == WORKING_MODE_FFF)
+  {
+
   if(pwm_count == 0){
     soft_pwm_0 = soft_pwm[0];
     if(soft_pwm_0 > 0) { 
@@ -1216,6 +1222,8 @@ ISR(TIMER0_COMPB_vect)
   pwm_count += (1 << SOFT_PWM_SCALE);
   pwm_count &= 0x7f;
   
+  }  // if (working_mode == WORKING_MODE_FFF)
+
   switch(temp_state) {
     case 0: // Prepare TEMP_0
       #if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)

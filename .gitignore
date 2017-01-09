@@ -7,4 +7,5 @@ applet/
 *.orig
 *.rej
 *.bak
+*.hex
 .piolibdeps
