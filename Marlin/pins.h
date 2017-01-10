@@ -903,7 +903,7 @@
 
 #define TEMP_0_PIN         13   // ANALOG NUMBERING
 #define TEMP_BED_PIN       14   // ANALOG NUMBERING
-#define TEMP_1_PIN         13   // ANALOG NUMBERING
+#define TEMP_1_PIN         -1   // ANALOG NUMBERING
 #define TEMP_2_PIN         -1   // ANALOG NUMBERING
 
 

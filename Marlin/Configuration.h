@@ -85,7 +85,7 @@
 // #define MACHINE_UUID "00000000-0000-0000-0000-000000000000"
 
 // This defines the number of extruders
-#define EXTRUDERS 3
+#define EXTRUDERS 1
 
 //// The following define selects which power supply you have. Please choose the one that matches your setup
 // 1 = ATX
@@ -223,7 +223,7 @@
 // You should use MINTEMP for thermistor short/failure protection.
 #define HEATER_0_MAXTEMP 275
 // Temperature sensor type as defined above
-#define TEMP_SENSOR_0 169 // 169 is default FAB Rev 1 thermistor | 11 is the typical 100K NTC beta=3950
+#define TEMP_SENSOR_0 170 // 169 is default FAB Rev 1 thermistor | 11 is the typical 100K NTC beta=3950
 
 #endif
 
