@@ -1,0 +1,44 @@
+Revision history
+================
+
+Rev 1.0.007 (26/01/2015)
+-----------------------
+- review of Autobed leveling procedure. Fixing of probed points' X and Y coordinates signs
+- added M-code M714 to select the homing X switch (max or min) to allow machine operation even with X min swicth fail (M714 S0->select X min switch, M714 S1->select X max switch)
+- Improved reactivity on Stop command for a failure
+- changed displayed error after endstop hit (changed to "106" error code for Xmax,"107" for Xmin,"108" for Ymax, "109" for Ymin, instead of general kill error code "100")
+
+Rev 1.0.006 (02/12/2014)
+-----------------------
+- review of Autobed leveling procedure. Fixing of probed points' X and 
+  Y coordinates signs 
+
+Rev 1.0.005 (24/11/2014)
+------------------------
+- added M732 code for enable/disable the operations kill on door 
+  opening permanently (M732 S0->disable(unsafe),M732 S1->enable(safe))
+
+Rev 1.0.004 (29/09/2014)
+------------------------
+- updated G30 to probe at max z=(probe length-1mm) 
+- added M-code M779 to force head serial ID reading even if the 
+  machine has been turned on without head (for testing purpose only)
+
+Rev 1.0.003 (22/09/2014)
+------------------------
+- changed M730 behavior, now command does not clear error ack signal 
+  (only M999 clear the error ack signal)
+- changed displayed error after DOOR opening during movements 
+  (changed to "102" error code instead of general kill error code "100")
+
+Rev 1.0.002 (26/09/2014)
+------------------------
+- changed Z axis speed for G27 command (6 times faster)
+- changed probing point for z for homing z (from bottom left to 
+  center-center)
+- changed maximum probing height is 1mm closer than factory stored 
+  zprobe_offset (safer to avoid damage after probe malfunction)
+
+Rev 1.0.001 (03/09/2014)
+------------------------
+- Initial revision based upon Marlin firmware for ATMega controllers

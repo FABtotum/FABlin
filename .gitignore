@@ -1,0 +1,7 @@
+*.o
+applet/
+*~
+*.orig
+*.rej
+*.bak
+Marlin/Marlin.h
