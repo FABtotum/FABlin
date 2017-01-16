@@ -27,6 +27,9 @@
     http://reprap.org/pipermail/reprap-dev/2011-May/003323.html
  */
 
+
+#include <errno.h>
+#include <Wire.h>
 #include "Marlin.h"
 
 #ifdef ENABLE_AUTO_BED_LEVELING
@@ -47,7 +50,6 @@
 #include "language.h"
 #include "pins_arduino.h"
 #include "math.h"
-#include "Wire.h"
 
 #include "Configuration_heads.h"
 
@@ -210,6 +212,8 @@
 // M731 - Disable kill on Door Open
 // M732 - Enable or disable the permanent door security switch (M732 S0 -> disable (unsafe), M732 S1 -> enable (safe))
 
+// M734   Enable /disable Endstop warnings
+// M735   Enable /disable silent mode (sounds except for power-on)
 // M740 - read WIRE_END sensor
 // M741 - read DOOR_OPEN sensor
 // M742 - read REEL_LENS_OPEN sensor
@@ -232,6 +236,8 @@
 // M766 - read FABtotum Personal Fabricator Firmware Build Date and Time
 // M767 - read FABtotum Personal Fabricator Firmware Update Author
 
+// M785 - Turn Prism UV module On/off M785 S[0-1]
+// M786 - External Power OFF
 
 // M779 - force Head product ID reading (for testing purpose only)
 // [unimplemented] M780 - read Head Product Name
@@ -304,6 +310,7 @@ float max_pos[3] = { X_MAX_POS, Y_MAX_POS, Z_MAX_POS };
 bool axis_known_position[3] = {false, false, false};
 float zprobe_zoffset;
 bool inactivity = true;
+bool silent=false;
 
 //endstop configs
 bool X_MIN_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
@@ -334,6 +341,7 @@ uint8_t extruder_heater_mapping[EXTRUDERS];     // Extruder to heater mapping
 //uint8_t tool_heater_mapping[]   = { 0, 0, 0 };  // Tool to heater mapping
 bool    tool_twi_support[]      = { false, false, false };  // Tool TWI support
 int fanSpeed=0;
+
 #ifdef SERVO_ENDSTOPS
   int servo_endstops[] = SERVO_ENDSTOPS;
   int servo_endstop_angles[] = SERVO_ENDSTOP_ANGLES;
@@ -434,12 +442,11 @@ unsigned long stoptime=0;
 
 static uint8_t tmp_extruder;
 
-
-bool Stopped=false;
-
 #if NUM_SERVOS > 0
   Servo servos[NUM_SERVOS];
 #endif
+
+bool Stopped=false;
 
 bool CooldownNoWait = true;
 bool target_direction;
@@ -451,7 +458,7 @@ boolean chdkActive = false;
 #endif
 
 unsigned int LaserSoftPwm;
-unsigned int FabSoftPwm_TMR;
+//unsigned int FabSoftPwm_TMR;
 unsigned int HeadLightSoftPwm;
 unsigned int FabSoftPwm_LMT;
 unsigned int RedSoftPwm;
@@ -485,6 +492,12 @@ bool z_probe_activation=true;
 bool home_Z_reverse=false;
 
 bool x_axis_endstop_sel=false;
+bool monitor_secure_endstop=false; //default is off
+
+bool min_x_endstop_triggered=false;
+bool max_x_endstop_triggered=false;
+bool min_y_endstop_triggered=false;
+bool max_y_endstop_triggered=false;
 
 byte SERIAL_HEAD_0=0;
 byte SERIAL_HEAD_1=0;
@@ -511,6 +524,12 @@ uint8_t extruder_0_thermistor_index = THERMISTOR_HOTSWAP_DEFAULT_INDEX;
 #ifdef SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE
 bool auto_fan_on_temp_change = true;
 #endif
+
+uint8_t working_mode = WORKING_MODE_FFF;
+
+uint8_t laser_powah = 0;
+bool laser_force = false;
+
 
 //===========================================================================
 //=============================Routines======================================
@@ -770,7 +789,7 @@ void FabtotumIO_init()
    //TCCR1A= _BV(COM1A1) | _BV(COM1B1) | _BV(WGM10);
    //TCCR1B= _BV(WGM12) | _BV(CS11) | _BV(CS10);
 
-   FabSoftPwm_TMR=0;
+   //FabSoftPwm_TMR=0;
    FabSoftPwm_LMT=MAX_PWM;
    HeadLightSoftPwm=0;
    LaserSoftPwm=0;
@@ -825,6 +844,7 @@ void FabtotumIO_init()
    BEEP_ON()
    _delay_ms(50);
    BEEP_OFF()
+
 }
 
 void setup()
@@ -876,7 +896,7 @@ void setup()
   watchdog_init();
   st_init();    // Initialize stepper, this enables interrupts!
   setup_photpin();
-  servo_init();
+
 
   FabtotumIO_init();
 
@@ -890,39 +910,28 @@ void setup()
   #ifdef DIGIPOT_I2C
     digipot_i2c_init();
   #endif
-}
 
-void poweroff_rqs(){
-    RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_PWR_OFF;
+  //initialize smart endstop check
+    if((READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING))
+  {
+    min_x_endstop_triggered=true;
+  }
 
+  if((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING))
+  {
+    max_x_endstop_triggered=true;
+  }
 
-    inactivity=true;
+  if((READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING))
+  {
+    min_y_endstop_triggered=true;
+  }
 
-    //kill external power supply
-    digitalWrite(PWR_OUT_PIN, LOW);
-    delay(2000);
-    digitalWrite(PWR_OUT_PIN, HIGH);
+  if((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING))
+  {
+    max_y_endstop_triggered=true;
+  }
 
-    store_last_amb_color();
-    set_amb_color_fading(true,true,true,fading_speed);
-
-    //beep
-    BEEP_ON()
-    _delay_ms(50);
-    BEEP_OFF()
-    _delay_ms(50);
-    BEEP_ON()
-    _delay_ms(50);
-    BEEP_OFF()
-
-}
-
-void check_power_btn(){
-  //check if pin is high
-  /*if (READ(PWR_IN_PIN)) {
-    poweroff_rqs();
-}*/
 }
 
 
@@ -970,11 +979,8 @@ void loop()
   manage_heater();
   manage_inactivity();
   checkHitEndstops();
-  check_power_btn();
   lcd_update();
 }
-
-
 
 void get_command()
 {
@@ -1679,10 +1685,77 @@ void refresh_cmd_timeout(void)
   } //retract
 #endif //FWRETRACT
 
+void working_mode_change (uint8_t new_mode, bool reset = false)
+{
+  if (new_mode == working_mode && !reset)
+    return;
+
+   // Deinit previous mode
+   switch (working_mode)
+   {
+      case WORKING_MODE_LASER:
+        laser_force = false;
+        laser_powah = 0;
+         // Disable supplementary +24v power for fabtotum laser head
+         if (installed_head_id == FAB_HEADS_laser_ID) {
+           WRITE(HEATER_0_PIN, 0);
+           //enable_heater();
+         }
+         break;
+   }
+
+   // Init new mode
+   switch (new_mode)
+   {
+      case WORKING_MODE_LASER:
+         // Laser tools use servo 0 pwm, in the future this may be configurable
+         servos[0].detach();
+         MILL_MOTOR_OFF();
+
+         // Enable supplementary +24v power for fabtotum laser head
+         if (installed_head_id == FAB_HEADS_laser_ID) {
+            disable_heater();
+            WRITE(HEATER_0_PIN, 1);
+         }
+
+         //SET_OUTPUT(LED_PIN);
+         break;
+
+      case WORKING_MODE_CNC:
+         servo_init();
+         break;
+   }
+
+   working_mode = new_mode;
+}
+
+void working_mode_echo ()
+{
+  switch (working_mode)
+  {
+    case WORKING_MODE_FFF:
+      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_FFF);
+      break;
+
+    case WORKING_MODE_LASER:
+      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_LASER);
+      break;
+
+    case WORKING_MODE_CNC:
+      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_CNC);
+      break;
+
+    default:
+      SERIAL_ECHOPAIR(MSG_WORKING_MODE, (unsigned long)working_mode);
+      SERIAL_ECHOLNPGM("");
+  }
+}
+
 void process_commands()
 {
   unsigned long codenum; //throw away variable
   char *starpos = NULL;
+  char saved_monitor_secure_endstop;
 #ifdef ENABLE_AUTO_BED_LEVELING
   float x_tmp, y_tmp, z_tmp, real_z;
 #endif
@@ -1761,12 +1834,23 @@ void process_commands()
         store_last_amb_color();
         set_amb_color(0,255,0);
 
+        saved_monitor_secure_endstop = monitor_secure_endstop;
         saved_feedrate = feedrate;
         saved_feedmultiply = feedmultiply;
         feedmultiply = 100;
         previous_millis_cmd = millis();
 
+        monitor_secure_endstop = false;
         enable_endstops(true);
+
+        /*if((READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)&&(!home_Z_reverse)){
+         //Z movement move to 50 if g27 just happened.
+         destination[Z_AXIS] = 20;    // move up
+         feedrate = max_feedrate[Z_AXIS];
+         plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
+         st_synchronize();
+         }
+         */
 
         for(int8_t i=0; i < NUM_AXIS; i++) {
           destination[i] = current_position[i];
@@ -1874,6 +1958,7 @@ void process_commands()
         #if Z_HOME_DIR < 0                      // If homing towards BED do Z last
           #ifndef Z_SAFE_HOMING
             if((home_all_axis) || (code_seen(axis_codes[Z_AXIS]))) {
+
               #if defined (Z_RAISE_BEFORE_HOMING) && (Z_RAISE_BEFORE_HOMING > 0)
                 destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
                 feedrate = max_feedrate[Z_AXIS];
@@ -1884,8 +1969,28 @@ void process_commands()
             }
           #else                      // Z Safe mode activated.
             if(home_all_axis) {
-              destination[X_AXIS] = round(Z_SAFE_HOMING_X_POINT - X_PROBE_OFFSET_FROM_EXTRUDER);
-              destination[Y_AXIS] = round(Z_SAFE_HOMING_Y_POINT - Y_PROBE_OFFSET_FROM_EXTRUDER);
+
+              // Move XY to safe_homing position
+              // Endstops are disabled as XY was just homed.
+              enable_endstops(false);
+              destination[X_AXIS] = round(Z_SAFE_HOMING_X_POINT);
+              destination[Y_AXIS] = round(Z_SAFE_HOMING_Y_POINT);
+              destination[Z_AXIS] = current_position[Z_AXIS];
+              destination[E_AXIS] = current_position[E_AXIS];
+              feedrate = XY_SLOW_FEEDRATE;
+
+              plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
+              plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
+              st_synchronize();
+              current_position[X_AXIS] = destination[X_AXIS];
+              current_position[Y_AXIS] = destination[Y_AXIS];
+              enable_endstops(true);
+
+              // Now that the XY have been positioned we are going to try to
+              // move the Z axis down if possible to avoid the probe hitting
+              // the bed during extending.
+              destination[X_AXIS] = round(Z_SAFE_HOMING_X_POINT);
+              destination[Y_AXIS] = round(Z_SAFE_HOMING_Y_POINT);
               destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
               feedrate = XY_TRAVEL_SPEED;
               current_position[Z_AXIS] = 0;
@@ -1951,12 +2056,40 @@ void process_commands()
         feedmultiply = saved_feedmultiply;
         previous_millis_cmd = millis();
         endstops_hit_on_purpose();
-        }
-      z_probe_activation=true;
-      home_Z_reverse=false;
 
-      restore_last_amb_color();
+        enable_endstops(false);
+
+        // Move away from the endstops only if doing G28 (without parameters!)
+        if (!(z_probe_activation && !code_seen(axis_codes[X_AXIS]) && !code_seen(axis_codes[X_AXIS])))
+        {
+          if (x_axis_endstop_sel)
+            destination[X_AXIS] = current_position[X_AXIS]-2;
+          else
+            destination[X_AXIS] = current_position[X_AXIS]+2;
+
+          destination[Y_AXIS] = current_position[Y_AXIS]+2;
+          destination[Z_AXIS] = current_position[Z_AXIS];
+          destination[E_AXIS] = current_position[E_AXIS];
+          feedrate = max_feedrate[Z_AXIS];
+          plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
+
+          current_position[X_AXIS] = destination[X_AXIS];
+          current_position[Y_AXIS] = destination[Y_AXIS];
+          current_position[Z_AXIS] = destination[Z_AXIS];
+          plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
+
+          st_synchronize();
+        }
+
+        z_probe_activation=true;
+        home_Z_reverse=false;
+        restore_last_amb_color();
+        enable_endstops(true);
+        monitor_secure_endstop = saved_monitor_secure_endstop;
+      }
+
       break;
+
 
 #ifdef ENABLE_AUTO_BED_LEVELING
     case 29: // G29 Detailed Z-Probe, probes the bed at 3 or more points.
@@ -1986,8 +2119,8 @@ void process_commands()
             plan_bed_level_matrix.set_to_identity();
             vector_3 uncorrected_position = plan_get_position();
             //uncorrected_position.debug("position durring G29");
-            current_position[X_AXIS] = uncorrected_position.x;
-            current_position[Y_AXIS] = uncorrected_position.y;
+            //current_position[X_AXIS] = uncorrected_position.x;
+            //current_position[Y_AXIS] = uncorrected_position.y;
             current_position[Z_AXIS] = uncorrected_position.z;
             plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
             setup_for_endstop_move();
@@ -3201,32 +3334,17 @@ void process_commands()
     #if (LARGE_FLASH == true && ( BEEPER > 0 || defined(ULTRALCD) || defined(LCD_USE_I2C_BUZZER)))
     case 300: // M300
     {
-//      int beepS = code_seen('S') ? code_value() : 110;
-//      int beepP = code_seen('P') ? code_value() : 1000;
-//      if (beepS > 0)
-//      {
-//        #if BEEPER > 0
-//          tone(BEEPER, beepS);
-//          delay(beepP);
-//          noTone(BEEPER);
-//        #elif defined(ULTRALCD)
-//		  lcd_buzz(beepS, beepP);
-//		#elif defined(LCD_USE_I2C_BUZZER)
-//		  lcd_buzz(beepP, beepS);
-//        #endif
-//      }
-//      else
-//      {
-//        delay(beepP);
-//      }
 
-        BEEP_ON()
-        _delay_ms(50);
-        BEEP_OFF()
-        _delay_ms(50);
-        BEEP_ON()
-        _delay_ms(50);
-        BEEP_OFF()
+      if (!silent){
+      BEEP_ON()
+      _delay_ms(50);
+      BEEP_OFF()
+      _delay_ms(50);
+      BEEP_ON()
+      _delay_ms(50);
+      BEEP_OFF()
+      }
+
     }
     break;
     #endif // M300
@@ -3361,6 +3479,38 @@ void process_commands()
     }
     break;
 #endif
+
+    case 450:
+    {
+      if (code_seen('S')) {
+        working_mode_change(code_value());
+      }
+
+      working_mode_echo();
+    }
+    break;
+
+    case 451:
+    {
+      working_mode_change(WORKING_MODE_FFF);
+      working_mode_echo();
+    }
+    break;
+
+    case 452: // M452 Set Laser mode
+    {
+      working_mode_change(WORKING_MODE_LASER);
+      working_mode_echo();
+    }
+    break;
+
+    case 453:
+    {
+      working_mode_change(WORKING_MODE_CNC);
+      working_mode_echo();
+    }
+    break;
+
     case 500: // M500 Store settings in EEPROM
     {
         Config_StoreSettings();
@@ -3484,7 +3634,6 @@ void process_commands()
           {
           #if BEEPER > 0
             SET_OUTPUT(BEEPER);
-
             WRITE(BEEPER,HIGH);
             delay(3);
             WRITE(BEEPER,LOW);
@@ -3874,22 +4023,40 @@ void process_commands()
 
     case 728:// M728 - RASPI ALIVE
     {
-      BEEP_ON()
-      _delay_ms(50);
-      BEEP_OFF()
-      _delay_ms(50);
-      BEEP_ON()
-      _delay_ms(50);
-      BEEP_OFF()
-      _delay_ms(50);
-      BEEP_ON()
-      _delay_ms(50);
-      BEEP_OFF()
-
+      //Stopped = false;
       set_amb_color(255,255,255);
       store_last_amb_color();
       stop_fading();
       restore_last_amb_color();
+
+      if (!silent){
+
+        //play intro tune
+        analogWrite(BEEPER, 180);
+
+        delay(50);
+        BEEP_OFF();
+        delay(50);
+
+        analogWrite(BEEPER, 185);
+
+        delay(50);
+        BEEP_OFF();
+        delay(50);
+
+        analogWrite(BEEPER, 190);
+
+        delay(50);
+        BEEP_OFF();
+        delay(80);
+
+        analogWrite(BEEPER, 115);
+
+        delay(100);
+        BEEP_OFF();
+        delay(100);
+
+      }
 
 
     }
@@ -3910,6 +4077,32 @@ void process_commands()
       disable_e1();
       disable_e2();
 
+      //outro tune
+      if (!silent){
+        analogWrite(BEEPER, 115);
+
+        delay(500);
+        BEEP_OFF();
+        delay(150);
+
+        analogWrite(BEEPER, 130);
+
+        delay(50);
+        BEEP_OFF();
+        delay(80);
+
+        analogWrite(BEEPER, 150);
+
+        delay(50);
+        BEEP_OFF();
+        delay(60);
+
+        analogWrite(BEEPER, 180);
+
+        delay(100);
+        BEEP_OFF();
+        delay(100);
+      }
 
       set_amb_color(0,0,0);
       store_last_amb_color();
@@ -3917,14 +4110,12 @@ void process_commands()
       //_delay_ms(45000);
       //restore_last_amb_color();
        //while(1){}
-
     }
     break;
 
     case 730:   // M730 - READ LAST ERROR CODE
     {
-
-      //RPI_ERROR_ACK_OFF();
+      RPI_ERROR_ACK_OFF();
       SERIAL_PROTOCOL("ERROR ");
       SERIAL_PROTOCOL(": ");
       SERIAL_PROTOCOLLN(ERROR_CODE);
@@ -3973,7 +4164,71 @@ void process_commands()
     }
     break;
 
+    case 734: // monitor warning settings (endstops)
+    {
+      //1 enable
+      //0 disable
+      int value;
+      if (code_seen('S')){
+        value = code_value();
+        if (value==1)
+        {
+          monitor_secure_endstop=true;
+          min_x_endstop_triggered=false;
+          max_x_endstop_triggered=false;
+          min_y_endstop_triggered=false;
+          max_y_endstop_triggered=false;
+        }
+
+        if (value==0){
+        monitor_secure_endstop=false;
+
+        }
+      }else{
+        SERIAL_PROTOCOLLN(monitor_secure_endstop);
+
+      }
+    }
+    break;
+
+    case 735:  //M735 S1-0 enable /disable silent mode (sounds except for power-on)
+    {
+    int value;
+      if (code_seen('S'))
+      {
+        value = code_value();
+        if(value==1)
+        {
+          silent=true;
+        }else{
+          silent=false;
+        }
+      }
+    }
+    break;
+
     case 3: // M3 S[RPM] SPINDLE ON - Clockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
+      if (working_mode == WORKING_MODE_LASER)
+      {
+        st_synchronize();
+        laser_force = false;
+        if (code_seen('S'))
+        {
+          long input = code_value_long() / PWM_SCALE;
+          if (input > MAX_PWM) {
+            laser_powah = MAX_PWM;
+          } else if (input < 0) {
+            laser_powah = 0;
+          } else {
+            laser_powah = input;
+          }
+        }
+        else
+        {
+          laser_powah = MAX_PWM;
+        }
+      }
+      else
       {
         inactivity=false;
         int servo_index = 0;
@@ -3981,8 +4236,21 @@ void process_commands()
         float rpm_1=0;
         enable_endstops(false);
 
+
         if(!MILL_MOTOR_STATUS())
             {
+
+        //wait
+        codenum=1500;
+        st_synchronize();
+        codenum += millis();  // keep track of when we started waiting
+        previous_millis_cmd = millis();
+        while(millis()  < codenum ){
+          manage_heater();
+          manage_inactivity();
+          lcd_update();
+        }
+
             if ((servo_index >= 0) && (servo_index < NUM_SERVOS))
               {
 	      servos[servo_index].attach(0);
@@ -4032,7 +4300,41 @@ void process_commands()
       break;
 
    case 4: // M4 S[RPM] SPINDLE ON - CounterClockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
+      if (working_mode == WORKING_MODE_LASER)
       {
+        if (code_seen('S'))
+        {
+          long input = code_value_long() / PWM_SCALE;
+          if (input > MAX_PWM) {
+            laser_powah = MAX_PWM;
+          } else if (input < 0) {
+            laser_powah = 0;
+          } else {
+            laser_powah = input;
+          }
+        }
+        else
+        {
+          laser_powah = MAX_PWM;
+        }
+        laser_force = true;
+      }
+      else
+      {
+
+
+        //wait
+        codenum=1500;
+        st_synchronize();
+        codenum += millis();  // keep track of when we started waiting
+        previous_millis_cmd = millis();
+        while(millis()  < codenum ){
+          manage_heater();
+          manage_inactivity();
+          lcd_update();
+        }
+
+
         inactivity=false;
         int servo_index = 0;
         int servo_position = SERVO_SPINDLE_ZERO;
@@ -4090,7 +4392,25 @@ void process_commands()
       break;
 
    case 5: // M5 SPINDLE OFF
+    if (working_mode == WORKING_MODE_LASER)
+    {
+      st_synchronize();
+      laser_force = false;
+      laser_powah = 0;
+    }
+    else
       {
+        //wait
+        codenum=1500;
+        st_synchronize();
+        codenum += millis();  // keep track of when we started waiting
+        previous_millis_cmd = millis();
+        while(millis()  < codenum ){
+          manage_heater();
+          manage_inactivity();
+          lcd_update();
+        }
+
         int servo_index = 0;
         int servo_position = SERVO_SPINDLE_ZERO;
         enable_endstops(true);
@@ -4398,9 +4718,16 @@ void process_commands()
 
     case 756 :  // M756 - ERROR GENERATOR
       {
-      RPI_ERROR_ACK_ON();
-      ERROR_CODE=9999999;
 
+      ERROR_CODE=0;
+      int value;
+      if (code_seen('E'))
+      {
+        value = code_value();
+        ERROR_CODE=int(value);
+      }
+
+      RPI_ERROR_ACK_ON();
 
       }
       break;
@@ -4531,35 +4858,110 @@ void process_commands()
     }
     break;
 
+
+    /*
+#define X_STEP_PIN         54
+#define X_DIR_PIN          55
+#define X_ENABLE_PIN       38
+
+#define Y_STEP_PIN         60
+#define Y_DIR_PIN          61
+#define Y_ENABLE_PIN       56
+
+#define Z_STEP_PIN         46
+#define Z_DIR_PIN          48
+#define Z_ENABLE_PIN       62
+
+#define E0_STEP_PIN        26
+#define E0_DIR_PIN         28
+#define E0_ENABLE_PIN      24
+
+#define E1_STEP_PIN        36
+#define E1_DIR_PIN         34
+#define E1_ENABLE_PIN      30
+    */
+
     case 786: // M786 - external power on/off pin control
       {
-          //poweroff_rqs();
+        //kill external power supply.
+        SERIAL_PROTOCOL("SHUTDOWN!");
+        digitalWrite(51, LOW);
       }
       break;
 
-    case 787: // M787 - external power on/off pin control
-      {
-              SERIAL_PROTOCOL(READ(PWR_IN_PIN));
+   case 792: {
+      //SWITCH XY/AB axis (5th axis interpolation mode)
+      //with this you can pilot A and B axis with X/Y G0 comands in full interpolation (marlin does not allow this natively)
+      if (code_seen('S')) {
+          int enable=code_value();
+          if (enable==1){
+             //enable 4/5th axis mode
+             /*
+             Original E0/E1 values:
+              //Steps/unit X72.58 Y72.58 Z2133.33 E177.78
+              #define E0_STEP_PIN        26
+              #define E0_DIR_PIN         28
+              #define E0_ENABLE_PIN      24
+
+              #define E1_STEP_PIN        36
+              #define E1_DIR_PIN         34
+              #define E1_ENABLE_PIN      30
+             */
+
+            #define X_STEP_PIN         26
+            #define X_DIR_PIN          28
+            #define X_ENABLE_PIN       24
+
+            #define Y_STEP_PIN         36
+            #define Y_DIR_PIN          34
+            #define Y_ENABLE_PIN       30
+
+
+            axis_steps_per_unit[0]=177.78;
+            axis_steps_per_unit[1]=8.888;
+
+          }
+              //disable 5th axis
+              #define X_STEP_PIN         54
+              #define X_DIR_PIN          55
+              #define X_ENABLE_PIN       38
+
+              #define Y_STEP_PIN         60
+              #define Y_DIR_PIN          61
+              #define Y_ENABLE_PIN       56
+
+              axis_steps_per_unit[0]=72.58;
+              axis_steps_per_unit[1]=72.58;
+
+          }else{
+              SERIAL_PROTOCOL("Usage: M792 S[0-1]");
       }
-      break;
+    }
+    break;
 
     case 793: // M793 - Set/read installed head soft ID
       {
         if (code_seen('S')) {
           installed_head_id = code_value_long();
+
+          // Forcefully reset mode...
+          switch (installed_head_id)
+          {
+            case FAB_HEADS_laser_ID:
+              working_mode_change(WORKING_MODE_LASER, true);
+              break;
+
+            case FAB_HEADS_mill_v2_ID:
+              working_mode_change(WORKING_MODE_CNC, true);
+              break;
+
+            default:
+              working_mode_change(WORKING_MODE_FFF, true);
+          }
         }
         SERIAL_PROTOCOLLN(installed_head_id);
       }
       break;
-
-    /*case 793: // M794 P1|P0 - Enable disable
-      {
-        if (code_seen('S')) {
-          installed_head_id = code_value_long();
-        }
-        SERIAL_PROTOCOLLN(installed_head_id);
-      }
-      break;*/
 
       /**
        * M563 - Define or remove a tool
@@ -4683,8 +5085,22 @@ void process_commands()
     break;
     case 802:   // M802 - returns supported thermistor types by index
     {
-      int value;
-          SERIAL_PROTOCOLLN(THERMISTOR_HOTSWAP_SUPPORTED_TYPES_AS_STRING);
+      if (code_seen('P'))
+      {
+        unsigned short tidx = code_value_long();
+        short (*table)[][2] = (short (*)[][2])(thermistors_map[tidx]);
+        // Dump table at pos P
+        for (unsigned int row = 0; row < thermistors_map_len[tidx]; row++)
+        {
+          SERIAL_ECHO((short)pgm_read_word(&(*table)[row][0]));
+          SERIAL_ECHOPGM(", ");
+          SERIAL_ECHOLN((short)pgm_read_word(&(*table)[row][1]));
+        }
+      }
+      else
+      {
+        SERIAL_PROTOCOLLN(THERMISTOR_HOTSWAP_SUPPORTED_TYPES_AS_STRING);
+      }
     }
     break;
 
@@ -5144,7 +5560,7 @@ void controllerFan()
 #endif
 
 #ifdef TEMP_STAT_LEDS
-static bool blue_led = false;
+//static bool blue_led = false;
 static uint32_t stat_update = 0;
 
 void handle_status_leds(void) {
@@ -5288,14 +5704,14 @@ void manage_inactivity()
  //   stop_fading();
  //   set_amb_color(0,0,255);
  //    }
- else
-     {
-       if(rpi_recovery_flag)
-       {
-       RPI_RECOVERY_OFF();
-       rpi_recovery_flag=false;
-       }
-     }
+ //else
+ //   {
+ //      if(rpi_recovery_flag)
+ //      {
+ //      RPI_RECOVERY_OFF();
+ //      rpi_recovery_flag=false;
+ //      }
+ //    }
 
  if ((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING) && (READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING))
     { // the user pressed both Y-Endstops at the same time (or a hardware switch that enables them at the same time)
@@ -5315,7 +5731,6 @@ void manage_inactivity()
      enable_door_kill=true;                    // REARM the killing process if the user closes the front door
     }
 
-
  manage_secure_endstop();
  manage_fab_soft_pwm();                        // manage light
  manage_amb_color_fading();                    // manage ligth fading
@@ -5324,60 +5739,96 @@ void manage_inactivity()
 
 void manage_secure_endstop()
 {
+  if(monitor_secure_endstop){
 
-  if((READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING)&&!READ(Y_ENABLE_PIN) && !(RPI_ERROR_STATUS()))
-  {
-    zeroed_far_from_home_y=true;
-    //kill();
-    RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_Y_MAX_ENDSTOP;
-  }
+    if((READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING)&& !READ(X_ENABLE_PIN) && !min_x_endstop_triggered && !(RPI_ERROR_STATUS()))
+    {
 
-  if((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING)&&!READ(X_ENABLE_PIN) && !(RPI_ERROR_STATUS()) && !x_axis_endstop_sel)
-  {
-    zeroed_far_from_home_x=true;
-    //kill();
-    RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_X_MAX_ENDSTOP;
-  }
+      min_x_endstop_triggered=true; //trigger
+      max_x_endstop_triggered=false;
+      min_y_endstop_triggered=false;
+      max_y_endstop_triggered=false;
 
-//  if(READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)
-//  {kill();}
+      RPI_ERROR_ACK_ON();
+      ERROR_CODE=ERROR_X_MIN_ENDSTOP;
+    }
 
-  if((READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING) && zeroed_far_from_home_x && !READ(X_ENABLE_PIN) && !(RPI_ERROR_STATUS()))
-  {
-    RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_X_MIN_ENDSTOP;
-    //kill();
-  }
+    if((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING)&&!READ(X_ENABLE_PIN) && !max_x_endstop_triggered  && !(RPI_ERROR_STATUS()))
+    {
+      //&& !x_axis_endstop_sel has been temporarily disabled.
 
-  if((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING) && zeroed_far_from_home_y && !READ(Y_ENABLE_PIN) && !(RPI_ERROR_STATUS()))
-  {
-    RPI_ERROR_ACK_ON();
-    ERROR_CODE=ERROR_Y_MIN_ENDSTOP;
-    //kill();
+      min_x_endstop_triggered=false;
+      max_x_endstop_triggered=true;  //trigger
+      min_y_endstop_triggered=false;
+      max_y_endstop_triggered=false;
+      RPI_ERROR_ACK_ON();
+      ERROR_CODE=ERROR_X_MAX_ENDSTOP;
+    }
+
+    if((READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING)&&!READ(Y_ENABLE_PIN) && !min_y_endstop_triggered && !(RPI_ERROR_STATUS()))
+    {
+
+      min_x_endstop_triggered=false;
+      max_x_endstop_triggered=false;
+      min_y_endstop_triggered=true; //trigger
+      max_y_endstop_triggered=false;
+
+      RPI_ERROR_ACK_ON();
+      ERROR_CODE=ERROR_Y_MAX_ENDSTOP;
+    }
+
+    if((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING)&& !READ(Y_ENABLE_PIN) && !max_y_endstop_triggered && !(RPI_ERROR_STATUS()))
+    {
+
+      min_x_endstop_triggered=false;
+      max_x_endstop_triggered=false;
+      min_y_endstop_triggered=false;
+      max_y_endstop_triggered=true;//trigger
+
+      RPI_ERROR_ACK_ON();
+      ERROR_CODE=ERROR_Y_MIN_ENDSTOP;
+    }
   }
 
 
 }
+
 void manage_fab_soft_pwm()
 {
-  FabSoftPwm_TMR=FabSoftPwm_TMR+1;
-  if(FabSoftPwm_TMR>LaserSoftPwm && LaserSoftPwm<MAX_PWM) LASER_GATE_OFF();
-  if(FabSoftPwm_TMR>HeadLightSoftPwm && HeadLightSoftPwm<MAX_PWM) HEAD_LIGHT_OFF();
-  if(FabSoftPwm_TMR>RedSoftPwm && RedSoftPwm<MAX_PWM) RED_OFF();
-  if(FabSoftPwm_TMR>GreenSoftPwm && GreenSoftPwm<MAX_PWM) GREEN_OFF();
-  if(FabSoftPwm_TMR>BlueSoftPwm && BlueSoftPwm<MAX_PWM) BLUE_OFF();
-  if(FabSoftPwm_TMR>FabSoftPwm_LMT)
-    {
-      if(LaserSoftPwm>0)LASER_GATE_ON();
-      if(HeadLightSoftPwm>0)HEAD_LIGHT_ON();
-      if(RedSoftPwm>0)RED_ON();
-      if(GreenSoftPwm>0)GREEN_ON();
-      if(BlueSoftPwm>0)BLUE_ON();
-      FabSoftPwm_TMR=0;
-    }
+  static unsigned int FabSoftPwm_TMR = 0;
 
+  bool do_laser = laser_force;
+
+  if (FabSoftPwm_TMR == 0)
+  {
+    if (!do_laser && working_mode == WORKING_MODE_LASER) {
+      if (blocks_queued()) {
+         if (current_block->steps_x != 0 || current_block->steps_y != 0) {
+           do_laser = true;
+         }
+      }
+    }
+    if (do_laser && laser_powah > 0) WRITE(SERVO0_PIN,1);
+
+    if(LaserSoftPwm>0)LASER_GATE_ON();
+    if(HeadLightSoftPwm>0)HEAD_LIGHT_ON();
+    if(RedSoftPwm>0)RED_ON();
+    if(GreenSoftPwm>0)GREEN_ON();
+    if(BlueSoftPwm>0)BLUE_ON();
+  }
+  else
+  {
+    if (!do_laser || (FabSoftPwm_TMR > laser_powah)) WRITE(SERVO0_PIN,0);
+
+    if(FabSoftPwm_TMR>LaserSoftPwm && LaserSoftPwm<MAX_PWM) LASER_GATE_OFF();
+    if(FabSoftPwm_TMR>HeadLightSoftPwm && HeadLightSoftPwm<MAX_PWM) HEAD_LIGHT_OFF();
+    if(FabSoftPwm_TMR>RedSoftPwm && RedSoftPwm<MAX_PWM) RED_OFF();
+    if(FabSoftPwm_TMR>GreenSoftPwm && GreenSoftPwm<MAX_PWM) GREEN_OFF();
+    if(FabSoftPwm_TMR>BlueSoftPwm && BlueSoftPwm<MAX_PWM) BLUE_OFF();
+  }
+
+  if (++FabSoftPwm_TMR > FabSoftPwm_LMT)
+    FabSoftPwm_TMR = 0;
 }
 void set_amb_color(unsigned int red,unsigned int green,unsigned int blue)
 {
@@ -5530,6 +5981,7 @@ char I2C_read(byte i2c_register)
 
 void kill_by_door()
 {
+
   store_last_amb_color();
   MILL_MOTOR_OFF();
   SERVO1_OFF();                   //disable milling motor
@@ -5561,6 +6013,22 @@ void kill_by_door()
 
   RPI_ERROR_ACK_ON();
   ERROR_CODE=ERROR_DOOR_OPEN;
+
+  /*
+  if (!silent){
+  BEEP_ON();
+  delay(500);
+  BEEP_OFF();
+  delay(100);
+  BEEP_ON();
+  delay(500);
+  BEEP_OFF();
+  delay(100);
+  BEEP_ON();
+  delay(1500);
+  BEEP_OFF();
+  }
+  */
 }
 
 void kill()
@@ -5589,6 +6057,7 @@ void kill()
 #if defined(PS_ON_PIN) && PS_ON_PIN > -1
   pinMode(PS_ON_PIN,INPUT);
 #endif
+
   SERIAL_ERROR_START;
   SERIAL_ERRORLNPGM(MSG_ERR_KILLED);
   LCD_ALERTMESSAGEPGM(MSG_KILLED);
@@ -5597,10 +6066,6 @@ void kill()
 
   RPI_ERROR_ACK_ON();
   ERROR_CODE=ERROR_KILLED;
-  if(READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING){ERROR_CODE=ERROR_Y_MAX_ENDSTOP;}
-  if(READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING){ERROR_CODE=ERROR_Y_MIN_ENDSTOP;}
-  if(READ(X_MIN_PIN)^X_MIN_ENDSTOP_INVERTING){ERROR_CODE=ERROR_X_MIN_ENDSTOP;}
-  if(READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING){ERROR_CODE=ERROR_X_MAX_ENDSTOP;}
 
 }
 

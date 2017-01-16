@@ -19,7 +19,7 @@
 */
 
 #ifndef temperature_h
-#define temperature_h 
+#define temperature_h
 
 #include "Marlin.h"
 #include "planner.h"
@@ -234,4 +234,3 @@ FORCE_INLINE void autotempShutdown(){
 void PID_autotune(float temp, int extruder, int ncycles);
 
 #endif
-

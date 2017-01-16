@@ -43,6 +43,3 @@ namespace SdFatUtil {
 
 using namespace SdFatUtil;  // NOLINT
 #endif  // #define SdFatUtil_h
-
-
-#endif

@@ -17,9 +17,9 @@
 #include <avr/eeprom.h>
 #include <avr/interrupt.h>
 
-
 #include "fastio.h"
 #include "Configuration.h"
+#include "Configuration_heads.h"
 #include "pins.h"
 
 #ifndef AT90USB
@@ -168,7 +168,7 @@ void manage_inactivity();
 #endif
 
 #define INVALID_EXTRUDER 252
-#define INVALID_EXTRUDER_1 (INVALID_EXRTUDER | 1)
+#define INVALID_EXTRUDER_1 (INVALID_EXTRUDER | 1)
 #define INVALID_EXTRUDER_2 (INVALID_EXTRUDER | 2)
 
 
@@ -319,6 +319,8 @@ extern unsigned int hotplate_board_version;
 extern unsigned int general_assembly_version;
 extern unsigned int installed_head_id;
 
+extern uint8_t working_mode;
+
 //FABtotum IO definition
 #define RED_ON()	WRITE(RED_PIN,LOW)
 #define RED_OFF()	WRITE(RED_PIN,HIGH)
@@ -328,6 +330,7 @@ extern unsigned int installed_head_id;
 #define BLUE_OFF()	WRITE(BLUE_PIN,HIGH)
 
 #define MAX_PWM         127
+#define PWM_SCALE (256/(MAX_PWM+1))
 
 #define HOT_LED_ON()	WRITE(HOT_LED_PIN,HIGH)
 #define HOT_LED_OFF()	WRITE(HOT_LED_PIN,LOW)
@@ -368,13 +371,8 @@ extern unsigned int installed_head_id;
 #define RPI_ERROR_STATUS()       READ(RPI_RECOVERY_PIN)
 #define RASPI_MAX_TURN_OFF_DELAY  3000  //30 seconds, value in tens of ms
 
-#define BEEP_ON()  TCCR0B = TCCR0B & 0b11111000 | 0x03; analogWrite(BEEPER, 127);
-#define BEEP_OFF()  TCCR0B = TCCR0B & 0b11111000 | 0x04; analogWrite(BEEPER, 255);
-
-
-//#define BEEP_ON()  analogWrite(BEEPER, 127);
-//#define BEEP_OFF() analogWrite(BEEPER, 255);
-
+#define BEEP_ON()  TCCR0B = TCCR0B & 0b11111000 | 0x02; analogWrite(BEEPER, 127);
+#define BEEP_OFF()  TCCR0B = TCCR0B & 0b11111000 | 0x03; analogWrite(BEEPER, 255);
 
 #define SERVO_SPINDLE_MAX  1832    //(MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
 #define SERVO_SPINDLE_MIN  1148
@@ -438,5 +436,10 @@ extern unsigned int installed_head_id;
 #define I2C_MAX_TIMEOUT 1000
 
 #define AVG_MEASURED_Z_MAX     1
+
+#define WORKING_MODE_FFF   1
+#define WORKING_MODE_LASER 2
+#define WORKING_MODE_CNC   3
+#define MACHINE_MODE_SCAN  4
 
 #endif
