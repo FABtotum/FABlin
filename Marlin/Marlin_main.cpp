@@ -523,7 +523,10 @@ namespace Laser
   uint8_t power = 0;
   bool    synchronized = false;
 
-  inline void parseSetPowerCmd (void);
+  void enable (void);
+  void disable (void);
+
+  void setPower (uint16_t);
 }
 
 static unsigned short int z_endstop_bug_workaround = 0;
@@ -674,35 +677,20 @@ void working_mode_change (uint8_t new_mode, bool reset = false)
   if (new_mode == working_mode && !reset)
     return;
 
-   // Deinit previous mode
-   switch (working_mode)
-   {
-      case WORKING_MODE_LASER:
-        Laser::power = 0;
-         // Disable supplementary +24v power for fabtotum laser head
-         if (installed_head_id == FAB_HEADS_laser_ID) {
-           WRITE(HEATER_0_PIN, 0);
-           //enable_heater();
-         }
-         break;
-   }
+  // Deinit previous mode
+  switch (working_mode)
+  {
+    case WORKING_MODE_LASER:
+      Laser::disable();
+      break;
+  }
 
    // Init new mode
-   switch (new_mode)
-   {
-      case WORKING_MODE_LASER:
-         // Laser tools use servo 0 pwm, in the future this may be configurable
-         SERVO1_ON();
-         servos[0].detach();
-
-         // Enable supplementary +24v power for fabtotum laser head
-         if (installed_head_id == FAB_HEADS_laser_ID) {
-            disable_heater();
-            WRITE(HEATER_0_PIN, 1);
-         }
-
-         //SET_OUTPUT(LED_PIN);
-         break;
+  switch (new_mode)
+  {
+    case WORKING_MODE_LASER:
+      Laser::enable();
+      break;
 
       case WORKING_MODE_CNC:
       case WORKING_MODE_HYBRID:
@@ -1728,6 +1716,39 @@ void ThermistorHotswap::setTable (const unsigned short value)
 
 #endif // defined(THERMISTOR_HOTSWAP)
 
+FORCE_INLINE void process_laser_power ()
+{
+  if (IsStopped()) return;
+
+  if (working_mode != WORKING_MODE_LASER) {
+    SERIAL_ERROR_START;
+    SERIAL_ERRORLNPGM("Laser mode not active");
+    return;
+  }
+
+  // Buggy at present
+  /*if (!head_placed) {
+    SERIAL_ERROR_START;
+    SERIAL_ERRORLNPGM("Head absent");
+    return;
+  }*/
+
+  if (inactivity) {
+    Laser::enable();
+    inactivity = false;
+  }
+
+  if (code_seen('S'))
+  {
+    long input = code_value_long() / PWM_SCALE;
+    Laser::setPower(input);
+  }
+  else
+  {
+    Laser::setPower(MAX_PWM);
+  }
+}
+
 void process_commands()
 {
   unsigned long codenum; //throw away variable
@@ -2569,7 +2590,7 @@ void process_commands()
      */
     case 60:
       Laser::synchronized = false;
-      Laser::parseSetPowerCmd();
+      process_laser_power();
       break;
 
     /**
@@ -2584,7 +2605,7 @@ void process_commands()
     case 61:
       Laser::synchronized = true;
       st_synchronize();
-      Laser::parseSetPowerCmd();
+      process_laser_power();
       break;
 
     /**
@@ -6075,37 +6096,37 @@ bool setTargetedHotend(int code){
   return false;
 }
 
-inline void Laser::parseSetPowerCmd ()
+void Laser::enable ()
 {
-  if (IsStopped()) return;
+  // Laser tools use servo 0 pwm, in the future this may be configurable
+  SERVO1_ON();
+  servos[0].detach();
 
-  if (working_mode != WORKING_MODE_LASER) {
-    SERIAL_ERROR_START;
-    SERIAL_ERRORLNPGM("Laser mode not active");
-    return;
+  // Enable supplementary +24v power for fabtotum laser head
+  if (installed_head_id == FAB_HEADS_laser_ID) {
+    disable_heater();
+    WRITE(HEATER_0_PIN, 1);
   }
+}
 
-  if (!head_placed) {
-    SERIAL_ERROR_START;
-    SERIAL_ERRORLNPGM("Head absent");
-    return;
-  }
+void Laser::disable ()
+{
+  Laser::power = 0;
 
-  if (code_seen('S'))
-  {
-    long input = code_value_long() / PWM_SCALE;
-    if (input > MAX_PWM) {
-      power = MAX_PWM;
-    } else if (input < 0) {
-      power = 0;
-    } else {
-      power = input;
-    }
+  // Disable supplementary +24v power for fabtotum laser head
+  if (installed_head_id == FAB_HEADS_laser_ID) {
+    WRITE(HEATER_0_PIN, 0);
+    //enable_heater();
   }
-  else
-  {
-    power = MAX_PWM;
-  }
+}
 
-  if (power) inactivity = false;
+void Laser::setPower (uint16_t power)
+{
+  if (power > MAX_PWM) {
+    Laser::power = MAX_PWM;
+  } else if (power < 0) {
+    Laser::power = 0;
+  } else {
+    Laser::power = power;
+  }
 }
