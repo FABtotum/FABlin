@@ -5531,6 +5531,9 @@ void manage_inactivity()
           SERVO1_OFF();
           rpm=0;
 
+          // Zero laser power whether it's active or not
+          Laser::disable();
+
           // warning
           RPI_ERROR_ACK_ON();
           ERROR_CODE=ERROR_IDLE_SAFETY;
@@ -5972,6 +5975,9 @@ void kill()
 void Stop()
 {
   store_last_amb_color();
+
+  // Disable any subsystem work
+  Laser::disable();
 
   // Disable any possible output to the head
   disable_heater();
