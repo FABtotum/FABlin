@@ -6075,24 +6075,37 @@ bool setTargetedHotend(int code){
   return false;
 }
 
-namespace Laser
+inline void Laser::parseSetPowerCmd ()
 {
-  inline void parseSetPowerCmd ()
+  if (IsStopped()) return;
+
+  if (working_mode != WORKING_MODE_LASER) {
+    SERIAL_ERROR_START;
+    SERIAL_ERRORLNPGM("Laser mode not active");
+    return;
+  }
+
+  if (!head_placed) {
+    SERIAL_ERROR_START;
+    SERIAL_ERRORLNPGM("Head absent");
+    return;
+  }
+
+  if (code_seen('S'))
   {
-    if (code_seen('S'))
-    {
-      long input = code_value_long() / PWM_SCALE;
-      if (input > MAX_PWM) {
-        power = MAX_PWM;
-      } else if (input < 0) {
-        power = 0;
-      } else {
-        power = input;
-      }
-    }
-    else
-    {
+    long input = code_value_long() / PWM_SCALE;
+    if (input > MAX_PWM) {
       power = MAX_PWM;
+    } else if (input < 0) {
+      power = 0;
+    } else {
+      power = input;
     }
   }
+  else
+  {
+    power = MAX_PWM;
+  }
+
+  if (power) inactivity = false;
 }
