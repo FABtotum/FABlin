@@ -762,6 +762,9 @@ void tool_change (uint8_t id)
    }
 #endif
 
+  if (installed_head_id > 1)
+  if (installed_head_id != 3)
+    head_placed = true;
 }
 
 void FabtotumHeads_init ()
