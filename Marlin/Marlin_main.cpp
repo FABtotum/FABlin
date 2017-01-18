@@ -422,7 +422,9 @@ const int sensitive_pins[] = SENSITIVE_PINS; // Sensitive pin list for M42
 //Inactivity shutdown variables
 static unsigned long previous_millis_cmd = 0;
 static unsigned long max_inactive_time = DEFAULT_DEACTIVE_TIME*1000l;
-static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
+// Statically #define this as long as it remains non configurable:
+//static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
+#define max_steppers_inactive_time  DEFAULT_STEPPERS_DEACTIVE_TIME*1000l
 
 unsigned long starttime=0;
 unsigned long stoptime=0;
@@ -5510,6 +5512,9 @@ void manage_inactivity()
             disable_e0();
             disable_e1();
             disable_e2();
+
+            // Zero laser power whether it's active or not
+            Laser::power = 0;
         }
     }
   }
@@ -5534,7 +5539,7 @@ void manage_inactivity()
           SERVO1_OFF();
           rpm=0;
 
-          // Zero laser power whether it's active or not
+          // Disable laser subsystem
           Laser::disable();
 
           // warning
