@@ -422,7 +422,9 @@ const int sensitive_pins[] = SENSITIVE_PINS; // Sensitive pin list for M42
 //Inactivity shutdown variables
 static unsigned long previous_millis_cmd = 0;
 static unsigned long max_inactive_time = DEFAULT_DEACTIVE_TIME*1000l;
-static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
+// Statically #define this as long as it remains non configurable:
+//static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
+#define max_steppers_inactive_time  DEFAULT_STEPPERS_DEACTIVE_TIME*1000l
 
 unsigned long starttime=0;
 unsigned long stoptime=0;
@@ -523,7 +525,10 @@ namespace Laser
   uint8_t power = 0;
   bool    synchronized = false;
 
-  inline void parseSetPowerCmd (void);
+  void enable (void);
+  void disable (void);
+
+  void setPower (uint16_t);
 }
 
 static unsigned short int z_endstop_bug_workaround = 0;
@@ -674,35 +679,20 @@ void working_mode_change (uint8_t new_mode, bool reset = false)
   if (new_mode == working_mode && !reset)
     return;
 
-   // Deinit previous mode
-   switch (working_mode)
-   {
-      case WORKING_MODE_LASER:
-        Laser::power = 0;
-         // Disable supplementary +24v power for fabtotum laser head
-         if (installed_head_id == FAB_HEADS_laser_ID) {
-           WRITE(HEATER_0_PIN, 0);
-           //enable_heater();
-         }
-         break;
-   }
+  // Deinit previous mode
+  switch (working_mode)
+  {
+    case WORKING_MODE_LASER:
+      Laser::disable();
+      break;
+  }
 
    // Init new mode
-   switch (new_mode)
-   {
-      case WORKING_MODE_LASER:
-         // Laser tools use servo 0 pwm, in the future this may be configurable
-         SERVO1_ON();
-         servos[0].detach();
-
-         // Enable supplementary +24v power for fabtotum laser head
-         if (installed_head_id == FAB_HEADS_laser_ID) {
-            disable_heater();
-            WRITE(HEATER_0_PIN, 1);
-         }
-
-         //SET_OUTPUT(LED_PIN);
-         break;
+  switch (new_mode)
+  {
+    case WORKING_MODE_LASER:
+      Laser::enable();
+      break;
 
       case WORKING_MODE_CNC:
       case WORKING_MODE_HYBRID:
@@ -1731,6 +1721,39 @@ void ThermistorHotswap::setTable (const unsigned short value)
 
 #endif // defined(THERMISTOR_HOTSWAP)
 
+FORCE_INLINE void process_laser_power ()
+{
+  if (IsStopped()) return;
+
+  if (working_mode != WORKING_MODE_LASER) {
+    SERIAL_ERROR_START;
+    SERIAL_ERRORLNPGM("Laser mode not active");
+    return;
+  }
+
+  // Buggy at present
+  /*if (!head_placed) {
+    SERIAL_ERROR_START;
+    SERIAL_ERRORLNPGM("Head absent");
+    return;
+  }*/
+
+  if (inactivity) {
+    Laser::enable();
+    inactivity = false;
+  }
+
+  if (code_seen('S'))
+  {
+    long input = code_value_long() / PWM_SCALE;
+    Laser::setPower(input);
+  }
+  else
+  {
+    Laser::setPower(MAX_PWM);
+  }
+}
+
 void process_commands()
 {
   unsigned long codenum; //throw away variable
@@ -2572,7 +2595,7 @@ void process_commands()
      */
     case 60:
       Laser::synchronized = false;
-      Laser::parseSetPowerCmd();
+      process_laser_power();
       break;
 
     /**
@@ -2587,7 +2610,7 @@ void process_commands()
     case 61:
       Laser::synchronized = true;
       st_synchronize();
-      Laser::parseSetPowerCmd();
+      process_laser_power();
       break;
 
     /**
@@ -5489,6 +5512,9 @@ void manage_inactivity()
             disable_e0();
             disable_e1();
             disable_e2();
+
+            // Zero laser power whether it's active or not
+            Laser::power = 0;
         }
     }
   }
@@ -5512,6 +5538,9 @@ void manage_inactivity()
           MILL_MOTOR_OFF();
           SERVO1_OFF();
           rpm=0;
+
+          // Disable laser subsystem
+          Laser::disable();
 
           // warning
           RPI_ERROR_ACK_ON();
@@ -5955,6 +5984,9 @@ void Stop()
 {
   store_last_amb_color();
 
+  // Disable any subsystem work
+  Laser::disable();
+
   // Disable any possible output to the head
   disable_heater();
   MILL_MOTOR_OFF();
@@ -6078,24 +6110,37 @@ bool setTargetedHotend(int code){
   return false;
 }
 
-namespace Laser
+void Laser::enable ()
 {
-  inline void parseSetPowerCmd ()
-  {
-    if (code_seen('S'))
-    {
-      long input = code_value_long() / PWM_SCALE;
-      if (input > MAX_PWM) {
-        power = MAX_PWM;
-      } else if (input < 0) {
-        power = 0;
-      } else {
-        power = input;
-      }
-    }
-    else
-    {
-      power = MAX_PWM;
-    }
+  // Laser tools use servo 0 pwm, in the future this may be configurable
+  SERVO1_ON();
+  servos[0].detach();
+
+  // Enable supplementary +24v power for fabtotum laser head
+  if (installed_head_id == FAB_HEADS_laser_ID) {
+    disable_heater();
+    WRITE(HEATER_0_PIN, 1);
+  }
+}
+
+void Laser::disable ()
+{
+  Laser::power = 0;
+
+  // Disable supplementary +24v power for fabtotum laser head
+  if (installed_head_id == FAB_HEADS_laser_ID) {
+    WRITE(HEATER_0_PIN, 0);
+    //enable_heater();
+  }
+}
+
+void Laser::setPower (uint16_t power)
+{
+  if (power > MAX_PWM) {
+    Laser::power = MAX_PWM;
+  } else if (power < 0) {
+    Laser::power = 0;
+  } else {
+    Laser::power = power;
   }
 }
