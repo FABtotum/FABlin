@@ -491,10 +491,10 @@ bool home_Z_reverse=false;
 bool x_axis_endstop_sel=false;
 bool monitor_secure_endstop=false; //default is off
 
-bool min_x_endstop_triggered=false;
-bool max_x_endstop_triggered=false;
-bool min_y_endstop_triggered=false;
-bool max_y_endstop_triggered=false;
+volatile bool min_x_endstop_triggered=false;
+volatile bool max_x_endstop_triggered=false;
+volatile bool min_y_endstop_triggered=false;
+volatile bool max_y_endstop_triggered=false;
 
 byte SERIAL_HEAD_0=0;
 byte SERIAL_HEAD_1=0;
@@ -1870,12 +1870,28 @@ void process_commands()
 
         home_all_axis = !((code_seen(axis_codes[X_AXIS])) || (code_seen(axis_codes[Y_AXIS])) || (code_seen(axis_codes[Z_AXIS])));
 
-        //#if Z_HOME_DIR > 0                      // If homing away from BED do Z first
-        if (Z_HOME_DIR > 0 || home_Z_reverse)
-        if((home_all_axis) || (code_seen(axis_codes[Z_AXIS]))) {
+        bool z_is_safe = false;
+
+        // If homing away from BED do Z first
+        if ((Z_HOME_DIR>0 || home_Z_reverse)
+        &&  (home_all_axis || code_seen(axis_codes[Z_AXIS])))
+        {
           HOMEAXIS(Z);
         }
-        //#endif
+        else
+        {
+          st_synchronize();
+          current_position[Z_AXIS] = 0;
+          destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
+          feedrate = XY_TRAVEL_SPEED;
+
+          plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
+          plan_buffer_line(current_position[X_AXIS], current_position[Y_AXIS], destination[Z_AXIS], current_position[E_AXIS], feedrate, active_extruder);
+          current_position[Z_AXIS] = destination[Z_AXIS];
+          z_is_safe = true;
+          //st_synchronize();
+        }
+
         if(Stopped){break;}
 
         #ifdef QUICK_HOME
@@ -2004,7 +2020,7 @@ void process_commands()
               destination[Y_AXIS] = round(Z_SAFE_HOMING_Y_POINT);
               destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
               feedrate = XY_TRAVEL_SPEED;
-              current_position[Z_AXIS] = 0;
+              current_position[Z_AXIS] = z_is_safe? destination[Z_AXIS] : 0;
 
               plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
               plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
