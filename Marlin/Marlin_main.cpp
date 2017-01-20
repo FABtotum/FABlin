@@ -4990,7 +4990,7 @@ void process_commands()
             int8_t extruder = tool_extruder_mapping[target_tool];
             if (extruder >= 0) {
                SERIAL_ECHOPAIR(": Drive=", (unsigned long)(tool_extruder_mapping[target_tool]));
-               SERIAL_ECHOPAIR(" Heater=", (unsigned long)(extruder_heater_mapping[target_tool]+1));
+               SERIAL_ECHOPAIR(" Heater=", (unsigned long)(EtoH(tool_extruder_mapping[target_tool])+1));
             } else {
                SERIAL_ECHOPGM(" Drive/Heater=undef.");
             }
