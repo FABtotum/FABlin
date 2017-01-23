@@ -180,6 +180,12 @@
 // M4 S[RPM] SPINDLE ON - CounterClockwise
 // M5        SPINDLE OFF
 
+// M60 S<0-255> - Set laser level immediately
+// M61 S<0-255> - Finish moves and set laser level
+// M62 - Turn off laser
+
+// M450 S<1-3> - Query or change working mode
+
 // M700 S<0-255> - Laser Power Control
 // M701 S<0-255> - Ambient Light, Set Red
 // M702 S<0-255> - Ambient Light, Set Green
@@ -2599,7 +2605,7 @@ void process_commands()
       break;
 
     /**
-     * M61 - Set laser power synchronically
+     * M61 - Finish moves and set laser power
      *
      * Any machine movement is finished, and then laser level is set.
      * If no power level is specified level is set to maximum (255).
@@ -2614,7 +2620,7 @@ void process_commands()
       break;
 
     /**
-     * M62 - Close laser
+     * M62 - Turn off laser
      *
      * Laser power is set to 0.
      */

@@ -33,19 +33,18 @@ To directly flash the firmware onto TOTUMduino, run:
 
   platformio run -t program
 
-`platformio.ini` has a default definition for using an AVRISP-mk2 usb 
-programmer. To flash or upload the firmware through other means refer 
-to [platformio 
+`platformio.ini` has a default definition for using an AVRISP-mk2 usb
+programmer. To flash or upload the firmware through other means refer
+to [platformio
 documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
 
 
 Changelog
 ---------
 
-### Version: 1.0.0096
-- Fixed G27/G28 behaviour near axis limits and silenced verbose error messages
-- Fixed G29 hitting Y endstop
-- Changed M503 and other diagnostic outputs
-- Fixed THERMISTOR_INPUT_HOTSWAP interference with heaters management
+### Version: 1.0.0097
+- Final laser support: moved dedicated commands from M6/7 to M60/1/2
+- Broadened number of cases in which head misplacement is detected
+- Workaround for false z-min endstop triggerings
 
-For complete changelog, see [ChangeLog](ChangeLog.txt).
+For the complete changelog, see [ChangeLog](ChangeLog.txt).
