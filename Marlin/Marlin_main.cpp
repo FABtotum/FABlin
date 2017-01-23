@@ -223,6 +223,8 @@
 // M744 - read HOT_BED placed in place
 // M745 - read Head placed in place
 
+// M747 [X<0-3>] [Y<0-3>] [Z<0-3>] - Assign endstop logic levels
+
 // M750 - read PRESSURE sensor (ANALOG 0-1023)
 // M751 - read voltage monitor 24VDC input supply (ANALOG V)
 // M752 - read voltage monitor 5VDC input supply (ANALOG V)
@@ -4578,7 +4580,18 @@ void process_commands()
     break;
 #endif
 
-    case 747:   // M747 - Set logic. e.g. M747 X1
+    /**
+     * M747 [X<0-3>] [Y<0-3>] [Z<0-3>] - Assign endstop logic levels
+     *
+     * Each parameter value sets endstop logic for the corresponding
+     * axis:
+     *
+     *  0 - normally low  min/max (high means triggered)
+     *  1 - normally high min/max (low means triggered)
+     *  2 - normally high min, low max
+     *  3 - normally low max, high min
+     */
+    case 747:
     {
       int value;
       if (code_seen('X'))
