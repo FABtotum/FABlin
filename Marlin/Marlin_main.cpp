@@ -896,7 +896,7 @@ void setup()
   watchdog_init();
   st_init();    // Initialize stepper, this enables interrupts!
   setup_photpin();
-
+  servo_init();
 
   FabtotumIO_init();
 
