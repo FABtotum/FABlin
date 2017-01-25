@@ -215,6 +215,7 @@ FORCE_INLINE float MainCurrent() {
 
 //#define MAX_PWM    127
 
+void heater_0_init_maxtemp (int16_t);
 int getHeaterPower(int heater);
 void disable_heater();
 void setWatch();
