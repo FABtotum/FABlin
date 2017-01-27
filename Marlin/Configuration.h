@@ -831,4 +831,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 #include "Configuration_adv.h"
 #include "thermistortables.h"
 
+// Laser support
+#define LASER_MIN_POWER 5
+
 #endif //__CONFIGURATION_H
