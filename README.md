@@ -39,8 +39,13 @@ to [platformio
 documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
 
 
-Changelog
----------
+Latest Changes
+--------------
+
+### Version 1.0.0097.1
+- Min power level for laser
+- Auto fan on when laser active
+- Better diagnostic messages for laser head
 
 ### Version: 1.0.0097
 - Final laser support: moved dedicated commands from M6/7 to M60/1/2
