@@ -540,11 +540,14 @@ uint8_t working_mode = WORKING_MODE_HYBRID;
 
 namespace Laser
 {
+  bool enabled = false;
   uint8_t power = 0;
   bool    synchronized = false;
 
   void enable (void);
   void disable (void);
+
+  inline bool isEnabled (void);
 
   void setPower (uint16_t);
 }
@@ -1826,18 +1829,11 @@ FORCE_INLINE void process_laser_power ()
 {
   if (IsStopped()) return;
 
-  if (working_mode != WORKING_MODE_LASER) {
+  if (working_mode != WORKING_MODE_LASER || !Laser::isEnabled()) {
     SERIAL_ERROR_START;
-    SERIAL_ERRORLNPGM("Laser mode not active");
+    SERIAL_ERRORLNPGM("Laser disabled (wrong mode or error)");
     return;
   }
-
-  // Buggy at present
-  /*if (!head_placed) {
-    SERIAL_ERROR_START;
-    SERIAL_ERRORLNPGM("Head absent");
-    return;
-  }*/
 
   if (inactivity) {
     Laser::enable();
@@ -1847,7 +1843,7 @@ FORCE_INLINE void process_laser_power ()
   if (code_seen('S'))
   {
     long input = code_value_long() / PWM_SCALE;
-    Laser::setPower(input);
+    Laser::setPower(input > LASER_MIN_POWER? input : LASER_MIN_POWER);
   }
   else
   {
@@ -2686,27 +2682,39 @@ void process_commands()
       }
      break;
 
-    /**
-     * M60 - Set laser power immediately
+    /*
+     * Command: M60
+     *
+     * Set laser power immediately.
+     *
+     * Parameters:
+     *
+     *  S<0-255> - laser power level, optional, defaults to 255
      *
      * If no power lavel specified laser will be set to max.
      *
-     * @param int S laser level (0-255)
-     *
+     * See also:
+     *  <M61>
      */
     case 60:
       Laser::synchronized = false;
       process_laser_power();
       break;
 
-    /**
-     * M61 - Finish moves and set laser power
+    /*
+     * Command: M61
      *
-     * Any machine movement is finished, and then laser level is set.
-     * If no power level is specified level is set to maximum (255).
+     * Finish moves and set laser power
      *
-     * @param int S laser level (0-255)
+     * Parameters:
+     *  S<0-255> - laser power level, optional, defaults to 255
      *
+     * Description:
+     *  Any machine movement is finished, and then laser level is set.
+     *  If no power level is specified level is set to maximum (255).
+     *
+     * See also:
+     *  <M60>
      */
     case 61:
       Laser::synchronized = true;
@@ -2714,10 +2722,14 @@ void process_commands()
       process_laser_power();
       break;
 
-    /**
-     * M62 - Turn off laser
+    /*
+     * Command: M62
      *
-     * Laser power is set to 0.
+     * Turn off laser
+     *
+     * Description:
+     *  Laser power is set to 0. Whether to wait for queued moves to finish
+     *  depends on whether M60 or M61 was issued last.
      */
     case 62:
       if (Laser::synchronized)
@@ -5899,7 +5911,7 @@ void manage_fab_soft_pwm()
   }
   else
   {
-    if (/*!do_laser || (*/FabSoftPwm_TMR > Laser::power/*)*/) WRITE(SERVO0_PIN,0);
+    if (FabSoftPwm_TMR > Laser::power) WRITE(SERVO0_PIN,0);
 
     if(FabSoftPwm_TMR>LaserSoftPwm && LaserSoftPwm<MAX_PWM) LASER_GATE_OFF();
     if(FabSoftPwm_TMR>HeadLightSoftPwm && HeadLightSoftPwm<MAX_PWM) HEAD_LIGHT_OFF();
@@ -6288,6 +6300,16 @@ bool setTargetedHotend(int code){
   return false;
 }
 
+inline bool Laser::isEnabled ()
+{
+  // Test power for Laser head
+  if (installed_head_id == FAB_HEADS_laser_ID) {
+    Laser::enabled = READ(HEATER_0_PIN);
+  }
+
+  return Laser::enabled;
+}
+
 void Laser::enable ()
 {
   // Laser tools use servo 0 pwm, in the future this may be configurable
@@ -6308,7 +6330,6 @@ void Laser::disable ()
   // Disable supplementary +24v power for fabtotum laser head
   if (installed_head_id == FAB_HEADS_laser_ID) {
     WRITE(HEATER_0_PIN, 0);
-    //enable_heater();
   }
 }
 
@@ -6320,5 +6341,9 @@ void Laser::setPower (uint16_t power)
     Laser::power = 0;
   } else {
     Laser::power = power;
+  }
+
+  if (Laser::power && !fanSpeed) {
+    fanSpeed = EXTRUDER_AUTO_FAN_SPEED;
   }
 }
