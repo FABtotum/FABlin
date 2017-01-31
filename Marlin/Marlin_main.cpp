@@ -5129,7 +5129,7 @@ void process_commands()
       FlushSerialRequestResend();
       restore_last_amb_color();
       RPI_ERROR_ACK_OFF();
-      Read_Head_Info();
+      //Read_Head_Info();
       }
     break;
     }
