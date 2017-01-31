@@ -33,6 +33,7 @@
 #include "ultralcd.h"
 #include "temperature.h"
 #include "watchdog.h"
+#include "Configuration_heads.h"
 
 //===========================================================================
 //=============================public variables============================
@@ -263,6 +264,7 @@ void PID_autotune(float temp, int extruder, int ncycles)
 
  for(;;) {
 
+    while (!temp_meas_ready);
     if(temp_meas_ready == true) { // temp sample ready
       updateTemperaturesFromRawValues();
 
@@ -984,8 +986,10 @@ void disable_heater()
   #endif
 
   #if defined(TEMP_1_PIN) && TEMP_1_PIN > -1
-    target_temperature[1]=0;
-    soft_pwm[1]=0;
+    #if (HEATERS > 1)
+      target_temperature[1]=0;
+      soft_pwm[1]=0;
+    #endif
     #if defined(HEATER_1_PIN) && HEATER_1_PIN > -1
       WRITE(HEATER_1_PIN,LOW);
     #endif
@@ -1025,8 +1029,9 @@ void max_temp_error(uint8_t e) {
 }
 
 void min_temp_error(uint8_t e) {
-  if(/*head_placed &&*/ installed_head_id!=3)
+  if(head_placed && installed_head_id!=3)
     {
+      head_placed = false;
         disable_heater();
         if(IsStopped() == false) {
           SERIAL_ERROR_START;
@@ -1037,9 +1042,6 @@ void min_temp_error(uint8_t e) {
         #ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
         Stop();
         #endif
-
-        // StopTool afer general Stop
-        StopTool();
 
         RPI_ERROR_ACK_ON();
         ERROR_CODE=ERROR_MIN_TEMP;
@@ -1197,11 +1199,11 @@ ISR(TIMER0_COMPB_vect)
       #endif
     } else WRITE(HEATER_0_PIN,0);
 
-    #if (HEATERS > 1)
+    #if HEATERS > 1
     soft_pwm_1 = soft_pwm[1];
     if(soft_pwm_1 > 0) WRITE(HEATER_1_PIN,1); else WRITE(HEATER_1_PIN,0);
     #endif
-    #if (HEATERS > 2)
+    #if HEATERS > 2
     soft_pwm_2 = soft_pwm[2];
     if(soft_pwm_2 > 0) WRITE(HEATER_2_PIN,1); else WRITE(HEATER_2_PIN,0);
     #endif
@@ -1220,10 +1222,10 @@ ISR(TIMER0_COMPB_vect)
       WRITE(HEATER_1_PIN,0);
       #endif
     }
-  #if (HEATERS > 1)
+  #if HEATERS > 1
   if(soft_pwm_1 < pwm_count) WRITE(HEATER_1_PIN,0);
   #endif
-  #if (HEATERS > 2)
+  #if HEATERS > 2
   if(soft_pwm_2 < pwm_count) WRITE(HEATER_2_PIN,0);
   #endif
   #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
@@ -1406,6 +1408,9 @@ ISR(TIMER0_COMPB_vect)
     {
 
       #ifdef THERMISTOR_INPUT_HOTSWAP
+         #if (TEMP_1_PIN < 0)
+         #error "THERMISTOR_INPUT_HOTSWAP needs both TEMP_0 and TEMP_1 to be defined"
+         #endif
       current_temperature_raw[0] = ((extruder_0_thermistor_input_index == 1)?raw_temp_1_value:raw_temp_0_value);
       #else
       current_temperature_raw[0] = raw_temp_0_value;

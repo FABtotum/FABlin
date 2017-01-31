@@ -276,6 +276,20 @@ const short temptable_170[][2] PROGMEM = {
 
 #endif // FABtotum thermistor table n.170
 
+#if (THERMISTORHEATER_0 == 171) || (THERMISTORHEATER_1 == 171) || (THERMISTORHEATER_2 == 171) || (THERMISTORBED == 171) || (defined THERMISTOR_HOTSWAP && THERMISTOR_HOTSWAP_IS_SUPPORTED(171))
+const short temptable_171[][2] PROGMEM = {
+   {195*OVERSAMPLENR,150},
+   {363*OVERSAMPLENR,120},
+   {609*OVERSAMPLENR, 90},
+   {732*OVERSAMPLENR, 75},
+   {805*OVERSAMPLENR, 65},
+   {893*OVERSAMPLENR, 50},
+   {966*OVERSAMPLENR, 30},
+   {996*OVERSAMPLENR, 15},
+   {1011*OVERSAMPLENR, 0}
+};
+#endif // FABtotum thermistor table n.171 (laser head - approximated)
+
 
 #if (THERMISTORHEATER_0 == 2) || (THERMISTORHEATER_1 == 2) || (THERMISTORHEATER_2 == 2) || (THERMISTORBED == 2) || (defined THERMISTOR_HOTSWAP && THERMISTOR_HOTSWAP_IS_SUPPORTED(2)) //200k bed thermistor
 const short temptable_2[][2] PROGMEM = {

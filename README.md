@@ -16,7 +16,8 @@ Compiling
 
 ### with Arduino IDE
 
-To compile you need the contents of this repository inside your Arduino IDE sketchbook. The firmware is contained inside the `Marlin` sketch.
+To compile you need the contents of this repository inside your Arduino
+IDE sketchbook. The firmware is contained inside the `Marlin` sketch.
 
 For further info refer to https://www.arduino.cc/en/Guide/Environment#toc7.
 
@@ -41,10 +42,9 @@ documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
 Changelog
 ---------
 
-### Version: 1.0.0096 (release candidate 2)
-- Fixed G27/G28 behaviour near axis limits and silenced verbose error messages
-- Fixed G29 hitting Y endstop
-- Changed M503 and other diagnostic outputs
-- Fixed THERMISTOR_INPUT_HOTSWAP feature
+### Version: 1.0.0097
+- Final laser support: moved dedicated commands from M6/7 to M60/1/2
+- Broadened number of cases in which head misplacement is detected
+- Workaround for false z-min endstop triggerings
 
-For complete changelog, see [ChangeLog](ChangeLog.txt).
+For the complete changelog, see [ChangeLog](ChangeLog.txt).

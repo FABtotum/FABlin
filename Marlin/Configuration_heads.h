@@ -5,7 +5,8 @@
  * Definitions for FABtotum Heads.
  */
 
-#define HEADS 5
+// 0 (for default) + the effective number of heads
+#define HEADS 7
 
 // 0 .. 99 are reserved
 #define FAB_HEADS_default_ID     0

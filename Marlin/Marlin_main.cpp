@@ -182,6 +182,12 @@
 // M4 S[RPM] SPINDLE ON - CounterClockwise
 // M5        SPINDLE OFF
 
+// M60 S<0-255> - Set laser level immediately
+// M61 S<0-255> - Finish moves and set laser level
+// M62 - Turn off laser
+
+// M450 S<1-3> - Query or change working mode
+
 // M563 [Pn [D<0-2>] [S<0,1>]] - Edit tool definition or query defined tools
 
 // M700 S<0-255> - Laser Power Control
@@ -435,7 +441,9 @@ const int sensitive_pins[] = SENSITIVE_PINS; // Sensitive pin list for M42
 //Inactivity shutdown variables
 static unsigned long previous_millis_cmd = 0;
 static unsigned long max_inactive_time = DEFAULT_DEACTIVE_TIME*1000l;
-static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
+// Statically #define this as long as it remains non configurable:
+//static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
+#define max_steppers_inactive_time  DEFAULT_STEPPERS_DEACTIVE_TIME*1000l
 
 unsigned long starttime=0;
 unsigned long stoptime=0;
@@ -530,8 +538,18 @@ tool_t  available_heads[HEADS];
 
 uint8_t working_mode = WORKING_MODE_HYBRID;
 
-uint8_t laser_powah = 0;
-bool laser_force = false;
+namespace Laser
+{
+  uint8_t power = 0;
+  bool    synchronized = false;
+
+  void enable (void);
+  void disable (void);
+
+  void setPower (uint16_t);
+}
+
+static unsigned short int z_endstop_bug_workaround = 0;
 
 
 //===========================================================================
@@ -679,41 +697,26 @@ void working_mode_change (uint8_t new_mode, bool reset = false)
   if (new_mode == working_mode && !reset)
     return;
 
-   // Deinit previous mode
-   switch (working_mode)
-   {
-      case WORKING_MODE_LASER:
-        laser_force = false;
-        laser_powah = 0;
-         // Disable supplementary +24v power for fabtotum laser head
-         if (installed_head_id == FAB_HEADS_laser_ID) {
-           WRITE(HEATER_0_PIN, 0);
-           //enable_heater();
-         }
-         break;
-   }
+  // Deinit previous mode
+  switch (working_mode)
+  {
+    case WORKING_MODE_LASER:
+      Laser::disable();
+      break;
+  }
 
    // Init new mode
-   switch (new_mode)
-   {
-      case WORKING_MODE_LASER:
-         // Laser tools use servo 0 pwm, in the future this may be configurable
-         servos[0].detach();
-         MILL_MOTOR_OFF();
+  switch (new_mode)
+  {
+    case WORKING_MODE_LASER:
+      Laser::enable();
+      break;
 
-         // Enable supplementary +24v power for fabtotum laser head
-         if (installed_head_id == FAB_HEADS_laser_ID) {
-            disable_heater();
-            WRITE(HEATER_0_PIN, 1);
-         }
-
-         //SET_OUTPUT(LED_PIN);
-         break;
-
-      case WORKING_MODE_CNC:
-         servo_init();
-         break;
-   }
+    case WORKING_MODE_CNC:
+    case WORKING_MODE_HYBRID:
+      servo_init();
+      break;
+  }
 
    working_mode = new_mode;
 }
@@ -754,7 +757,12 @@ void tool_change (uint8_t id)
 
    // Update heaters max temp
 #if (EXTRUDERS > 0)
-   if (installed_head->maxtemp > installed_head->mintemp) {
+  if (installed_head->maxtemp > installed_head->mintemp)
+  {
+    // Activate custom thermistor table
+    // Important: do this before changing max temp cause we need correct raw values
+    ThermistorHotswap::setTable(installed_head->thtable);
+
       maxttemp[0] = installed_head->maxtemp;
       CRITICAL_SECTION_START
       heater_0_init_maxtemp(installed_head->maxtemp);
@@ -762,6 +770,9 @@ void tool_change (uint8_t id)
    }
 #endif
 
+  if (installed_head_id > 1)
+  if (installed_head_id != 3)
+    head_placed = true;
 }
 
 void FabtotumHeads_init ()
@@ -778,7 +789,13 @@ void FabtotumHeads_init ()
 
    available_heads[FAB_HEADS_laser_ID].mode = WORKING_MODE_LASER;
    available_heads[FAB_HEADS_laser_ID].heaters = 0;
-   available_heads[FAB_HEADS_laser_ID].maxtemp = 65;
+   available_heads[FAB_HEADS_laser_ID].thtable = 3;
+   available_heads[FAB_HEADS_laser_ID].maxtemp = 80;
+
+   available_heads[FAB_HEADS_direct_ID].mode = WORKING_MODE_FFF;
+   //available_heads[FAB_HEADS_direct_ID].heaters = FAB_HEADS_direct_HEATER;
+   //available_heads[FAB_HEADS_direct_ID].thtable = 0;
+   //available_heads[FAB_HEADS_hybrid_ID].maxtemp = 275;
 
    tool_change(installed_head_id);
 }
@@ -855,17 +872,17 @@ void FabtotumIO_init()
    pinMode(NOT_SERVO2_ON_PIN,OUTPUT);
 
    //setting analog as input
-   pinMode(MAIN_CURRENT_SENSE_PIN,INPUT);
-   pinMode(MON_5V_PIN,INPUT);
-   pinMode(MON_24V_PIN,INPUT);
-   pinMode(PRESSURE_ANALOG_PIN,INPUT);
+   pinMode(analogInputToDigitalPin(MAIN_CURRENT_SENSE_PIN), INPUT);
+   pinMode(analogInputToDigitalPin(MON_5V_PIN), INPUT);
+   pinMode(analogInputToDigitalPin(MON_24V_PIN), INPUT);
+   pinMode(analogInputToDigitalPin(PRESSURE_ANALOG_PIN), INPUT);
 
    pinMode(NOT_REEL_LENS_OPEN_PIN,OUTPUT);
 
-   //POWER MABNAHGEMENT
-   pinMode(PWR_OUT_PIN, OUTPUT);  //set external PSU shutdown pin (Optional on I2C)
-   pinMode(PWR_IN_PIN,INPUT);  //set external PSU shutdown pin (Optional on I2C)
-   digitalWrite(PWR_OUT_PIN, HIGH);
+  //POWER MABNAHGEMENT
+  pinMode(PWR_OUT_PIN, OUTPUT);  //set external PSU shutdown pin (Optional on I2C)
+  pinMode(PWR_IN_PIN,INPUT);  //set external PSU shutdown pin (Optional on I2C)
+  digitalWrite(PWR_OUT_PIN, HIGH);
 
    //fastio init
    // SET_INPUT(IO)  ; SET_OUTPUT(IO);
@@ -916,39 +933,29 @@ void FabtotumIO_init()
    enable_door_kill=true;
    rpm = 0;
 
-   // Default tool definitions
-   /*defineTool(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-   defineTool(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_5th_axis_SMART);
-   defineTool(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);*/
+  // Particular tool definitions
+  // TODO: move these in a flash-mem table of factory-supported heads and load
+  //       definitions accordingly
+  switch (installed_head_id)
+  {
+    case FAB_HEADS_direct_ID:
+       defineTool(0, FAB_HEADS_direct_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
+       defineTool(2, FAB_HEADS_default_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+       break;
+    case FAB_HEADS_mill_v2_ID:
+       defineTool(0, -1, -1, FAB_HEADS_mill_v2_SMART);
+       break;
+    default:
+      defineTool(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+  }
 
-   // Particular tool definitions
-   // TODO: move these in a flash-mem table of factory-supported heads and load
-   //       definitions accordingly
-   switch (installed_head_id)
-   {
-      case FAB_HEADS_direct_ID:
-         defineTool(0, FAB_HEADS_direct_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
-         defineTool(2, FAB_HEADS_default_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-         break;
-      case FAB_HEADS_mill_v2_ID:
-         defineTool(0, -1, -1, FAB_HEADS_mill_v2_SMART);
-         break;
-      default:
-        defineTool(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-   }
+  // Load starting tool (T0)
+  loadTool(0);
 
-   // Load starting tool (T0)
-   loadTool(0);
-
-   /*fading_speed=200;
-   fading_started=false;
-   led_update_cycles=0;
-   red_fading=false;
-   green_fading=false;
-   blue_fading=false;
-   slope=true;*/
    set_amb_color(0,0,0);
    set_amb_color_fading(true,true,false,fading_speed);
+
+  Read_Head_Info();
 
    _delay_ms(50);
    BEEP_OFF()
@@ -957,6 +964,7 @@ void FabtotumIO_init()
    _delay_ms(50);
    BEEP_OFF()
 
+  z_endstop_bug_workaround = fab_batch_number >= 3? 255 : 0;
 }
 
 void setup()
@@ -1798,6 +1806,55 @@ void refresh_cmd_timeout(void)
   } //retract
 #endif //FWRETRACT
 
+#ifdef THERMISTOR_HOTSWAP
+
+void ThermistorHotswap::setTable (const unsigned short value)
+{
+  if (value >= 0 && value < THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN)
+  {
+    extruder_0_thermistor_index=value;
+    CRITICAL_SECTION_START
+    heater_ttbl_map[0] = thermistors_map[extruder_0_thermistor_index];
+    heater_ttbllen_map[0] = thermistors_map_len[extruder_0_thermistor_index];
+    CRITICAL_SECTION_END
+  }
+}
+
+#endif // defined(THERMISTOR_HOTSWAP)
+
+FORCE_INLINE void process_laser_power ()
+{
+  if (IsStopped()) return;
+
+  if (working_mode != WORKING_MODE_LASER) {
+    SERIAL_ERROR_START;
+    SERIAL_ERRORLNPGM("Laser mode not active");
+    return;
+  }
+
+  // Buggy at present
+  /*if (!head_placed) {
+    SERIAL_ERROR_START;
+    SERIAL_ERRORLNPGM("Head absent");
+    return;
+  }*/
+
+  if (inactivity) {
+    Laser::enable();
+    inactivity = false;
+  }
+
+  if (code_seen('S'))
+  {
+    long input = code_value_long() / PWM_SCALE;
+    Laser::setPower(input);
+  }
+  else
+  {
+    Laser::setPower(MAX_PWM);
+  }
+}
+
 void process_commands()
 {
   unsigned long codenum; //throw away variable
@@ -2628,6 +2685,46 @@ void process_commands()
         }
       }
      break;
+
+    /**
+     * M60 - Set laser power immediately
+     *
+     * If no power lavel specified laser will be set to max.
+     *
+     * @param int S laser level (0-255)
+     *
+     */
+    case 60:
+      Laser::synchronized = false;
+      process_laser_power();
+      break;
+
+    /**
+     * M61 - Finish moves and set laser power
+     *
+     * Any machine movement is finished, and then laser level is set.
+     * If no power level is specified level is set to maximum (255).
+     *
+     * @param int S laser level (0-255)
+     *
+     */
+    case 61:
+      Laser::synchronized = true;
+      st_synchronize();
+      process_laser_power();
+      break;
+
+    /**
+     * M62 - Turn off laser
+     *
+     * Laser power is set to 0.
+     */
+    case 62:
+      if (Laser::synchronized)
+        st_synchronize();
+      Laser::power = 0;
+      break;
+
     case 104: // M104
       if(setTargetedHotend(104)){
         break;
@@ -4255,27 +4352,6 @@ void process_commands()
     break;
 
     case 3: // M3 S[RPM] SPINDLE ON - Clockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
-      if (working_mode == WORKING_MODE_LASER)
-      {
-        st_synchronize();
-        laser_force = false;
-        if (code_seen('S'))
-        {
-          long input = code_value_long() / PWM_SCALE;
-          if (input > MAX_PWM) {
-            laser_powah = MAX_PWM;
-          } else if (input < 0) {
-            laser_powah = 0;
-          } else {
-            laser_powah = input;
-          }
-        }
-        else
-        {
-          laser_powah = MAX_PWM;
-        }
-      }
-      else
       {
         inactivity=false;
         int servo_index = 0;
@@ -4347,26 +4423,6 @@ void process_commands()
       break;
 
    case 4: // M4 S[RPM] SPINDLE ON - CounterClockwise  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
-      if (working_mode == WORKING_MODE_LASER)
-      {
-        if (code_seen('S'))
-        {
-          long input = code_value_long() / PWM_SCALE;
-          if (input > MAX_PWM) {
-            laser_powah = MAX_PWM;
-          } else if (input < 0) {
-            laser_powah = 0;
-          } else {
-            laser_powah = input;
-          }
-        }
-        else
-        {
-          laser_powah = MAX_PWM;
-        }
-        laser_force = true;
-      }
-      else
       {
 
 
@@ -4439,13 +4495,6 @@ void process_commands()
       break;
 
    case 5: // M5 SPINDLE OFF
-    if (working_mode == WORKING_MODE_LASER)
-    {
-      st_synchronize();
-      laser_force = false;
-      laser_powah = 0;
-    }
-    else
       {
         //wait
         codenum=1500;
@@ -4472,7 +4521,7 @@ void process_commands()
       }
       break;
 
-    case 6: // M6 S[PWM] LASER ON (provisional code)
+    /*case 6: // M6 S[PWM] LASER ON (provisional code)
       {
         inactivity=false;
         int servo_index = 0;
@@ -4526,7 +4575,7 @@ void process_commands()
            }
          servos[servo_index].detach();
       }
-      break;
+      break;*/
 
    case 740: // M740 - read WIRE_END sensor
       {
@@ -5079,14 +5128,7 @@ void process_commands()
       if (code_seen('S'))
       {
         value = code_value();
-        if(value>=0 && value<THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN)
-        {
-          extruder_0_thermistor_index=value;
-	  CRITICAL_SECTION_START
-	  heater_ttbl_map[0] = thermistors_map[extruder_0_thermistor_index];
-	  heater_ttbllen_map[0] = thermistors_map_len[extruder_0_thermistor_index];
-	  CRITICAL_SECTION_END
-        }
+        ThermistorHotswap::setTable(value);
       }
       else
       {
@@ -5208,6 +5250,7 @@ void process_commands()
       FlushSerialRequestResend();
       restore_last_amb_color();
       RPI_ERROR_ACK_OFF();
+      Read_Head_Info();
       }
     break;
     }
@@ -5639,6 +5682,9 @@ void manage_inactivity()
             disable_e0();
             disable_e1();
             disable_e2();
+
+            // Zero laser power whether it's active or not
+            Laser::power = 0;
         }
     }
   }
@@ -5662,6 +5708,9 @@ void manage_inactivity()
           MILL_MOTOR_OFF();
           SERVO1_OFF();
           rpm=0;
+
+          // Disable laser subsystem
+          Laser::disable();
 
           // warning
           RPI_ERROR_ACK_ON();
@@ -5753,12 +5802,19 @@ void manage_inactivity()
       ERROR_CODE=ERROR_Y_BOTH_TRIGGERED;
     }
 
- if ((READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING) && (READ(Z_MIN_PIN)^Z_MIN_ENDSTOP_INVERTING))
-    { // the user pressed both Z-Endstops at the same time (or a hardware switch that enables them at the same time)
+  if ((READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING) && (READ(Z_MIN_PIN)^Z_MIN_ENDSTOP_INVERTING))
+  { // the user pressed both Z-Endstops at the same time (or a hardware switch that enables them at the same time)
+    if (z_endstop_bug_workaround == 0) {
       RPI_ERROR_ACK_ON();
       ERROR_CODE=ERROR_Z_BOTH_TRIGGERED;
+    } else {
+      z_endstop_bug_workaround --;
     }
-
+  } else {
+    if (z_endstop_bug_workaround < 255)
+    if (fab_batch_number >= 3)
+      z_endstop_bug_workaround++;
+  }
 
  if (!READ(DOOR_OPEN_PIN) && !enable_door_kill)
     {
@@ -5831,18 +5887,9 @@ void manage_fab_soft_pwm()
 {
   static unsigned int FabSoftPwm_TMR = 0;
 
-  bool do_laser = laser_force;
-
   if (FabSoftPwm_TMR == 0)
   {
-    if (!do_laser && working_mode == WORKING_MODE_LASER) {
-      if (blocks_queued()) {
-         if (current_block->steps_x != 0 || current_block->steps_y != 0) {
-           do_laser = true;
-         }
-      }
-    }
-    if (do_laser && laser_powah > 0) WRITE(SERVO0_PIN,1);
+    if (Laser::power > 0) WRITE(SERVO0_PIN,1);
 
     if(LaserSoftPwm>0)LASER_GATE_ON();
     if(HeadLightSoftPwm>0)HEAD_LIGHT_ON();
@@ -5852,7 +5899,7 @@ void manage_fab_soft_pwm()
   }
   else
   {
-    if (!do_laser || (FabSoftPwm_TMR > laser_powah)) WRITE(SERVO0_PIN,0);
+    if (/*!do_laser || (*/FabSoftPwm_TMR > Laser::power/*)*/) WRITE(SERVO0_PIN,0);
 
     if(FabSoftPwm_TMR>LaserSoftPwm && LaserSoftPwm<MAX_PWM) LASER_GATE_OFF();
     if(FabSoftPwm_TMR>HeadLightSoftPwm && HeadLightSoftPwm<MAX_PWM) HEAD_LIGHT_OFF();
@@ -5949,38 +5996,45 @@ void manage_amb_color_fading()
 }
 
 
-void Read_Head_Info(bool force=false)
+void Read_Head_Info(bool force)
 {
-   // Dummy heads can't be read...
-   if (head_is_dummy)
-   {
-      // ...unless you force it
-      if (force) {
-         Wire.begin();
-      } else {
-         return;
-      }
-   }
+  // Dummy heads can't be read...
+  if (head_is_dummy)
+  {
+    // ...unless you force it
+    if (force) {
+       Wire.begin();
+    } else {
+       return;
+    }
+  }
 
-   SERIAL_HEAD_0=I2C_read(SERIAL_N_FAM_DEV_CODE);
-   SERIAL_HEAD_1=I2C_read(SERIAL_N_0);
-   SERIAL_HEAD_2=I2C_read(SERIAL_N_1);
-   SERIAL_HEAD_3=I2C_read(SERIAL_N_2);
-   SERIAL_HEAD_4=I2C_read(SERIAL_N_3);
-   SERIAL_HEAD_5=I2C_read(SERIAL_N_4);
-   SERIAL_HEAD_6=I2C_read(SERIAL_N_5);
-   SERIAL_HEAD_7=I2C_read(SERIAL_N_CRC);
+  SERIAL_HEAD_0=I2C_read(SERIAL_N_FAM_DEV_CODE);
+  SERIAL_HEAD_1=I2C_read(SERIAL_N_0);
+  SERIAL_HEAD_2=I2C_read(SERIAL_N_1);
+  SERIAL_HEAD_3=I2C_read(SERIAL_N_2);
+  SERIAL_HEAD_4=I2C_read(SERIAL_N_3);
+  SERIAL_HEAD_5=I2C_read(SERIAL_N_4);
+  SERIAL_HEAD_6=I2C_read(SERIAL_N_5);
+  SERIAL_HEAD_7=I2C_read(SERIAL_N_CRC);
 
-   i2c_timeout=false;
+  i2c_timeout=false;
 
-   if(SERIAL_HEAD_0==63 && SERIAL_HEAD_1==63 && SERIAL_HEAD_2==63 && SERIAL_HEAD_3==63 && SERIAL_HEAD_4==63 && SERIAL_HEAD_5==63 && SERIAL_HEAD_6==63 && SERIAL_HEAD_7==63)
-   {
-      head_placed=false;
-   }
-   else
-   {
-      head_placed=true;
-   }
+  if (installed_head_id <= 1)
+  {
+    if(SERIAL_HEAD_0==63 && SERIAL_HEAD_1==63 && SERIAL_HEAD_2==63 && SERIAL_HEAD_3==63 && SERIAL_HEAD_4==63 && SERIAL_HEAD_5==63 && SERIAL_HEAD_6==63 && SERIAL_HEAD_7==63)
+    {
+       head_placed=false;
+    }
+    else
+    {
+       head_placed=true;
+    }
+  }
+  else
+  {
+    head_placed=true;
+  }
 }
 
 char I2C_read(byte i2c_register)
@@ -6106,7 +6160,18 @@ void kill()
 void Stop()
 {
   store_last_amb_color();
+
+  // Disable any subsystem work
+  Laser::disable();
+
+  // Disable any possible output to the head
   disable_heater();
+  MILL_MOTOR_OFF();
+  #ifdef FAST_PWM_FAN
+  setPwmFrequency(FAN_PIN, 0);
+  #endif
+  fanSpeed = 0;
+
   set_amb_color(MAX_PWM,MAX_PWM,0);
   if(Stopped == false) {
     Stopped = true;
@@ -6221,4 +6286,39 @@ bool setTargetedHotend(int code){
       return true;
     }
   return false;
+}
+
+void Laser::enable ()
+{
+  // Laser tools use servo 0 pwm, in the future this may be configurable
+  SERVO1_ON();
+  servos[0].detach();
+
+  // Enable supplementary +24v power for fabtotum laser head
+  if (installed_head_id == FAB_HEADS_laser_ID) {
+    disable_heater();
+    WRITE(HEATER_0_PIN, 1);
+  }
+}
+
+void Laser::disable ()
+{
+  Laser::power = 0;
+
+  // Disable supplementary +24v power for fabtotum laser head
+  if (installed_head_id == FAB_HEADS_laser_ID) {
+    WRITE(HEATER_0_PIN, 0);
+    //enable_heater();
+  }
+}
+
+void Laser::setPower (uint16_t power)
+{
+  if (power > MAX_PWM) {
+    Laser::power = MAX_PWM;
+  } else if (power < 0) {
+    Laser::power = 0;
+  } else {
+    Laser::power = power;
+  }
 }

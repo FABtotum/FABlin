@@ -1,6 +1,17 @@
 Revision history
 ================
 
+Fix 1.0.0096.1 (2016-11-22)
+---------------------------
+- Increased MAX TEMP value for different heads
+
+Rev 1.0.0096 (2016-11-22)
+-------------------------
+- Fixed G27/G28 behaviour near axis limits and silenced verbose error messages
+- Fixed G29 hitting Y endstop
+- Changed M503 and other diagnostic outputs
+- Fixed THERMISTOR_INPUT_HOTSWAP interference with heaters management
+
 Rev 1.0.0095.1 (2016-05-02)
 ---------------------------
 - Fixed a bug with timing when using M3,M4,M5
@@ -28,6 +39,26 @@ Rev 1.0.0095 (2016-04-22)
   - ERROR_LONG_EXTRUSION 124 (when extruding too much!)
 - Added command M793 to set the installed head version (dev only).
   - All codes related to the head have been discontinued in favour of a single ID.
+
+Rev 1.0.0093 (2016-12-21)
+-------------------------
+- Removed Flickering during homing
+- Removed M728 color changes
+- Merged pull request #12
+- PRISM Preparatory work (M785 turn on/off UV Module)
+- Laser support: M6 S[0-255] turn head laser on (+24Vdc) M7 turn laser off
+- M786 external PSU power off pin control
+
+Rev 1.0.008 (2016-05-29)
+------------------------
+- Heater,Milling Motor, Bed are disabled after 8 minutes of no physical (movement, heating) activity.
+- Fan Auto on if received M109 or M104. M106 can override speed and M107 can disable it as usual.
+- Changed default Accelerations and Jerk to match FAB UI 0.875 defaults
+- Added support for Capacitive Probe /external Endstop with G38 (Code by Imarin)
+- Added support for impossible endstops combinations. (Code by Imarin)
+- changes on Safety lockdown & other nasty safety messages.
+- changed fading speeds
+
 
 Rev 1.0.007 (26/01/2015)
 -----------------------
