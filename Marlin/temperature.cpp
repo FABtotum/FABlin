@@ -1031,6 +1031,7 @@ void max_temp_error(uint8_t e) {
 void min_temp_error(uint8_t e) {
   if(head_placed && installed_head_id!=3)
     {
+      head_placed = false;
         disable_heater();
         if(IsStopped() == false) {
           SERIAL_ERROR_START;

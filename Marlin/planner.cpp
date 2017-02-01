@@ -610,7 +610,13 @@ block->steps_x = labs((target[X_AXIS]-position[X_AXIS]) - (target[Y_AXIS]-positi
     return; 
   }
 
-  block->fan_speed = fanSpeed;
+#define MAX_FAN_SPEED_NZ 127
+
+  if (fanSpeed > MAX_FAN_SPEED_NZ && position[Z_AXIS] > target[Z_AXIS]) {
+    block->fan_speed = MAX_FAN_SPEED_NZ;
+  } else {
+    block->fan_speed = fanSpeed;
+  }
   #ifdef BARICUDA
   block->valve_pressure = ValvePressure;
   block->e_to_p_pressure = EtoPPressure;

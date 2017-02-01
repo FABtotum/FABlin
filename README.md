@@ -3,10 +3,12 @@ FABlin Firmware
 ==========================
 FABtotum Marlin Derivate Firmware.
 
-This is the FABlin, a Marlin Derivate Firmware. Marlin was originally created by Erik Zalm (https://github.com/ErikZalm/Marlin)
-The changes made are focused on multipurpose personal fabrication and hardware characteristics of the FABtotum Personal Fabricator such as 3D/4 Axis milling, 3D/4 axis scanning, Touch-probing and the Totumduino Board I/Os capabilities.
-
-Supported G-codes: http://forum.fabtotum.cc/showthread.php?1364-Supported-Gcodes
+This is the FABlin, a Marlin Derivate Firmware. Marlin was originally
+created by Erik Zalm (https://github.com/ErikZalm/Marlin) The changes
+made are focused on multipurpose personal fabrication and hardware
+characteristics of the FABtotum Personal Fabricator such as 3D/4 Axis
+milling, 3D/4 axis scanning, Touch-probing and the Totumduino Board
+I/Os capabilities.
 
 
 Compiling
@@ -14,11 +16,11 @@ Compiling
 
 ### with Arduino IDE
 
-To correctly compile the firmware with Arduino you
-must set the folder where this repository is checked out as Arduino's
-sketchbook folder inside Arduino's preferences. Alternatively you can
-manually copy the [FABlin/libraries/SmartComm](libraries/SmartComm)
-folder into your current sketchbook's libraries folder.
+To correctly compile the firmware with Arduino you must set the folder
+where this repository is checked out as Arduino's *sketchbook folder*
+inside Arduino's preferences. Alternatively you can manually copy the
+[FABlin/libraries/SmartComm](libraries/SmartComm) folder into your
+current sketchbook's *libraries* folder.
 
 For further info refer to
 https://www.arduino.cc/en/Guide/Environment#toc7.
@@ -41,15 +43,17 @@ to [platformio
 documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
 
 
-Changelog
----------
+Latest Changes
+--------------
 
-### Version: 1.0.0096
+### Version 1.0.0097.1
+- Min power level for laser
+- Auto fan on when laser active
+- Better diagnostic messages for laser head
 
-- Fixed G27/G28 behaviour near axis limits and silenced verbose error messages
-- Updated default thermistor table for the extruder
-- Changed M503 and other diagnostic outputs
-- Fixed G29 hitting Y endstop
+### Version: 1.0.0097
+- Final laser support: moved dedicated commands from M6/7 to M60/1/2
+- Broadened number of cases in which head misplacement is detected
+- Workaround for false z-min endstop triggerings
 
-
-For complete changelog, see [ChangeLog](ChangeLog.txt).
+For the complete changelog, see [ChangeLog](ChangeLog.txt).

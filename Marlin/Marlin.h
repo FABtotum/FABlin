@@ -276,6 +276,11 @@ extern bool enable_secure_switch_zprobe;
 #endif
 
 #ifdef THERMISTOR_HOTSWAP
+namespace ThermistorHotswap
+{
+  void setTable (const unsigned short);
+}
+
 extern int maxttemp[EXTRUDERS];
 #ifdef TEMP_SENSOR_1_AS_REDUNDANT
 extern void *heater_ttbl_map[2];

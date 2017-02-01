@@ -15,7 +15,7 @@
 // User-specified version info of this build to display in [Pronterface, etc] terminal window during
 // startup. Implementation of an idea by Prof Braino to inform user that any changes made to this
 // build by the user have been successfully uploaded into firmware.
-#define STRING_BUILD_VERSION  "V 1.0.0096"
+#define STRING_BUILD_VERSION  "V 1.0.0097.1-hdb"
 #define STRING_BUILD_DATE __DATE__ " " __TIME__ // build date and time
 #define STRING_CONFIG_H_AUTHOR "FABteam" // Who made the changes.
 
@@ -168,8 +168,8 @@
 // END: This are auxiliary macros supporting up to ELEVEN (0-10) tables
 
 // USER CONFIGURATION:
-#define THERMISTOR_HOTSWAP_SUPPORTED_TYPES ( 170, 11, 1 )
-#define THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN 3 // two types are currently supported
+#define THERMISTOR_HOTSWAP_SUPPORTED_TYPES ( 170, 11, 1, 171 )
+#define THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN 4
 #define THERMISTOR_HOTSWAP_DEFAULT_INDEX 0 // the index of within the supported types to which the printer will be initialised.
 
 // START: This are auxiliary macros
@@ -559,7 +559,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 
 #define DEFAULT_AXIS_STEPS_PER_UNIT   {72.5811,72.5811,2133.333,3048.1593}  //  steps per unit for fabtotum e=1914.5295 steps/mm with MK7 ----> MK8 e=2961.833
 
-#define DEFAULT_MAX_FEEDRATE          {550, 550, 15, 12}    // (mm/sec)  E0 was 2MM/SEC
+#define DEFAULT_MAX_FEEDRATE          {250, 250, 15, 12}    // (mm/sec)  E0 was 2MM/SEC
 #define DEFAULT_MAX_ACCELERATION      {10000,10000,50,100}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for Skeinforge 40+, for older versions raise them a lot.
 
 #define DEFAULT_ACCELERATION          4000    // X, Y, Z and E max acceleration in mm/s^2 for printing moves  (was 5000)
@@ -835,5 +835,8 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 
 #include "Configuration_adv.h"
 #include "thermistortables.h"
+
+// Laser support
+#define LASER_MIN_POWER 5
 
 #endif //__CONFIGURATION_H
