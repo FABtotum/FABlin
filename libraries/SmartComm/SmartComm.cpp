@@ -39,7 +39,8 @@ void SmartComm::begin(uint16_t param)
          break;
 
       case SMARTCOMM_BUS_TWI:
-         Wire.begin((uint8_t)(param & 0x7F));
+         _twi_address = (uint8_t)(param & 0x7F);
+         Wire.begin(_twi_address);
          break;
    }
 }
@@ -76,7 +77,7 @@ size_t SmartComm::write(uint8_t value)
    {
       case SMARTCOMM_BUS_SERIAL:
          return Serial.write(value);
-         
+
       case SMARTCOMM_BUS_TWI:
          if (IS_VALID_TWI_7BIT_ADDRESS(_twi_address)) {
             // We're slaves, humbly write a response to a request
@@ -104,7 +105,7 @@ size_t SmartComm::write(const char* string)
    {
       case SMARTCOMM_BUS_SERIAL:
          return Serial.write(string);
-         
+
       case SMARTCOMM_BUS_TWI:
          if (IS_VALID_TWI_7BIT_ADDRESS(_twi_address)) {
             // We're slaves, humbly write a response to a request
@@ -188,7 +189,7 @@ void SmartComm::serial (uint8_t sRX, uint8_t sTX, uint32_t baud)
       end();
       _serial_baud = baud;
    }
-   
+
    if (sRX != _serial_rx || sTX != _serial_tx)
    {
       _serial_rx = sRX;
@@ -212,14 +213,14 @@ void SmartComm::wire(bool enable)
 }
 
 /**
- * Enables TWI bus and initializes communication as slave.
+ * Enables TWI bus as master and sets default slave address.
  *
  * @param uint8_t:7 addr - Slave address (only least significant 7 bits used)
  */
 void SmartComm::wire (uint8_t addr)
 {
+   _twi_target = addr & 0x7F;
    wire(true);
-   begin(addr & 0x7F);
 }
 
 inline boolean _probe_serial (SoftwareSerial& serial, uint32_t speed, const char *probe, const char *resp)
