@@ -845,6 +845,8 @@ void FabtotumHeads_init ()
 
    // Load starting tool (T0)
    tools.change(0);
+
+  Read_Head_Info();
 }
 
 void FabtotumIO_init()
@@ -934,6 +936,9 @@ void FabtotumIO_init()
    BEEP_OFF()
 
   z_endstop_bug_workaround = fab_batch_number >= 3? 255 : 0;
+
+  // SmartHead is configured as Two-Wire bus by default
+  SmartHead.wire(true);
 }
 
 void setup()
@@ -6150,7 +6155,7 @@ void manage_amb_color_fading()
 }
 
 
-void Read_Head_Info(bool force=false)
+void Read_Head_Info(bool force)
 {
   // Dummy heads can't be read...
   if (head_is_dummy)

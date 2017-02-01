@@ -29,14 +29,14 @@ class SmartComm : public Stream
       SmartComm (SoftwareSerial&);
 
       // Set serial mode
-      inline void serial (boolean=true);
+      void serial (bool=true);
       void serial (uint8_t, uint8_t, uint32_t=0xFF);
 
       // Alias to attached serial
       SoftwareSerial& Serial;
 
       // Set two-wire mode
-      inline void wire (boolean=true);
+      void wire (bool=true);
       void wire (uint8_t);
 
       // No need to define alias to singleton Wire

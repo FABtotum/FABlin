@@ -60,14 +60,17 @@ uint8_t tools_s::change (uint8_t tool)
    active_extruder = tool_extruder_mapping[tool];
    head_is_dummy = !tool_twi_support[tool];
 
+#ifdef SMART_COMM
    if (installed_head_id <= FAB_HEADS_laser_ID)
    {
+#endif
       // For legacy heads we do not rely on SmartComm module
       if (head_is_dummy) {
          TWCR &= ~MASK(TWEN);
       } else {
          Wire.begin();
       }
+#ifdef SMART_COMM
    }
    else
    {
@@ -82,6 +85,7 @@ uint8_t tools_s::change (uint8_t tool)
          // be explicitely configured for them to continue to work.
       }
    }
+#endif
 
    return active_extruder;
 }

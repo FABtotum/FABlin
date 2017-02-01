@@ -209,7 +209,7 @@ void refresh_cmd_timeout(void);
 
 void manage_fab_soft_pwm(void);
 
-void Read_Head_Info(bool);
+void Read_Head_Info(bool=false);
 char I2C_read(byte i2c_register);
 
 #ifdef FAST_PWM_FAN

@@ -5,13 +5,13 @@
 #include "modes.h"
 
 typedef struct tool_s {
-   uint8_t mode = WORKING_MODE_HYBRID;
+   uint8_t mode = 0;
    uint8_t extruders:3;
    uint8_t heaters:3;
    uint8_t thtable = THERMISTOR_HOTSWAP_DEFAULT_INDEX;
    int16_t mintemp = HEATER_0_MINTEMP;
    int16_t maxtemp = HEATER_0_MAXTEMP;
-   uint8_t serial  = 1;
+   uint8_t serial  = 0;
 } tool_t;
 
 extern struct tools_s
