@@ -794,6 +794,20 @@ void tool_change (uint8_t id)
    }
 #endif
 
+  switch (installed_head->serial)
+  {
+    case TOOL_SERIAL_SER:
+      // There ain't  an automatic serial interface configuration at the moment
+      break;
+    case TOOL_SERIAL_TWI:
+      SmartHead.wire(true);
+      break;
+    default:
+      SmartHead.wire(false);
+      SmartHead.serial(false);
+  }
+
+  // Set head placement status to the expected value (to be checked by subsequent procedures)
   if (installed_head_id > 1)
   if (installed_head_id != 3)
     head_placed = true;
@@ -806,24 +820,24 @@ void FabtotumHeads_init ()
    tools.factory[FAB_HEADS_hybrid_ID].extruders= 1;
    tools.factory[FAB_HEADS_hybrid_ID].heaters  = 1;
    tools.factory[FAB_HEADS_hybrid_ID].maxtemp = 235;
-   tools.factory[FAB_HEADS_hybrid_ID].serial  = 1;
+   tools.factory[FAB_HEADS_hybrid_ID].serial  = TOOL_SERIAL_TWI;
 
    tools.factory[FAB_HEADS_print_v2_ID].mode = WORKING_MODE_FFF;
    tools.factory[FAB_HEADS_print_v2_ID].extruders= 1;
    tools.factory[FAB_HEADS_print_v2_ID].heaters  = 1;
-   tools.factory[FAB_HEADS_print_v2_ID].serial  = 0;
+   //tools.factory[FAB_HEADS_print_v2_ID].serial  = 0;
 
    tools.factory[FAB_HEADS_mill_v2_ID].mode = WORKING_MODE_CNC;
    tools.factory[FAB_HEADS_mill_v2_ID].extruders= 0;
    tools.factory[FAB_HEADS_mill_v2_ID].heaters  = 0;
-   tools.factory[FAB_HEADS_mill_v2_ID].serial  = 0;
+   //tools.factory[FAB_HEADS_mill_v2_ID].serial  = 0;
 
    tools.factory[FAB_HEADS_laser_ID].mode = WORKING_MODE_LASER;
    tools.factory[FAB_HEADS_laser_ID].extruders= 0;
    tools.factory[FAB_HEADS_laser_ID].heaters  = 0;
    tools.factory[FAB_HEADS_laser_ID].thtable = 3;
    tools.factory[FAB_HEADS_laser_ID].maxtemp = 80;
-   tools.factory[FAB_HEADS_laser_ID].serial  = 0;
+   //tools.factory[FAB_HEADS_laser_ID].serial  = 0;
 
    tool_change(installed_head_id);
 
@@ -4733,12 +4747,13 @@ void process_commands()
 
          case 4:  // Smart Head port
             SmartHead.end();
-            if (baudRate > 0) {
+            if (baudRate >= 300)
+            {
                if (sRX != 255 && sTX != 255 && sRX != sTX) {
                   // Set serial pins
                   SmartHead.serial(sRX, sTX, baudRate);
-                  SmartHead.begin();
                }
+               SmartHead.begin(baudRate);
             }
             break;
       }
@@ -6173,16 +6188,20 @@ void Read_Head_Info(bool force)
     }
   }
 
-  SERIAL_HEAD_0=I2C_read(SERIAL_N_FAM_DEV_CODE);
-  SERIAL_HEAD_1=I2C_read(SERIAL_N_0);
-  SERIAL_HEAD_2=I2C_read(SERIAL_N_1);
-  SERIAL_HEAD_3=I2C_read(SERIAL_N_2);
-  SERIAL_HEAD_4=I2C_read(SERIAL_N_3);
-  SERIAL_HEAD_5=I2C_read(SERIAL_N_4);
-  SERIAL_HEAD_6=I2C_read(SERIAL_N_5);
-  SERIAL_HEAD_7=I2C_read(SERIAL_N_CRC);
+  if (installed_head->serial == TOOL_SERIAL_TWI)
+  {
+    SERIAL_HEAD_0=I2C_read(SERIAL_N_FAM_DEV_CODE);
+    SERIAL_HEAD_1=I2C_read(SERIAL_N_0);
+    SERIAL_HEAD_2=I2C_read(SERIAL_N_1);
+    SERIAL_HEAD_3=I2C_read(SERIAL_N_2);
+    SERIAL_HEAD_4=I2C_read(SERIAL_N_3);
+    SERIAL_HEAD_5=I2C_read(SERIAL_N_4);
+    SERIAL_HEAD_6=I2C_read(SERIAL_N_5);
+    SERIAL_HEAD_7=I2C_read(SERIAL_N_CRC);
 
-  i2c_timeout=false;
+    i2c_timeout=false;
+  }
+  // We don't have an identification protocol for the serial interface yet
 
   if (installed_head_id <= 1)
   {

@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include "modes.h"
 
+#define TOOL_SERIAL_NONE 0
+#define TOOL_SERIAL_SER  1
+#define TOOL_SERIAL_TWI  2
+
 typedef struct tool_s {
    uint8_t mode = 0;
    uint8_t extruders:3;

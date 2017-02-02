@@ -195,7 +195,7 @@ void SmartComm::serial (uint8_t sRX, uint8_t sTX, uint32_t baud)
       _serial_rx = sRX;
       _serial_tx = sTX;
 
-      // Reinstantiate SoftwareSerial if pin changed
+      // Reinstantiate SoftwareSerial if pins changed
       Serial = SoftwareSerial(_serial_rx,_serial_tx);
    }
 
