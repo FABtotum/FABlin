@@ -158,7 +158,7 @@
 // M240 - Trigger a camera to take a photograph
 // M250 - Set LCD contrast C<contrast value> (value 0..63)
 // M280 - set servo position absolute. P: servo index, S: angle or microseconds
-// M300 - Play beep sound S<frequency Hz> P<duration ms>
+// M300 - Play beep sound. S<beeps> number of beeps, D<dur> duration of the beep in 10ms x dur, P<pause> pause between beeps in 10ms x pause
 // M301 - Set PID parameters P I and D
 // M302 - Allow cold extrudes, or set the minimum extrude S<temperature>.
 // M303 - PID relay autotune S<temperature> sets the target temperature. (default target temperature = 150C)
@@ -3628,16 +3628,58 @@ void process_commands()
     case 300: // M300
     {
 
-      if (!silent){
-      BEEP_ON()
-      _delay_ms(50);
-      BEEP_OFF()
-      _delay_ms(50);
-      BEEP_ON()
-      _delay_ms(50);
-      BEEP_OFF()
+      if(code_seen('S'))
+      {
+        byte beeps = code_value();
+        byte dur = 5;
+        byte pause = 5;
+        
+        if( code_seen('D') )
+        {
+          dur = code_value();
+          if(dur < 1)
+            dur = 1;
+        }
+        
+        if( code_seen('P') )
+        {
+          pause = code_value();
+          if(pause < 1)
+            pause = 1;
+        }
+        
+        if(beeps > 10)
+          beeps = 10;
+        if(beeps < 1)
+          beeps = 1;
+        
+        byte dd;
+        
+        while(beeps--)
+        {
+          BEEP_ON()
+          dd = dur;
+          while(dd--)
+            _delay_ms(10);
+            
+          BEEP_OFF()
+          dd = pause;
+          while(dd--)
+            _delay_ms(10);
+        }
       }
-
+      else
+      {
+        if (!silent){
+        BEEP_ON()
+        _delay_ms(50);
+        BEEP_OFF()
+        _delay_ms(50);
+        BEEP_ON()
+        _delay_ms(50);
+        BEEP_OFF()
+        }
+      }
     }
     break;
     #endif // M300
