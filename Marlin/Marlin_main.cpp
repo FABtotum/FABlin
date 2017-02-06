@@ -130,7 +130,7 @@
 // M128 - EtoP Open (BariCUDA EtoP = electricity to air pressure transducer by jmil)
 // M129 - EtoP Closed (BariCUDA EtoP = electricity to air pressure transducer by jmil)
 // M140 - Set bed target temp
-// M150 - Set BlinkM Color Output R: Red<0-255> U(!): Green<0-255> B: Blue<0-255> over i2c, G for green does not work.
+// M150 - Set ambient light fading color and speed R: Red<0-255> U(!): Green<0-255> B: Blue<0-255>, S: Speed<0-255>, S0 disables fading G for green does not work as it's a G command.
 // M190 - Sxxx Wait for bed current temp to reach target temp. Waits only when heating
 //        Rxxx Wait for bed current temp to reach target temp. Waits when heating and cooling
 // M200 D<millimeters>- set filament diameter and set E axis units to cubic millimeters (use S0 to set back to millimeters).
@@ -3103,21 +3103,33 @@ void process_commands()
       #endif
       break;
       //TODO: update for all axis, use for loop
-    #ifdef BLINKM
     case 150: // M150
       {
-        byte red;
-        byte grn;
-        byte blu;
+        byte red = 0;
+        byte grn = 0;
+        byte blu = 0;
+        unsigned int spd = fading_speed;
 
         if(code_seen('R')) red = code_value();
         if(code_seen('U')) grn = code_value();
         if(code_seen('B')) blu = code_value();
+        if(code_seen('S')) spd = code_value();
 
-        SendColors(red,grn,blu);
+        if(spd == 0)
+        {
+          stop_fading();
+        }
+        else
+        {
+          led_update_cycles=0;
+          fading_started=false;
+          slope=true;
+          set_amb_color(red, grn, blu);
+          set_amb_color_fading(red, grn, blu, spd);
+        }
+
       }
       break;
-    #endif //BLINKM
     case 200: // M200 D<millimeters> set filament diameter and set E axis units to cubic millimeters (use S0 to set back to millimeters).
       {
         float area = .0;
