@@ -3,11 +3,11 @@ FABlin Firmware
 ==========================
 FABtotum Marlin Derivate Firmware.
 
-This is the FABlin, a Marlin Derivate Firmware. Marlin was originally 
-created by Erik Zalm (https://github.com/ErikZalm/Marlin) The changes 
-made are focused on multipurpose personal fabrication and hardware 
-characteristics of the FABtotum Personal Fabricator such as 3D/4 Axis 
-milling, 3D/4 axis scanning, Touch-probing and the Totumduino Board 
+This is the FABlin, a Marlin Derivate Firmware. Marlin was originally
+created by Erik Zalm (https://github.com/ErikZalm/Marlin) The changes
+made are focused on multipurpose personal fabrication and hardware
+characteristics of the FABtotum Personal Fabricator such as 3D/4 Axis
+milling, 3D/4 axis scanning, Touch-probing and the Totumduino Board
 I/Os capabilities.
 
 
@@ -16,15 +16,19 @@ Compiling
 
 ### with Arduino IDE
 
-To compile you need the contents of this repository inside your Arduino 
-IDE sketchbook. The firmware is contained inside the `Marlin` sketch.
+To correctly compile the firmware with Arduino you must set the folder
+where this repository is checked out as Arduino's *sketchbook folder*
+inside Arduino's preferences. Alternatively you can manually copy the
+[FABlin/libraries/SmartComm](libraries/SmartComm) folder into your
+current sketchbook's *libraries* folder.
 
-For further info refer to https://www.arduino.cc/en/Guide/Environment#toc7.
+For further info refer to
+https://www.arduino.cc/en/Guide/Environment#toc7.
 
 
 ### with PlatformIO
 
-A default `platformio.ini` file with correct directories definitions is 
+A default `platformio.ini` file with correct directories definitions is
 now included in the repository. To compile the firmware simply run:
 
   platformio run

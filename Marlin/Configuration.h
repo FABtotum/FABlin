@@ -15,7 +15,7 @@
 // User-specified version info of this build to display in [Pronterface, etc] terminal window during
 // startup. Implementation of an idea by Prof Braino to inform user that any changes made to this
 // build by the user have been successfully uploaded into firmware.
-#define STRING_BUILD_VERSION  "V 1.0.0097.1"
+#define STRING_BUILD_VERSION  "V 1.0.0097.1-hdb"
 #define STRING_BUILD_DATE __DATE__ " " __TIME__ // build date and time
 #define STRING_CONFIG_H_AUTHOR "FABteam" // Who made the changes.
 
@@ -223,7 +223,7 @@
 // You should use MINTEMP for thermistor short/failure protection.
 #define HEATER_0_MAXTEMP 275
 // Temperature sensor type as defined above
-#define TEMP_SENSOR_0 169 // 169 is default FAB Rev 1 thermistor | 11 is the typical 100K NTC beta=3950
+#define TEMP_SENSOR_0 170 // 169 is default FAB Rev 1 thermistor | 11 is the typical 100K NTC beta=3950
 
 #endif
 
@@ -827,6 +827,11 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 //
 #define SERVO_ENDSTOPS {-1, -1, 1} // Servo index for X, Y, Z. Disable with -1
 #define SERVO_ENDSTOP_ANGLES {0,0, 0,0, 127,26} // X,Y,Z Axis Extend and Retract angles
+
+/******************\
+* SmartComm module *
+*******************/
+#define SMART_COMM
 
 #include "Configuration_adv.h"
 #include "thermistortables.h"

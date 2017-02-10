@@ -64,6 +64,12 @@
 #include <SPI.h>
 #endif
 
+#include "tools.h"
+#include "modes.h"
+#include "Configuration_heads.h"
+
+#include <SoftwareSerial.h>
+#include <SmartComm.h>
 
 // look here for descriptions of G-codes: http://linuxcnc.org/handbook/gcode/g-code.html
 // http://objects.reprap.org/wiki/Mendel_User_Manual:_RepRapGCodes
@@ -155,6 +161,8 @@
 // M302 - Allow cold extrudes, or set the minimum extrude S<temperature>.
 // M303 - PID relay autotune S<temperature> sets the target temperature. (default target temperature = 150C)
 // M304 - Set bed PID parameters P I and D
+// M350 - Set microstepping mode.
+// M351 - Toggle MS1 MS2 pins directly.
 // M400 - Finish all moves
 // M401 - Lower z-probe if present
 // M402 - Raise z-probe if present
@@ -164,15 +172,18 @@
 // M503 - print the current settings (from memory not from EEPROM)
 // M540 - Use S[0|1] to enable or disable the stop SD card print on endstop hit (requires ABORT_ON_ENDSTOP_HIT_FEATURE_ENABLED)
 // M600 - Pause for filament change X[pos] Y[pos] Z[relative lift] E[initial retract] L[later retract distance for removal]
+// M605 - Set dual x-carriage movement mode: S<mode> [ X<duplication x-offset> R<duplication temp offset> ]
 // M665 - set delta configurations
 // M666 - set delta endstop adjustment
-// M605 - Set dual x-carriage movement mode: S<mode> [ X<duplication x-offset> R<duplication temp offset> ]
 // M907 - Set digital trimpot motor current using axis codes.
 // M908 - Control digital trimpot directly.
-// M350 - Set microstepping mode.
-// M351 - Toggle MS1 MS2 pins directly.
 // M928 - Start SD logging (M928 filename.g) - ended by M29
 // M999 - Restart after being stopped by error
+
+// Implemented RepRap-like codes
+//-----------------------
+// M563 [Pn [D<0-2>] [S<0,1>]] - Edit tool definition or query defined tools
+// M575 [P<port number>] R<rx address> T<tx address> [B<baud rate>] [S<option mask>] - Set communication port parameters
 
 //FABtotum custom M codes
 //-----------------------
@@ -249,12 +260,12 @@
 // M782 - read Head product ID
 // [unimplemented] M783 - read Head vendor ID
 // M784 - read Head Serial ID
-// [overridden] M785 - read Head firmware version
-// [overridden] M786 - read needed firmware version of FABtotum Personal Fabricator Main Controller
-// [unimplemented] M787 - read Head capability: type0 (passive, active)
+// M785 - Turn Prism UV module On/off M785 S[0-1] // [overrides] M785 - read Head firmware version
+// M786 - External Power OFF // [overrides] M786 - read needed firmware version of FABtotum Personal Fabricator Main Controller
+// M787 - external power on/off pin control // [overrides] M787 - read Head capability: type0 (passive, active)
 // [unimplemented] M788 - read Head capability: type1 (additive, milling, syringe, laser etc..)
 // [unimplemented] M789 - read Head capability: purpose (single purpose, multipurpose)
-// [unimplemented] M790 - read Head capability: wattage (0-200W)
+// M790 - Send command(s) to smart head  // [overrides] M790 - read Head capability: wattage (0-200W)
 // [unimplemented] M791 - read Head capability: axis (number of axis)
 // [unimplemented] M792 - read Head capability: servo (number of axis)
 // M793 - set/read installed head soft ID
@@ -337,7 +348,12 @@ float extruder_offset[NUM_EXTRUDER_OFFSETS][EXTRUDERS] = {
 #endif
 };
 #endif
-uint8_t active_extruder = 0;
+uint8_t active_tool = 0;     // Active logical tool
+uint8_t active_extruder = 0; // Active actual extruder
+bool head_is_dummy = false;  // Head reaquires TWI silencing
+uint8_t tool_extruder_mapping[] = { 0, 1, 2 };  // Tool to drive mapping
+uint8_t tool_heater_mapping[]   = { 0, -1, 0 };  // Tool to heater mapping
+bool    tool_twi_support[]      = { true, false, false };  // Tool TWI support
 int fanSpeed=0;
 
 #ifdef SERVO_ENDSTOPS
@@ -399,6 +415,9 @@ unsigned int plateconn_board_version=0;
 unsigned int hotplate_board_version=0;
 unsigned int general_assembly_version=0;
 unsigned int installed_head_id=0;
+
+bool head_placed = false;
+
 //===========================================================================
 //=============================Private Variables=============================
 //===========================================================================
@@ -505,7 +524,6 @@ byte SERIAL_HEAD_5=0;
 byte SERIAL_HEAD_6=0;
 byte SERIAL_HEAD_7=0;
 
-bool head_placed=false;
 
 unsigned long i2c_pre_millis=0;
 bool i2c_timeout=false;
@@ -522,6 +540,19 @@ uint8_t extruder_0_thermistor_index = THERMISTOR_HOTSWAP_DEFAULT_INDEX;
 #ifdef SELECTABLE_AUTO_FAN_ON_TEMP_CHANGE
 bool auto_fan_on_temp_change = true;
 #endif
+
+// Additional (software) serial interfaces
+#if defined(RX4) && defined(TX4)
+
+  // Smart Heads
+  SoftwareSerial Serial4(RX4, TX4);
+  SmartComm SmartHead(Serial4);
+
+#endif
+
+void forward_command(uint8_t, const char*);
+static int8_t forward_commands_to = -1;      // What communication line to forward to
+static bool   feedback_responses  = false;  // Wether to feed back responses on main serial line
 
 tool_t* installed_head;
 tool_t  available_heads[HEADS];
@@ -705,11 +736,11 @@ void working_mode_change (uint8_t new_mode, bool reset = false)
       Laser::enable();
       break;
 
-      case WORKING_MODE_CNC:
-      case WORKING_MODE_HYBRID:
-         servo_init();
-         break;
-   }
+    case WORKING_MODE_CNC:
+    case WORKING_MODE_HYBRID:
+      servo_init();
+      break;
+  }
 
    working_mode = new_mode;
 }
@@ -742,7 +773,9 @@ void working_mode_echo ()
 
 void tool_change (uint8_t id)
 {
-   installed_head = &(available_heads[id]);
+  if (id <= HEADS) {
+    installed_head = &(tools.factory[id]);
+  }
    installed_head_id = id;
 
    // Forcefully reset mode...
@@ -763,6 +796,20 @@ void tool_change (uint8_t id)
    }
 #endif
 
+  switch (installed_head->serial)
+  {
+    case TOOL_SERIAL_SER:
+      // There ain't  an automatic serial interface configuration at the moment
+      break;
+    case TOOL_SERIAL_TWI:
+      SmartHead.wire(true);
+      break;
+    default:
+      SmartHead.wire(false);
+      SmartHead.serial(false);
+  }
+
+  // Set head placement status to the expected value (to be checked by subsequent procedures)
   if (installed_head_id > 1)
   if (installed_head_id != 3)
     head_placed = true;
@@ -770,22 +817,52 @@ void tool_change (uint8_t id)
 
 void FabtotumHeads_init ()
 {
-   available_heads[FAB_HEADS_hybrid_ID].mode = 0;
-   available_heads[FAB_HEADS_hybrid_ID].heaters = 1;
-   available_heads[FAB_HEADS_hybrid_ID].maxtemp = 235;
+   // Factory heads definitions
+   tools.factory[FAB_HEADS_hybrid_ID].mode = WORKING_MODE_HYBRID;
+   tools.factory[FAB_HEADS_hybrid_ID].extruders= 1;
+   tools.factory[FAB_HEADS_hybrid_ID].heaters  = 1;
+   tools.factory[FAB_HEADS_hybrid_ID].maxtemp = 235;
+   tools.factory[FAB_HEADS_hybrid_ID].serial  = TOOL_SERIAL_TWI;
 
-   available_heads[FAB_HEADS_print_v2_ID].mode = WORKING_MODE_FFF;
-   available_heads[FAB_HEADS_print_v2_ID].heaters = 1;
+   tools.factory[FAB_HEADS_print_v2_ID].mode = WORKING_MODE_FFF;
+   tools.factory[FAB_HEADS_print_v2_ID].extruders= 1;
+   tools.factory[FAB_HEADS_print_v2_ID].heaters  = 1;
+   //tools.factory[FAB_HEADS_print_v2_ID].serial  = 0;
 
-   available_heads[FAB_HEADS_mill_v2_ID].mode = WORKING_MODE_CNC;
-   available_heads[FAB_HEADS_mill_v2_ID].heaters = 0;
+   tools.factory[FAB_HEADS_mill_v2_ID].mode = WORKING_MODE_CNC;
+   tools.factory[FAB_HEADS_mill_v2_ID].extruders= 0;
+   tools.factory[FAB_HEADS_mill_v2_ID].heaters  = 0;
+   //tools.factory[FAB_HEADS_mill_v2_ID].serial  = 0;
 
-   available_heads[FAB_HEADS_laser_ID].mode = WORKING_MODE_LASER;
-   available_heads[FAB_HEADS_laser_ID].heaters = 0;
-   available_heads[FAB_HEADS_laser_ID].thtable = 3;
-   available_heads[FAB_HEADS_laser_ID].maxtemp = 80;
+   tools.factory[FAB_HEADS_laser_ID].mode = WORKING_MODE_LASER;
+   tools.factory[FAB_HEADS_laser_ID].extruders= 0;
+   tools.factory[FAB_HEADS_laser_ID].heaters  = 0;
+   tools.factory[FAB_HEADS_laser_ID].thtable = 3;
+   tools.factory[FAB_HEADS_laser_ID].maxtemp = 80;
+   //tools.factory[FAB_HEADS_laser_ID].serial  = 0;
 
    tool_change(installed_head_id);
+
+   // Default user tool definitions
+   tools.define(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+   tools.define(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_5th_axis_SMART);
+   tools.define(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
+
+   // Particular tool configurations
+   switch (installed_head_id)
+   {
+      case FAB_HEADS_direct_ID:
+         tools.define(0, FAB_HEADS_direct_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
+         tools.define(2, FAB_HEADS_default_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+         break;
+      case FAB_HEADS_mill_v2_ID:
+         tools.define(0, -1, FAB_HEADS_default_HEATER, FAB_HEADS_mill_v2_SMART);
+   }
+
+   // Load starting tool (T0)
+   tools.change(0);
+
+  Read_Head_Info();
 }
 
 void FabtotumIO_init()
@@ -867,8 +944,6 @@ void FabtotumIO_init()
    set_amb_color(0,0,0);
    set_amb_color_fading(true,true,false,fading_speed);
 
-  Read_Head_Info();
-
    _delay_ms(50);
    BEEP_OFF()
    _delay_ms(30);
@@ -877,6 +952,9 @@ void FabtotumIO_init()
    BEEP_OFF()
 
   z_endstop_bug_workaround = fab_batch_number >= 3? 255 : 0;
+
+  // SmartHead is configured as Two-Wire bus by default
+  SmartHead.wire(true);
 }
 
 void setup()
@@ -965,6 +1043,18 @@ void setup()
 
 }
 
+inline void manage_head ()
+{
+   if (feedback_responses)
+   {
+      if (forward_commands_to >= 0)
+      {
+         while (Serial4.available()) {
+            MYSERIAL.write(Serial4.read());
+         }
+      }
+   }
+}
 
 void loop()
 {
@@ -997,11 +1087,15 @@ void loop()
         }
       }
       else
-      {
+      /*{
         process_commands();
-      }
+     }*/
     #else
+    if (forward_commands_to >= 0) {
+      forward_command(forward_commands_to, cmdbuffer[bufindr]);
+   } else {
       process_commands();
+   }
     #endif //SDSUPPORT
     buflen = (buflen-1);
     bufindr = (bufindr + 1)%BUFSIZE;
@@ -1010,6 +1104,7 @@ void loop()
   manage_heater();
   manage_inactivity();
   checkHitEndstops();
+  manage_head();
   lcd_update();
 }
 
@@ -1715,6 +1810,42 @@ void refresh_cmd_timeout(void)
     }
   } //retract
 #endif //FWRETRACT
+
+inline void forward_command (uint8_t interface, const char* line)
+{
+   if (code_seen(LINE_FORWARDING_TERMINATION_CHAR)) {
+      forward_commands_to = -1;
+      feedback_responses  = false;
+      return;
+   }
+
+   bool error = false;
+   switch (interface)
+   {
+      case 0:
+         SERIAL_ERRORPGM("Cannot forward commands to interface #0");
+         return;
+
+      case 4:
+         if (!SmartHead.isListening()) {
+            error = true;
+            break;
+         }
+         SmartHead.write(line);
+         return;
+
+      default:
+         SERIAL_ERRORPGM("Invalid interface #");
+         SERIAL_ECHO(interface);
+         return;
+   }
+
+   if (error) {
+      SERIAL_ERRORPGM("Comm interface ");
+      SERIAL_ECHO(interface);
+      SERIAL_ERRORLNPGM(" is not active");
+   }
+}
 
 #ifdef THERMISTOR_HOTSWAP
 
@@ -2804,10 +2935,11 @@ void process_commands()
         /* continue to loop until we have reached the target temp
           _and_ until TEMP_RESIDENCY_TIME hasn't passed since we reached it */
         while(((residencyStart == -1) ||
-              (residencyStart >= 0 && (((unsigned int) (millis() - residencyStart)) < (TEMP_RESIDENCY_TIME * 1000UL))))&&(!Stopped)) {
+              (residencyStart >= 0 && (((unsigned int) (millis() - residencyStart)) < (TEMP_RESIDENCY_TIME * 1000UL))))&&(!Stopped))
       #else
-        while ( target_direction ? (isHeatingHotend(tmp_extruder)) : (isCoolingHotend(tmp_extruder)&&(CooldownNoWait==false)) ) {
+        while ( target_direction ? (isHeatingHotend(tmp_extruder)) : (isCoolingHotend(tmp_extruder)&&(CooldownNoWait==false)) )
       #endif //TEMP_RESIDENCY_TIME
+      {
           if( (millis() - codenum) > 1000UL )
           { //Print Temp Reading and remaining time every 1 second while heating up/cooling down
             SERIAL_PROTOCOLPGM("T:");
@@ -2850,6 +2982,7 @@ void process_commands()
         previous_millis_cmd = millis();
       }
       break;
+
     case 190: // M190 - Wait for bed heater to reach target.
     inactivity=false;
     #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
@@ -2973,7 +3106,7 @@ void process_commands()
       #endif
       #ifdef ULTIPANEL
         powersupply = false;
-        LCD_MESSAGEPGM(MACHINE_NAME" "MSG_OFF".");
+        LCD_MESSAGEPGM(MACHINE_NAME " " MSG_OFF ".");
         lcd_update();
       #endif
 	  break;
@@ -3136,6 +3269,7 @@ void process_commands()
         tmp_extruder = active_extruder;
         if(code_seen('T')) {
           tmp_extruder = code_value();
+          tmp_extruder = tool_extruder_mapping[tmp_extruder];
           if(tmp_extruder >= EXTRUDERS) {
             SERIAL_ECHO_START;
             SERIAL_ECHO(MSG_M200_INVALID_EXTRUDER);
@@ -4456,6 +4590,7 @@ void process_commands()
       break;
 
     /*case 6: // M6 S[PWM] LASER ON (provisional code)
+>>>>>>> development
       {
         inactivity=false;
         int servo_index = 0;
@@ -4510,6 +4645,122 @@ void process_commands()
          servos[servo_index].detach();
       }
       break;*/
+
+    case 563: // M563 [Px] [Dy] [Sz]- Define tool or swap definitions
+      {
+         // Select target (logical) tool
+         unsigned long target_tool;
+        if (code_seen('P')) {
+          target_tool = code_value_long();
+       } else {
+          target_tool = active_tool;
+
+         // Output tool definitions
+         SERIAL_ECHOLNPGM("");
+         for (target_tool = 0; target_tool < EXTRUDERS; target_tool++)
+         {
+            if (target_tool == active_tool) {
+               SERIAL_ECHOPGM(" * ");
+            } else {
+              SERIAL_ECHOPGM("   ");
+           }
+            SERIAL_ECHOPAIR("T", (unsigned long)target_tool);
+            SERIAL_ECHOPAIR(": drive:", (unsigned long)tool_extruder_mapping[target_tool]);
+            if (tool_twi_support[target_tool]) {
+              SERIAL_ECHOPGM(" / twi:on");
+           } else {
+              SERIAL_ECHOPGM(" / twi:off");
+           }
+            SERIAL_ECHOLNPGM("");
+         }
+         return;
+       }
+
+       // Assign drive
+       uint8_t drive;
+        if (code_seen('D')) {
+          drive = code_value_long();
+           //tool_extruder_mapping[target_tool] = tmp_extruder;
+        } else /*if (target_tool != active_tool)*/ {
+           drive = active_extruder;
+           /*tool_extruder_mapping[active_tool] = tool_extruder_mapping[target_tool];
+           tool_extruder_mapping[target_tool] = active_extruder;*/
+        }
+
+        // State head smartness
+        bool twi;
+        if (code_seen('S')) {
+           twi = code_value_long()==1 ? true : false;
+        } else {
+           twi = !head_is_dummy;
+        }
+
+        tools.define(target_tool, drive, 0, twi);
+
+        // Reselect active tool to possibly reload its definition
+        tools.change(active_tool);
+
+      }
+      break;
+
+   /**
+    * M575 P B R T S - Set communication params
+    *
+    * @param  P <port number> - Select communication port number:
+    *                       0 - Main serial bus
+    *                       1-3 - Additional Hardware serial ports (reserved)
+    *                       4 - 1st Auxiliary serial port (linked to the head)
+    * @param  R <rx>  - Set receive pin for serial bus, or slave address for twi bus. Not available for port 0.
+    * @param  T <tx>  - Set transmit pin for serial bus, or default target address for twi bus. Not available for port 0.
+    * @param  B 0,300,...,115200 - For serial bus: set baud rate, or disable (0);
+    *                            - for twi bus: enable (1) or disables (0) bus.
+    * @param  S <options> - Define features (currently unsupported)
+    */
+   case 575: {
+
+      uint8_t port_n = 4;
+      if (code_seen('P')) {
+         port_n = code_value_long() & 0xFF;
+      }
+
+      uint8_t sRX = 255, sTX = 255;
+		switch (port_n) {
+			case 4: sRX = RX4; sTX = TX4; break;
+		}
+      if (code_seen('R')) {
+         sRX = code_value_long() & 0xFF;
+      }
+
+		if (code_seen('T')) {
+			sTX = code_value_long() & 0xFF;
+		}
+
+      uint32_t baudRate = 0;
+      if (code_seen('B')) {
+         baudRate = code_value_long();
+      }
+
+      switch (port_n)
+      {
+         case 0:
+            MYSERIAL.end();
+            MYSERIAL.begin(baudRate);
+            break;
+
+         case 4:  // Smart Head port
+            SmartHead.end();
+            if (baudRate >= 300)
+            {
+               if (sRX != 255 && sTX != 255 && sRX != sTX) {
+                  // Set serial pins
+                  SmartHead.serial(sRX, sTX, baudRate);
+               }
+               SmartHead.begin(baudRate);
+            }
+            break;
+      }
+
+   } break;
 
    case 740: // M740 - read WIRE_END sensor
       {
@@ -4832,7 +5083,7 @@ void process_commands()
 
     case 779 :  // M779 - force head ID reading after reset /for testing purpose only
       {
-         Read_Head_Info();
+         Read_Head_Info(true);
 
         if (!silent){
           _delay_ms(50);
@@ -4951,13 +5202,13 @@ void process_commands()
               #define E1_ENABLE_PIN      30
              */
 
-            #define X_STEP_PIN         26
+            /*#define X_STEP_PIN         26
             #define X_DIR_PIN          28
             #define X_ENABLE_PIN       24
 
             #define Y_STEP_PIN         36
             #define Y_DIR_PIN          34
-            #define Y_ENABLE_PIN       30
+            #define Y_ENABLE_PIN       30*/
 
 
             axis_steps_per_unit[0]=177.78;
@@ -4965,13 +5216,13 @@ void process_commands()
 
           }
               //disable 5th axis
-              #define X_STEP_PIN         54
+              /*#define X_STEP_PIN         54
               #define X_DIR_PIN          55
               #define X_ENABLE_PIN       38
 
               #define Y_STEP_PIN         60
               #define Y_DIR_PIN          61
-              #define Y_ENABLE_PIN       56
+              #define Y_ENABLE_PIN       56*/
 
               axis_steps_per_unit[0]=72.58;
               axis_steps_per_unit[1]=72.58;
@@ -4982,18 +5233,59 @@ void process_commands()
     }
     break;
 
+   /**
+    * M790 - Send command(s) to smart head.
+    */
+   case 790: {
+
+       if (head_is_dummy) {
+         SERIAL_ERROR_START;
+          SERIAL_ERRORLNPGM("Smart head communication disabled by active tool definition");
+          break;
+       }
+
+      int8_t port = forward_commands_to;
+      if (code_seen('P')) {
+         port = code_value_long();
+      }
+
+      if (port < 0) {
+         SERIAL_ERROR_START;
+         SERIAL_ERRORLNPGM("Communication interface not specified");
+         break;
+      }
+
+      if (code_seen(LINE_FORWARDING_ENCLOSING_CHAR))
+      {
+        char* s = strchr(strchr_pointer+1, LINE_FORWARDING_ENCLOSING_CHAR);
+        if (s)
+          *s = 0;
+        forward_command(port, strchr_pointer+1);
+      }
+      else
+      {
+         // Forward lines until empty line is found
+         forward_commands_to = port;
+         feedback_responses  = true;
+      }
+
+   } break;
+
     case 793: // M793 - Set/read installed head soft ID
     {
       if (code_seen('S')) {
         uint8_t id = code_value_long();
+        if (id < FAB_HEADS_thirdparty_ID)
+        if (id > HEADS) {
+          SERIAL_ERROR_START;
+          SERIAL_ERRORLNPGM("Unsupported head ID");
+          return;
+        }
         tool_change(id);
       }
       SERIAL_PROTOCOLLN(installed_head_id);
     }
     break;
-
-
-
 
 #ifdef THERMISTOR_HOTSWAP
     case 800:   // M800 - changes/reads the thermistor of extruder0 type index
@@ -5138,6 +5430,7 @@ void process_commands()
   else if(code_seen('T'))
   {
     tmp_extruder = code_value();
+    tmp_extruder = tools.change(tmp_extruder);
     if(tmp_extruder >= EXTRUDERS) {
       SERIAL_ECHO_START;
       SERIAL_ECHO("T");
@@ -5875,20 +6168,38 @@ void manage_amb_color_fading()
 }
 
 
-void Read_Head_Info()
+void Read_Head_Info(bool force)
 {
-  Wire.begin();        // join i2c bus (address optional for master)
+  // Dummy heads can't be read...
+  if (head_is_dummy)
+  {
+    // ...unless you force it
+    if (force) {
+#if defined(SMART_COMM)
+      // It's understood that SmartHead has been configured beforehand
+      SmartHead.begin();
+#else
+      Wire.begin();
+#endif
+    } else {
+      return;
+    }
+  }
 
-  SERIAL_HEAD_0=I2C_read(SERIAL_N_FAM_DEV_CODE);
-  SERIAL_HEAD_1=I2C_read(SERIAL_N_0);
-  SERIAL_HEAD_2=I2C_read(SERIAL_N_1);
-  SERIAL_HEAD_3=I2C_read(SERIAL_N_2);
-  SERIAL_HEAD_4=I2C_read(SERIAL_N_3);
-  SERIAL_HEAD_5=I2C_read(SERIAL_N_4);
-  SERIAL_HEAD_6=I2C_read(SERIAL_N_5);
-  SERIAL_HEAD_7=I2C_read(SERIAL_N_CRC);
+  if (installed_head->serial == TOOL_SERIAL_TWI)
+  {
+    SERIAL_HEAD_0=I2C_read(SERIAL_N_FAM_DEV_CODE);
+    SERIAL_HEAD_1=I2C_read(SERIAL_N_0);
+    SERIAL_HEAD_2=I2C_read(SERIAL_N_1);
+    SERIAL_HEAD_3=I2C_read(SERIAL_N_2);
+    SERIAL_HEAD_4=I2C_read(SERIAL_N_3);
+    SERIAL_HEAD_5=I2C_read(SERIAL_N_4);
+    SERIAL_HEAD_6=I2C_read(SERIAL_N_5);
+    SERIAL_HEAD_7=I2C_read(SERIAL_N_CRC);
 
-  i2c_timeout=false;
+    i2c_timeout=false;
+  }
+  // We don't have an identification protocol for the serial interface yet
 
   if (installed_head_id <= 1)
   {
@@ -6131,6 +6442,7 @@ bool setTargetedHotend(int code){
   tmp_extruder = active_extruder;
   if(code_seen('T')) {
     tmp_extruder = code_value();
+    tmp_extruder = tool_extruder_mapping[tmp_extruder];
     if(tmp_extruder >= EXTRUDERS) {
       SERIAL_ECHO_START;
       switch(code){
