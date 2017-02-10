@@ -773,7 +773,9 @@ void working_mode_echo ()
 
 void tool_change (uint8_t id)
 {
-   installed_head = &(tools.factory[id]);
+  if (id <= HEADS) {
+    installed_head = &(tools.factory[id]);
+  }
    installed_head_id = id;
 
    // Forcefully reset mode...
@@ -5273,21 +5275,17 @@ void process_commands()
     {
       if (code_seen('S')) {
         uint8_t id = code_value_long();
+        if (id < FAB_HEADS_thirdparty_ID)
+        if (id > HEADS) {
+          SERIAL_ERROR_START;
+          SERIAL_ERRORLNPGM("Unsupported head ID");
+          return;
+        }
         tool_change(id);
       }
       SERIAL_PROTOCOLLN(installed_head_id);
     }
     break;
-
-    /*case 793: // M794 P1|P0 - Enable disable
-      {
-        if (code_seen('S')) {
-          installed_head_id = code_value_long();
-        }
-        SERIAL_PROTOCOLLN(installed_head_id);
-      }
-      break;*/
-
 
 #ifdef THERMISTOR_HOTSWAP
     case 800:   // M800 - changes/reads the thermistor of extruder0 type index
