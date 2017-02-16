@@ -2024,6 +2024,10 @@ void process_commands()
               current_position[X_AXIS] = destination[X_AXIS];
               current_position[Y_AXIS] = destination[Y_AXIS];
 
+              // Without this G29 does not know X/Y have been homed
+              axis_known_position[X_AXIS] = true;
+              axis_known_position[Y_AXIS] = true;
+
               HOMEAXIS(Z);
             }
           }
