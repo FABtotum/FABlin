@@ -1836,7 +1836,9 @@ void process_commands()
       z_probe_activation=false;
       home_Z_reverse= true;
     case 28: //G28 Home all Axis one at a time
-    if(!Stopped){
+    {
+      if (Stopped) break;
+
         retract_z_probe(); //Safety first.
   #ifdef ENABLE_AUTO_BED_LEVELING
         plan_bed_level_matrix.set_to_identity();  //Reset the plane ("erase" all leveling data)
@@ -2114,6 +2116,7 @@ void process_commands()
 
         z_probe_activation=true;
         home_Z_reverse=false;
+        stop_fading();
         restore_last_amb_color();
         enable_endstops(true);
         monitor_secure_endstop = saved_monitor_secure_endstop;
