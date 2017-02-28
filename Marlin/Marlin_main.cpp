@@ -575,6 +575,9 @@ namespace Laser
 
 static unsigned short int z_endstop_bug_workaround = 0;
 
+const char* mods = NULL;
+uint8_t modl = 0;
+uint8_t modi = 0;
 
 //===========================================================================
 //=============================Routines======================================
@@ -813,6 +816,13 @@ void tool_change (uint8_t id)
   if (installed_head_id > 1)
   if (installed_head_id != 3)
     head_placed = true;
+
+  // Run hardcoded head modification codes
+  if (installed_head->mods) {
+    mods = installed_head->mods;
+    modl = strlen(mods);
+    modi = 0;
+  }
 }
 
 void FabtotumHeads_init ()
@@ -1110,8 +1120,14 @@ void loop()
 
 void get_command()
 {
-  while( MYSERIAL.available() > 0  && buflen < BUFSIZE) {
-    serial_char = MYSERIAL.read();
+  while ((MYSERIAL.available() > 0  && buflen < BUFSIZE)
+  ||     (modl && modi < modl))
+  {
+    if (modi < modl) {
+      serial_char = mods[modi++];
+    } else {
+      serial_char = MYSERIAL.read();
+    }
     if(serial_char == '\n' ||
        serial_char == '\r' ||
        (serial_char == ':' && comment_mode == false) ||
@@ -5314,6 +5330,12 @@ void process_commands()
         tool_change(id);
       }
       SERIAL_PROTOCOLLN(installed_head_id);
+    }
+    break;
+
+    case 794:
+    {
+      SERIAL_ECHOLN(mods);
     }
     break;
 
