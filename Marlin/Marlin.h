@@ -59,6 +59,10 @@
   #define MYSERIAL MSerial
 #endif
 
+#ifdef SMART_COMM
+  #include <SmartComm.h>
+#endif
+
 #define SERIAL_PROTOCOL(x) (MYSERIAL.print(x))
 #define SERIAL_PROTOCOL_F(x,y) (MYSERIAL.print(x,y))
 #define SERIAL_PROTOCOLPGM(x) (serialprintPGM(PSTR(x)))
@@ -298,10 +302,15 @@ extern uint8_t extruder_0_thermistor_input_index;
 #endif
 
 // Handling multiple extruders pins
+extern uint8_t active_tool;     // Active logical tool
 extern uint8_t active_extruder;
 extern uint8_t extruder_heater_mapping[];
 
 void StopTool();
+extern bool head_is_dummy;
+extern uint8_t tool_extruder_mapping[];
+extern uint8_t tool_heater_mapping[];
+extern bool    tool_twi_support[];
 
 #ifdef DIGIPOT_I2C
 extern void digipot_i2c_set_current( int channel, float current );
@@ -324,15 +333,14 @@ extern unsigned int hotplate_board_version;
 extern unsigned int general_assembly_version;
 extern unsigned int installed_head_id;
 
-extern uint8_t working_mode;
+#ifdef SMART_COMM
 
-typedef struct tool_s {
-   uint8_t mode = 0;
-   uint8_t heaters = 1;  // 0: Bed; 1...: hot-ends
-   uint8_t thtable = THERMISTOR_HOTSWAP_DEFAULT_INDEX;
-   int16_t mintemp = HEATER_0_MINTEMP;
-   int16_t maxtemp = HEATER_0_MAXTEMP;
-} tool_t;
+  // Smart Heads
+  extern SmartComm SmartHead;
+
+#endif
+
+extern uint8_t working_mode;
 
 //FABtotum IO definition
 #define RED_ON()	WRITE(RED_PIN,LOW)

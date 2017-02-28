@@ -52,7 +52,7 @@ Rev 1.0.0095 (2016-04-22)
 - Added command M793 to set the installed head version (dev only).
   - All codes related to the head have been discontinued in favour of a single ID.
 
-Rev 1.0.0093 (2016-12-21)
+Rev 1.0.0093 (2015-12-21)
 -------------------------
 - Removed Flickering during homing
 - Removed M728 color changes
@@ -61,7 +61,12 @@ Rev 1.0.0093 (2016-12-21)
 - Laser support: M6 S[0-255] turn head laser on (+24Vdc) M7 turn laser off
 - M786 external PSU power off pin control
 
-Rev 1.0.008 (2016-05-29)
+Rev 1.0.0091 (2015-07-06)
+-------------------------
+- Performance: Updated base configurations (Jerks)
+- Other: Introduced M763 SX Hardware batch numbering
+
+Rev 1.0.008 (2015-05-29)
 ------------------------
 - Heater,Milling Motor, Bed are disabled after 8 minutes of no physical (movement, heating) activity.
 - Fan Auto on if received M109 or M104. M106 can override speed and M107 can disable it as usual.

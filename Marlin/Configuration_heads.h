@@ -11,8 +11,8 @@
 // 0 .. 99 are reserved
 #define FAB_HEADS_default_ID     0
 #define FAB_HEADS_default_DRIVE  0
-#define FAB_HEADS_default_HEATER 1
-#define FAB_HEADS_default_SMART  1
+#define FAB_HEADS_default_HEATER 0
+#define FAB_HEADS_default_SMART  0
 
 #define FAB_HEADS_hybrid_ID     1
 
@@ -33,5 +33,6 @@
 #define FAB_HEADS_direct_SMART  0
 
 // 100 ... are free for public use
+#define FAB_HEADS_thirdparty_ID 100
 
 #endif // _CONFIGURATION_HEADS_H_

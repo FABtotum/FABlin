@@ -494,5 +494,13 @@ const unsigned int dropsegments=5; //everything with less than this number of st
   #undef BED_MAXTEMP
 #endif
 
+#if defined(SMART_COMM)
+   #define LINE_FORWARDING_ENCLOSING_CHAR   '"'
+   #define LINE_FORWARDING_TERMINATION_CHAR '.'  // This character alone on an input line is used to escape from input echoing to the head
+
+   #define SMART_HEAD_RX_PIN 11
+   #define SMART_HEAD_TX_PIN 57
+#endif
+
 
 #endif //__CONFIGURATION_ADV_H
