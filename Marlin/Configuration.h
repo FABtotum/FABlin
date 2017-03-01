@@ -239,10 +239,10 @@
 // The minimal temperature defines the temperature below which the heater will not be enabled It is used
 // to check that the wiring to the thermistor is not broken.
 // Otherwise this would lead to the heater being powered on all the time.
-#define HEATER_0_MINTEMP 15
-#define HEATER_1_MINTEMP 15
-#define HEATER_2_MINTEMP 15
-#define BED_MINTEMP 15
+#define HEATER_0_MINTEMP 10
+#define HEATER_1_MINTEMP 10
+#define HEATER_2_MINTEMP 10
+#define BED_MINTEMP 10
 
 // When temperature exceeds max temp, your heater will be switched off.
 // This feature exists to protect your hotend from overheating accidentally, but *NOT* from thermistor short/failure!
