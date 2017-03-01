@@ -2014,8 +2014,8 @@ void process_commands()
         else
         {
           st_synchronize();
-          current_position[Z_AXIS] = 0;
-          destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
+          //current_position[Z_AXIS] = 0;
+          destination[Z_AXIS] = current_position[Z_AXIS] + Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
           feedrate = XY_TRAVEL_SPEED;
 
           plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
