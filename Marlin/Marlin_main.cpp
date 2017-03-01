@@ -1750,7 +1750,11 @@ FORCE_INLINE void process_laser_power ()
   if (code_seen('S'))
   {
     long input = code_value_long() / PWM_SCALE;
-    Laser::setPower(input > LASER_MIN_POWER? input : LASER_MIN_POWER);
+    if (input == 0 || input > LASER_MIN_POWER) {
+      Laser::setPower(input);
+    } else {
+      Laser::setPower(LASER_MIN_POWER);
+    }
   }
   else
   {
