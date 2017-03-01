@@ -46,6 +46,15 @@ documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
 Latest Changes
 --------------
 
+### Version 1.0.0097.2
+- Head state is not reset after M999: this makes possible (again) to use
+  other machine functions while the head is disabled after an error
+  occurred.
+- Fixed G28 not setting X/Y as homed after G28 without arguments
+- Lowered min heater temperature down to 10 degrees
+- Setting laser power to 0 actually turns off the laser beam
+- Ambient color correctly reset after homing
+
 ### Version 1.0.0097.1
 - Min power level for laser
 - Auto fan on when laser active

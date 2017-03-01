@@ -1,6 +1,14 @@
 Revision history
 ================
 
+Fix: 1.0.0097.2 (2017-03-01)
+----------------------------
+- Head state is not reset after M999
+- Fixed G28 not setting X/Y as homed after G28 without arguments
+- Lowered min heater temperature down to 10 degrees
+- Setting laser power to 0 actually turns off the laser beam
+- Ambient color correctly reset after homing
+
 Fix: 1.0.0097.1 (2017-01-27)
 ----------------------------
 - Min power level for laser
