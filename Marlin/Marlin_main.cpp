@@ -791,6 +791,14 @@ void working_mode_echo ()
 
 void tool_change (uint8_t id)
 {
+  // Shutdown head
+  StopTool();
+
+  // Reset default tool configurations
+  tools.define(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+  tools.define(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_5th_axis_SMART);
+  tools.define(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
+
   if (id <= HEADS) {
     installed_head = &(tools.factory[id]);
   }
@@ -814,10 +822,13 @@ void tool_change (uint8_t id)
    }
 #endif
 
+  // Preconfigure head serial interface (Wire / Serial4 / SmartHead)
   switch (installed_head->serial)
   {
     case TOOL_SERIAL_SER:
-      // There ain't  an automatic serial interface configuration at the moment
+      SmartHead.serial(true);
+      // There ain't no automatic serial interface configuration at the moment
+      // However Serial4 has RX4 = 67 and TX4 = 11 by default
       break;
     case TOOL_SERIAL_TWI:
       SmartHead.wire(true);
@@ -839,27 +850,27 @@ void tool_change (uint8_t id)
     mods = installed_head->mods;
     modl = strlen(mods);
   }
+
+  // Reselect active tool to make any tool configuration modification effective
+  tools.change(active_tool);
+
+  // And try to read head info if available
+  Read_Head_Info();
 }
 
 void FabtotumHeads_init ()
 {
-   tools.factory[FAB_HEADS_hybrid_ID].mode = WORKING_MODE_HYBRID;
-   tools.factory[FAB_HEADS_hybrid_ID].extruders= 0;
-   tools.factory[FAB_HEADS_hybrid_ID].heaters  = 0;
-   tools.factory[FAB_HEADS_hybrid_ID].maxtemp = 235;
-   tools.factory[FAB_HEADS_hybrid_ID].serial  = 0;
-
    // Factory heads definitions
    tools.factory[FAB_HEADS_hybrid_ID].mode = WORKING_MODE_HYBRID;
    tools.factory[FAB_HEADS_hybrid_ID].extruders= 1;
    tools.factory[FAB_HEADS_hybrid_ID].heaters  = 1;
    tools.factory[FAB_HEADS_hybrid_ID].maxtemp = 235;
    tools.factory[FAB_HEADS_hybrid_ID].serial  = TOOL_SERIAL_TWI;
+   tools.factory[FAB_HEADS_hybrid_ID].mods  = "M563 P0 D0 H1 S1\n";
 
    tools.factory[FAB_HEADS_print_v2_ID].mode = WORKING_MODE_FFF;
    tools.factory[FAB_HEADS_print_v2_ID].extruders= 1;
    tools.factory[FAB_HEADS_print_v2_ID].heaters  = 1;
-   //tools.factory[FAB_HEADS_print_v2_ID].serial  = 0;
 
    tools.factory[FAB_HEADS_mill_v2_ID].mode = WORKING_MODE_CNC;
    tools.factory[FAB_HEADS_mill_v2_ID].extruders= 0;
@@ -872,85 +883,24 @@ void FabtotumHeads_init ()
    tools.factory[FAB_HEADS_laser_ID].thtable = 3;
    tools.factory[FAB_HEADS_laser_ID].maxtemp = 80;
 
+  tools.factory[FAB_HEADS_5th_axis_ID].mods = "M563 P0 D1\nM563 P1 D0\n";
+
    tools.factory[FAB_HEADS_direct_ID].mode = WORKING_MODE_FFF;
-   //available_heads[FAB_HEADS_direct_ID].heaters = FAB_HEADS_direct_HEATER;
-   //available_heads[FAB_HEADS_direct_ID].thtable = 0;
-   //available_heads[FAB_HEADS_hybrid_ID].maxtemp = 275;
-   tools.factory[FAB_HEADS_direct_ID].mods = "M563 P0 D2 S0\nM563 P2 D0\n";
+   tools.factory[FAB_HEADS_direct_ID].mods = "M563 P0 D2 S0\nM563 P2 D0\nM92 E98.30\nM720\n";
 
    tool_change(installed_head_id);
-
-   // Default user tool definitions
-   tools.define(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-   tools.define(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_5th_axis_SMART);
-   tools.define(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
-
-   // Particular tool configurations
-   /*switch (installed_head_id)
-   {
-      case FAB_HEADS_direct_ID:
-         tools.define(0, FAB_HEADS_direct_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
-         tools.define(2, FAB_HEADS_default_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-         break;
-      case FAB_HEADS_mill_v2_ID:
-         tools.define(0, -1, FAB_HEADS_default_HEATER, FAB_HEADS_mill_v2_SMART);
-   }*/
-
-   // Load starting tool (T0)
-   tools.change(0);
-
-  Read_Head_Info();
 }
 
-/*void defineTool(uint8_t tool, int8_t drive=-1, int8_t heater=-1, bool twi=false)
-{
-   tool_extruder_mapping[tool] = drive;
-
-   if (drive >= 0 && heater >= 0) {
-      extruder_heater_mapping[drive] = heater - 1;
-   }
-
-   tool_twi_support[tool] = twi;
-}*/
-
-/*uint8_t loadTool (uint8_t tool)
-{
-   active_tool = tool;
-   active_extruder = tool_extruder_mapping[tool];
-   head_is_dummy = !tool_twi_support[tool];
-
-   if (head_is_dummy) {
-      TWCR &= ~MASK(TWEN);
-   } else {
-      Wire.begin();
-   }
-
-   switch (active_extruder)
-   {
-      case FAB_HEADS_5th_axis_DRIVE:
-         if (installed_head_id != FAB_HEADS_5th_axis_ID) {
-            return INVALID_EXTRUDER | active_extruder;
-         }
-         break;
-      case FAB_HEADS_direct_DRIVE:
-         if (installed_head_id != FAB_HEADS_direct_ID) {
-             return INVALID_EXTRUDER | active_extruder;
-         }
-         MILL_MOTOR_ON();
-   }
-
-   return active_extruder;
-}*/
-
+/*
+ * Shut-down dangerous things connected to the mounted tool upon a forced stop
+ */
 void StopTool ()
 {
-   /* Shut-down dangerous things connected to the mounted tool upon a forced stop */
-
    #if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
-      // Shot down +24V line if FABtotum DirectDrive head is present
-      if (installed_head_id==FAB_HEADS_direct_ID) {
+      // Shut down +24V line if FABtotum DirectDrive head is present
+      //if (installed_head_id==FAB_HEADS_direct_ID) {
          MILL_MOTOR_OFF();
-      }
+      //}
    #endif
 
    fanSpeed = 0;
@@ -3902,6 +3852,135 @@ void process_commands()
     break;
     #endif
 
+      /**
+       * M563 - Define or remove a tool
+       *
+       *    P - Tool to define
+       *    D - Associated drive (0-2)
+       *    H - Associated heater (0)
+       *    S - Whether tool supports communication (0,1)
+       */
+    case 563: // M563 [Pn [Dn] [Hn] [Sn]] - Define tool
+      {
+         // Select target (logical) tool
+         unsigned long target_tool;
+        if (code_seen('P')) {
+          target_tool = code_value_long();
+       } else {
+          target_tool = active_tool;
+
+         SERIAL_ECHOLNPGM("ok Tools defined:");
+
+         // Output tool definitions
+         for (target_tool = 0; target_tool < EXTRUDERS; target_tool++)
+         {
+            SERIAL_ECHO_START;
+            SERIAL_ECHOPAIR(" T", (unsigned long)target_tool);
+            int8_t extruder = tool_extruder_mapping[target_tool];
+            if (extruder >= 0) {
+               SERIAL_ECHOPAIR(": Drive=", (unsigned long)(tool_extruder_mapping[target_tool]));
+               SERIAL_ECHOPAIR(" Heater=", (unsigned long)(EtoH(tool_extruder_mapping[target_tool])+1));
+            } else {
+               SERIAL_ECHOPGM(" Drive/Heater=undef.");
+            }
+            if (tool_twi_support[target_tool]) {
+              SERIAL_ECHOLNPGM(" Serial=on");
+           } else {
+              SERIAL_ECHOLNPGM(" Serial=off");
+           }
+         }
+         return;
+       }
+
+       // Assign drive
+      int8_t drive;
+        if (code_seen('D')) {
+          drive = code_value_long();
+        } else  {
+           drive = -1;
+        }
+
+        // Assign heater
+        int8_t heater;
+        if (code_seen('H')) {
+           heater = code_value_long();
+        } else  {
+           heater = -1;
+        }
+
+        bool twi;
+        if (code_seen('S')) {
+           twi = code_value_long()==1 ? true : false;
+        } else {
+           twi = false;
+        }
+
+        tools.define(target_tool, drive, heater, twi);
+
+        // Reselect active tool to reload definition
+        tools.change(active_tool);
+
+      }
+      break;
+
+    /**
+    * M575 P B R T S - Set communication params
+    *
+    * @param  P <port number> - Select communication port number:
+    *                       0 - Main serial bus
+    *                       1-3 - Additional Hardware serial ports (reserved)
+    *                       4 - 1st Auxiliary serial port (linked to the head)
+    * @param  R <rx>  - Set receive pin for serial bus, or slave address for twi bus. Not available for port 0.
+    * @param  T <tx>  - Set transmit pin for serial bus, or default target address for twi bus. Not available for port 0.
+    * @param  B 0,300,...,115200 - For serial bus: set baud rate, or disable (0);
+    *                            - for twi bus: enable (1) or disables (0) bus.
+    * @param  S <options> - Define features (currently unsupported)
+    */
+    case 575:
+    {
+      uint8_t port_n = 4;
+      if (code_seen('P')) {
+         port_n = code_value_long() & 0xFF;
+      }
+
+      uint8_t sRX = 255, sTX = 255;
+      switch (port_n) {
+        case 4: sRX = RX4; sTX = TX4; break;
+      }
+      if (code_seen('R')) {
+         sRX = code_value_long() & 0xFF;
+      }
+
+      if (code_seen('T')) {
+        sTX = code_value_long() & 0xFF;
+      }
+
+      uint32_t baudRate = 0;
+      if (code_seen('B')) {
+         baudRate = code_value_long();
+      }
+
+      switch (port_n)
+      {
+         case 0:
+            MYSERIAL.end();
+            MYSERIAL.begin(baudRate);
+            break;
+
+         case 4:  // Smart Head port
+            SmartHead.end();
+            if (baudRate >= 300)
+            {
+               if (sRX != 255 && sTX != 255 && sRX != sTX) {
+                  // Set serial pins
+                  SmartHead.serial(sRX, sTX, baudRate);
+               }
+               SmartHead.begin(baudRate);
+            }
+            break;
+      }
+    }
+    break;
 
     #ifdef FILAMENTCHANGEENABLE
     case 600: //Pause for filament change X[pos] Y[pos] Z[relative lift] E[initial retract] L[later retract distance for removal]
@@ -4740,178 +4819,6 @@ void process_commands()
       }
       break;
 
-    /*case 6: // M6 S[PWM] LASER ON (provisional code)
->>>>>>> development
-      {
-        inactivity=false;
-        int servo_index = 0;
-        int servo_position = SERVO_SPINDLE_ZERO;
-        float pwm_1=0;
-        enable_endstops(false);
-
-        if(!MILL_MOTOR_STATUS())
-            {
-            if ((servo_index >= 0) && (servo_index < NUM_SERVOS))
-              {
-			   servos[servo_index].attach(0);
-               servos[servo_index].write(servo_position);
-              }
-		  MILL_MOTOR_ON();
-          SERVO1_ON();
-          fanSpeed=255;
-
-		  //_delay_ms(2000);
-          //servos[servo_index].write(SERVO_SPINDLE_ARM);
-          //_delay_ms(1000);
-          //servos[servo_index].write(servo_position);
-          //_delay_ms(500);
-
-		  }
-
-        if (code_seen('S')) {
-          int pwm = code_value();
-          if(pwm<=0)
-            {pwm=0;}
-          if(pwm>=255)
-            {pwm=255;}
-        }
-
-         SERIAL_PROTOCOL(MSG_OK);
-         //SERIAL_PROTOCOL("Laser On!");
-      }
-      break;
-
-   case 7: // M7 LASER OFF
-      {
-        int servo_index = 0;
-        int servo_position = SERVO_SPINDLE_ZERO;
-        enable_endstops(true);
-
-        if(MILL_MOTOR_STATUS())
-            {
-            MILL_MOTOR_OFF();
-            SERVO1_OFF();
-            fanSpeed=0;
-           }
-         servos[servo_index].detach();
-      }
-      break;*/
-
-    /*case 563: // M563 [Px] [Dy] [Sz]- Define tool or swap definitions
-      {
-         // Select target (logical) tool
-         unsigned long target_tool;
-        if (code_seen('P')) {
-          target_tool = code_value_long();
-       } else {
-          target_tool = active_tool;
-
-         // Output tool definitions
-         SERIAL_ECHOLNPGM("");
-         for (target_tool = 0; target_tool < EXTRUDERS; target_tool++)
-         {
-            if (target_tool == active_tool) {
-               SERIAL_ECHOPGM(" * ");
-            } else {
-              SERIAL_ECHOPGM("   ");
-           }
-            SERIAL_ECHOPAIR("T", (unsigned long)target_tool);
-            SERIAL_ECHOPAIR(": drive:", (unsigned long)tool_extruder_mapping[target_tool]);
-            if (tool_twi_support[target_tool]) {
-              SERIAL_ECHOPGM(" / twi:on");
-           } else {
-              SERIAL_ECHOPGM(" / twi:off");
-           }
-            SERIAL_ECHOLNPGM("");
-         }
-         return;
-       }
-
-       // Assign drive
-       uint8_t drive;
-        if (code_seen('D')) {
-          drive = code_value_long();
-           //tool_extruder_mapping[target_tool] = tmp_extruder;
-        } else  {
-           drive = active_extruder;
-
-        }
-
-        // State head smartness
-        bool twi;
-        if (code_seen('S')) {
-           twi = code_value_long()==1 ? true : false;
-        } else {
-           twi = !head_is_dummy;
-        }
-
-        tools.define(target_tool, drive, 0, twi);
-
-        // Reselect active tool to possibly reload its definition
-        tools.change(active_tool);
-
-      }
-      break;*/
-
-   /**
-    * M575 P B R T S - Set communication params
-    *
-    * @param  P <port number> - Select communication port number:
-    *                       0 - Main serial bus
-    *                       1-3 - Additional Hardware serial ports (reserved)
-    *                       4 - 1st Auxiliary serial port (linked to the head)
-    * @param  R <rx>  - Set receive pin for serial bus, or slave address for twi bus. Not available for port 0.
-    * @param  T <tx>  - Set transmit pin for serial bus, or default target address for twi bus. Not available for port 0.
-    * @param  B 0,300,...,115200 - For serial bus: set baud rate, or disable (0);
-    *                            - for twi bus: enable (1) or disables (0) bus.
-    * @param  S <options> - Define features (currently unsupported)
-    */
-   case 575: {
-
-      uint8_t port_n = 4;
-      if (code_seen('P')) {
-         port_n = code_value_long() & 0xFF;
-      }
-
-      uint8_t sRX = 255, sTX = 255;
-		switch (port_n) {
-			case 4: sRX = RX4; sTX = TX4; break;
-		}
-      if (code_seen('R')) {
-         sRX = code_value_long() & 0xFF;
-      }
-
-		if (code_seen('T')) {
-			sTX = code_value_long() & 0xFF;
-		}
-
-      uint32_t baudRate = 0;
-      if (code_seen('B')) {
-         baudRate = code_value_long();
-      }
-
-      switch (port_n)
-      {
-         case 0:
-            MYSERIAL.end();
-            MYSERIAL.begin(baudRate);
-            break;
-
-         case 4:  // Smart Head port
-            SmartHead.end();
-            if (baudRate >= 300)
-            {
-               if (sRX != 255 && sTX != 255 && sRX != sTX) {
-                  // Set serial pins
-                  SmartHead.serial(sRX, sTX, baudRate);
-               }
-               SmartHead.begin(baudRate);
-            }
-            break;
-      }
-
-   } break;
-
    case 740: // M740 - read WIRE_END sensor
       {
         //SERIAL_PROTOCOLPGM(MSG_WIRE_END);
@@ -5436,77 +5343,6 @@ void process_commands()
       SERIAL_PROTOCOLLN(installed_head_id);
     }
     break;
-
-      /**
-       * M563 - Define or remove a tool
-       *
-       *    P - Tool to define
-       *    D - Associated drive (0-2)
-       *    H - Associated heater (0)
-       *    S - Whether tool supports communication (0,1)
-       */
-    case 563: // M563 [Pn [Dn] [Hn] [Sn]] - Define tool
-      {
-         // Select target (logical) tool
-         unsigned long target_tool;
-        if (code_seen('P')) {
-          target_tool = code_value_long();
-       } else {
-          target_tool = active_tool;
-
-         SERIAL_ECHOLNPGM("ok Tools defined:");
-
-         // Output tool definitions
-         for (target_tool = 0; target_tool < EXTRUDERS; target_tool++)
-         {
-            SERIAL_ECHO_START;
-            SERIAL_ECHOPAIR(" T", (unsigned long)target_tool);
-            int8_t extruder = tool_extruder_mapping[target_tool];
-            if (extruder >= 0) {
-               SERIAL_ECHOPAIR(": Drive=", (unsigned long)(tool_extruder_mapping[target_tool]));
-               SERIAL_ECHOPAIR(" Heater=", (unsigned long)(EtoH(tool_extruder_mapping[target_tool])+1));
-            } else {
-               SERIAL_ECHOPGM(" Drive/Heater=undef.");
-            }
-            if (tool_twi_support[target_tool]) {
-              SERIAL_ECHOLNPGM(" Serial=on");
-           } else {
-              SERIAL_ECHOLNPGM(" Serial=off");
-           }
-         }
-         return;
-       }
-
-       // Assign drive
-      int8_t drive;
-        if (code_seen('D')) {
-          drive = code_value_long();
-        } else  {
-           drive = -1;
-        }
-
-        // Assign heater
-        int8_t heater;
-        if (code_seen('H')) {
-           heater = code_value_long();
-        } else  {
-           heater = -1;
-        }
-
-        bool twi;
-        if (code_seen('S')) {
-           twi = code_value_long()==1 ? true : false;
-        } else {
-           twi = false;
-        }
-
-        tools.define(target_tool, drive, heater, twi);
-
-        // Reselect active tool to reload definition
-        tools.change(active_tool);
-
-      }
-      break;
 
     case 794:
     {
