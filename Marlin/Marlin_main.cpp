@@ -2003,7 +2003,7 @@ void process_commands()
         feedrate = 0.0;
 
         home_all_axis = !((code_seen(axis_codes[X_AXIS])) || (code_seen(axis_codes[Y_AXIS])) || (code_seen(axis_codes[Z_AXIS])));
-        home_x_or_y_axis_only = code_seen(axis_codes[X_AXIS]) || code_seen(axis_codes[Y_AXIS]);
+        home_x_or_y_axis_only = (code_seen(axis_codes[X_AXIS]) || code_seen(axis_codes[Y_AXIS])) && (!code_seen(axis_codes[Z_AXIS]));
 
         bool z_is_safe = false;
 
