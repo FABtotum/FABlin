@@ -425,6 +425,7 @@ const char axis_codes[NUM_AXIS] = {'X', 'Y', 'Z', 'E'};
 static float destination[NUM_AXIS] = {  0.0, 0.0, 0.0, 0.0};
 static float offset[3] = {0.0, 0.0, 0.0};
 static bool home_all_axis = true;
+static bool home_x_or_y_axis_only = false;
 static float feedrate = 1500.0, next_feedrate, saved_feedrate;
 static long gcode_N, gcode_LastN, Stopped_gcode_LastN = 0;
 
@@ -2002,6 +2003,7 @@ void process_commands()
         feedrate = 0.0;
 
         home_all_axis = !((code_seen(axis_codes[X_AXIS])) || (code_seen(axis_codes[Y_AXIS])) || (code_seen(axis_codes[Z_AXIS])));
+        home_x_or_y_axis_only = code_seen(axis_codes[X_AXIS]) || code_seen(axis_codes[Y_AXIS]);
 
         bool z_is_safe = false;
 
@@ -2015,7 +2017,7 @@ void process_commands()
         {
           st_synchronize();
           //current_position[Z_AXIS] = 0;
-          destination[Z_AXIS] = current_position[Z_AXIS] + Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
+          destination[Z_AXIS] = current_position[Z_AXIS] + (home_x_or_y_axis_only?0:Z_RAISE_BEFORE_HOMING) * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
           feedrate = XY_TRAVEL_SPEED;
 
           plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
