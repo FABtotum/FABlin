@@ -59,6 +59,8 @@
   #define MYSERIAL MSerial
 #endif
 
+#include "tools.h"
+
 #ifdef SMART_COMM
   #include <SmartComm.h>
 #endif
@@ -86,6 +88,24 @@ const char echomagic[] PROGMEM ="echo:";
 #define SERIAL_ECHOLNPGM(x) SERIAL_PROTOCOLLNPGM(x)
 
 #define SERIAL_ECHOPAIR(name,value) (serial_echopair_P(PSTR(name),(value)))
+
+#ifdef DEBUG
+  #define LOG_DEBUG(x)      SERIAL_PROTOCOLLN(x)
+  #define LOG_DEBUG_F(x,y)  SERIAL_PROTOCOLLN_F(x,y)
+  #define LOG_DEBUGPGM(msg) SERIAL_PROTOCOLLNPGM(msg)
+  #define LOG_DEBUG_R(reg)  do {                      \
+    SERIAL_PROTOCOLPGM(#reg "=");                     \
+    for (int i=7; i >= 0; i--) {                      \
+      SERIAL_PROTOCOL((unsigned long)((reg>>i) & 1)); \
+    }                                                 \
+    SERIAL_PROTOCOLLNPGM("");                         \
+  } while(0)
+#else
+  #define LOG_DEBUG(x)
+  #define LOG_DEBUG_F(x,y)
+  #define LOG_DEBUGPGM(msg)
+  #define LOG_DEBUG_R(reg)
+#endif
 
 void serial_echopair_P(const char *s_P, float v);
 void serial_echopair_P(const char *s_P, double v);
@@ -148,28 +168,32 @@ void manage_inactivity();
 #endif
 
 #if defined(E0_ENABLE_PIN) && (E0_ENABLE_PIN > -1)
-  #define enable_e0() WRITE(E0_ENABLE_PIN, E_ENABLE_ON)
-  #define disable_e0() WRITE(E0_ENABLE_PIN,!E_ENABLE_ON)
+  #define enable_e0() WRITE(E0_ENABLE_PIN, E0_ENABLE_ON)
+  #define disable_e0() WRITE(E0_ENABLE_PIN,!E0_ENABLE_ON)
 #else
   #define enable_e0()  /* nothing */
   #define disable_e0() /* nothing */
 #endif
 
 #if (EXTRUDERS > 1) && defined(E1_ENABLE_PIN) && (E1_ENABLE_PIN > -1)
-  #define enable_e1() WRITE(E1_ENABLE_PIN, E_ENABLE_ON)
-  #define disable_e1() WRITE(E1_ENABLE_PIN,!E_ENABLE_ON)
+  #define enable_e1() WRITE(E1_ENABLE_PIN, E1_ENABLE_ON)
+  #define disable_e1() WRITE(E1_ENABLE_PIN,!E1_ENABLE_ON)
 #else
   #define enable_e1()  /* nothing */
   #define disable_e1() /* nothing */
 #endif
 
 #if (EXTRUDERS > 2) && defined(E2_ENABLE_PIN) && (E2_ENABLE_PIN > -1)
-  #define enable_e2() WRITE(E2_ENABLE_PIN, E_ENABLE_ON)
-  #define disable_e2() WRITE(E2_ENABLE_PIN,!E_ENABLE_ON)
+  #define enable_e2() WRITE(E2_ENABLE_PIN, E2_ENABLE_ON)
+  #define disable_e2() WRITE(E2_ENABLE_PIN,!E2_ENABLE_ON)
 #else
   #define enable_e2()  /* nothing */
   #define disable_e2() /* nothing */
 #endif
+
+#define INVALID_EXTRUDER 252
+#define INVALID_EXTRUDER_1 (INVALID_EXTRUDER | 1)
+#define INVALID_EXTRUDER_2 (INVALID_EXTRUDER | 2)
 
 
 enum AxisEnum {X_AXIS=0, Y_AXIS=1, Z_AXIS=2, E_AXIS=3};
@@ -281,13 +305,13 @@ namespace ThermistorHotswap
   void setTable (const unsigned short);
 }
 
-extern int maxttemp[EXTRUDERS];
+extern int maxttemp[HEATERS];
 #ifdef TEMP_SENSOR_1_AS_REDUNDANT
 extern void *heater_ttbl_map[2];
 extern uint8_t heater_ttbllen_map[2];
 #else
-extern void *heater_ttbl_map[EXTRUDERS];
-extern uint8_t heater_ttbllen_map[EXTRUDERS];
+extern void *heater_ttbl_map[HEATERS];
+extern uint8_t heater_ttbllen_map[HEATERS];
 #endif
 extern void *thermistors_map[THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN];
 extern uint8_t thermistors_map_len[THERMISTOR_HOTSWAP_SUPPORTED_TYPES_LEN];
@@ -300,9 +324,12 @@ extern uint8_t extruder_0_thermistor_input_index;
 // Handling multiple extruders pins
 extern uint8_t active_tool;     // Active logical tool
 extern uint8_t active_extruder;
+extern uint8_t extruder_heater_mapping[];
+
+void StopTool();
 extern bool head_is_dummy;
 extern uint8_t tool_extruder_mapping[];
-extern uint8_t tool_heater_mapping[];
+extern int8_t tool_heater_mapping[];
 extern bool    tool_twi_support[];
 
 #ifdef DIGIPOT_I2C
@@ -325,6 +352,8 @@ extern unsigned int plateconn_board_version;
 extern unsigned int hotplate_board_version;
 extern unsigned int general_assembly_version;
 extern unsigned int installed_head_id;
+
+extern tool_t* installed_head;
 
 #ifdef SMART_COMM
 
@@ -354,13 +383,13 @@ extern uint8_t working_mode;
 #define LASER_GATE_ON()	WRITE(LASER_GATE_PIN,LOW)
 #define LASER_GATE_OFF()	WRITE(LASER_GATE_PIN,HIGH)
 
-#define MILL_MOTOR_ON()	WRITE(MILL_MOTOR_ON_PIN,HIGH)
-#define MILL_MOTOR_OFF()	WRITE(MILL_MOTOR_ON_PIN,LOW)
+#define MILL_MOTOR_ON()	 WRITE(MILL_MOTOR_ON_PIN,HIGH)
+#define MILL_MOTOR_OFF() if (IsStopped() || active_extruder!=2) WRITE(MILL_MOTOR_ON_PIN,LOW)
 
 #define MILL_MOTOR_STATUS()  READ(MILL_MOTOR_ON_PIN)
 
-#define SERVO1_ON()	WRITE(NOT_SERVO1_ON_PIN,LOW)
-#define SERVO1_OFF()	WRITE(NOT_SERVO1_ON_PIN,HIGH)
+#define SERVO1_ON()	if (IsStopped() || active_extruder!=2) WRITE(NOT_SERVO1_ON_PIN,LOW)
+#define SERVO1_OFF()	if (active_extruder!=2) WRITE(NOT_SERVO1_ON_PIN,HIGH)
 #define SERVO1_STATUS()   !READ(NOT_SERVO1_ON_PIN)
 
 #define SERVO2_ON()	WRITE(NOT_SERVO2_ON_PIN,LOW)
@@ -431,7 +460,10 @@ extern uint8_t working_mode;
 #define ERROR_AMBIENT_TEMP   122
 #define ERROR_EXTRUDE_MINTEMP   123
 #define ERROR_LONG_EXTRUSION   124
-//#define ERROR_HEAD_ABSENT    125
+#define ERROR_HEAD_ABSENT    125
+
+//POWER SHUTDOWN REQUEST:
+#define ERROR_PWR_OFF    999
 
 //Head Serial ID
 #define SERIAL_ID_ADDR          80//(0x50)

@@ -33,29 +33,29 @@ vector_3 vector_3::cross(vector_3 left, vector_3 right)
 		left.x * right.y - left.y * right.x);
 }
 
-vector_3 vector_3::operator+(vector_3 v) 
+vector_3 vector_3::operator+(vector_3 v)
 {
 	return vector_3((x + v.x), (y + v.y), (z + v.z));
 }
 
-vector_3 vector_3::operator-(vector_3 v) 
+vector_3 vector_3::operator-(vector_3 v)
 {
 	return vector_3((x - v.x), (y - v.y), (z - v.z));
 }
 
-vector_3 vector_3::get_normal() 
+vector_3 vector_3::get_normal()
 {
 	vector_3 normalized = vector_3(x, y, z);
 	normalized.normalize();
 	return normalized;
 }
 
-float vector_3::get_length() 
+float vector_3::get_length()
 {
 	float length = sqrt((x * x) + (y * y) + (z * z));
 	return length;
 }
- 
+
 void vector_3::normalize()
 {
 	float length = get_length();
@@ -69,12 +69,12 @@ void vector_3::apply_rotation(matrix_3x3 matrix)
 	float resultX = x * matrix.matrix[3*0+0] + y * matrix.matrix[3*1+0] + z * matrix.matrix[3*2+0];
 	float resultY = x * matrix.matrix[3*0+1] + y * matrix.matrix[3*1+1] + z * matrix.matrix[3*2+1];
 	float resultZ = x * matrix.matrix[3*0+2] + y * matrix.matrix[3*1+2] + z * matrix.matrix[3*2+2];
-        
-        
+
+
         /*float resultX = x * matrix.matrix[3*0+0] + y * matrix.matrix[3*0+1] + z * matrix.matrix[3*0+2];
 	float resultY = x * matrix.matrix[3*1+0] + y * matrix.matrix[3*1+1] + z * matrix.matrix[3*1+2];
 	float resultZ = x * matrix.matrix[3*2+0] + y * matrix.matrix[3*2+1] + z * matrix.matrix[3*2+2];*/
-        
+
 
 	x = resultX;
 	y = resultY;
@@ -108,11 +108,11 @@ matrix_3x3 matrix_3x3::create_from_rows(vector_3 row_0, vector_3 row_1, vector_3
         //row_1.debug("row_1");
         //row_2.debug("row_2");
 	matrix_3x3 new_matrix;
-	new_matrix.matrix[0] = row_0.x; new_matrix.matrix[1] = row_0.y; new_matrix.matrix[2] = row_0.z; 
-	new_matrix.matrix[3] = row_1.x; new_matrix.matrix[4] = row_1.y; new_matrix.matrix[5] = row_1.z; 
-	new_matrix.matrix[6] = row_2.x; new_matrix.matrix[7] = row_2.y; new_matrix.matrix[8] = row_2.z; 
+	new_matrix.matrix[0] = row_0.x; new_matrix.matrix[1] = row_0.y; new_matrix.matrix[2] = row_0.z;
+	new_matrix.matrix[3] = row_1.x; new_matrix.matrix[4] = row_1.y; new_matrix.matrix[5] = row_1.z;
+	new_matrix.matrix[6] = row_2.x; new_matrix.matrix[7] = row_2.y; new_matrix.matrix[8] = row_2.z;
         //new_matrix.debug("new_matrix");
-        
+
 	return new_matrix;
 }
 
@@ -133,7 +133,7 @@ matrix_3x3 matrix_3x3::create_look_at(vector_3 target)
    // y_row.debug("y_row");
    // z_row.debug("z_row");
 
- 
+
      // create the matrix already correctly transposed
     matrix_3x3 rot = matrix_3x3::create_from_rows(x_row, y_row, z_row);
 
@@ -145,8 +145,8 @@ matrix_3x3 matrix_3x3::create_look_at(vector_3 target)
 matrix_3x3 matrix_3x3::transpose(matrix_3x3 original)
 {
   matrix_3x3 new_matrix;
-  new_matrix.matrix[0] = original.matrix[0]; new_matrix.matrix[1] = original.matrix[3]; new_matrix.matrix[2] = original.matrix[6]; 
-  new_matrix.matrix[3] = original.matrix[1]; new_matrix.matrix[4] = original.matrix[4]; new_matrix.matrix[5] = original.matrix[7]; 
+  new_matrix.matrix[0] = original.matrix[0]; new_matrix.matrix[1] = original.matrix[3]; new_matrix.matrix[2] = original.matrix[6];
+  new_matrix.matrix[3] = original.matrix[1]; new_matrix.matrix[4] = original.matrix[4]; new_matrix.matrix[5] = original.matrix[7];
   new_matrix.matrix[6] = original.matrix[2]; new_matrix.matrix[7] = original.matrix[5]; new_matrix.matrix[8] = original.matrix[8];
   return new_matrix;
   //return original;
@@ -171,4 +171,3 @@ void matrix_3x3::debug(char* title)
 }
 
 #endif // #ifdef ENABLE_AUTO_BED_LEVELING
-

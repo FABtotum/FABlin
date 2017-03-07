@@ -17,7 +17,7 @@
 
 /**
  * tools.load
- * 
+ *
  * Load a factory tool configuration into one of the user definable slots.
  */
 void tools_s::load (uint8_t tool, uint8_t id)
@@ -31,32 +31,33 @@ void tools_s::load (uint8_t tool, uint8_t id)
 
 /**
  * tools.define
- * 
+ *
  * Define a logical tool that can be selected through `T` address
- * 
+ *
  * A tool can be a physical addon (head) to be harnessed, or a different
  * configuration of equipped hardware.
- * 
+ *
  * Max tools number is statically set to 3 at present.
- * 
+ *
  */
-void tools_s::define(uint8_t tool, unsigned int drive, unsigned int heater, bool twi)
+void tools_s::define(uint8_t tool, unsigned int drive, unsigned int heater, uint8_t serial)
 {
    tool_extruder_mapping[tool] = drive;
    tool_heater_mapping[tool] = heater;
-   tool_twi_support[tool] = twi;
+   tool_twi_support[tool] = serial != 0;
 }
 
 /**
  * tools.change
- * 
+ *
  * Loads the referenced tool and activate all of its defined hardware and
  * facilities.
- * 
+ *
  */
 uint8_t tools_s::change (uint8_t tool)
 {
-   active_tool = tool;
+   installed_head = &magazine[tool];
+
    active_extruder = tool_extruder_mapping[tool];
    head_is_dummy = !tool_twi_support[tool];
 
@@ -66,9 +67,11 @@ uint8_t tools_s::change (uint8_t tool)
 #endif
       // For legacy heads we do not rely on SmartComm module
       if (head_is_dummy) {
-         TWCR &= ~MASK(TWEN);
+         TWCR = 0;
       } else {
+LOG_DEBUGPGM("tools.change: Wire.begin");
          Wire.begin();
+LOG_DEBUG_R(TWCR);
       }
 #ifdef SMART_COMM
    }
@@ -87,6 +90,7 @@ uint8_t tools_s::change (uint8_t tool)
    }
 #endif
 
+   active_tool = tool;
    return active_extruder;
 }
 

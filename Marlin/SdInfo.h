@@ -276,5 +276,3 @@ union csd_t {
   csd2_t v2;
 };
 #endif  // SdInfo_h
-
-#endif

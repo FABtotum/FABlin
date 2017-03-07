@@ -143,66 +143,66 @@ const short temptable_168[][2] PROGMEM = {
 #if (THERMISTORHEATER_0 == 169) || (THERMISTORHEATER_1 == 169)  || (THERMISTORHEATER_2 == 169) || (THERMISTORBED == 169) || (defined THERMISTOR_HOTSWAP && THERMISTOR_HOTSWAP_IS_SUPPORTED(169)) //R@25C = 100k, Beta = 4750 K
 
 const short temptable_169[][2] PROGMEM = {
-{      13*OVERSAMPLENR ,       300     },      
-{      14*OVERSAMPLENR ,       295     },      
-{      16*OVERSAMPLENR ,       290     },      
-{      17*OVERSAMPLENR ,       285     },      
-{      18*OVERSAMPLENR ,       280     },      
-{      19*OVERSAMPLENR ,       275     },      
-{      21*OVERSAMPLENR ,       270     },      
-{      22*OVERSAMPLENR ,       265     },      
-{      24*OVERSAMPLENR ,       260     },      
-{      26*OVERSAMPLENR ,       255     },      
-{      28*OVERSAMPLENR ,       250     },      
-{      31*OVERSAMPLENR ,       245     },      
-{      33*OVERSAMPLENR ,       240     },      
-{      36*OVERSAMPLENR ,       235     },      
-{      40*OVERSAMPLENR ,       230     },      
-{      43*OVERSAMPLENR ,       225     },      
-{      47*OVERSAMPLENR ,       220     },      
-{      52*OVERSAMPLENR ,       215     },      
-{      57*OVERSAMPLENR ,       210     },      
-{      62*OVERSAMPLENR ,       205     },      
-{      68*OVERSAMPLENR ,       200     },      
-{      75*OVERSAMPLENR ,       195     },      
-{      83*OVERSAMPLENR ,       190     },      
-{      91*OVERSAMPLENR ,       185     },      
-{      101*OVERSAMPLENR        ,       180     },      
-{      112*OVERSAMPLENR        ,       175     },      
-{      123*OVERSAMPLENR        ,       170     },      
-{      137*OVERSAMPLENR        ,       165     },      
-{      152*OVERSAMPLENR        ,       160     },      
-{      168*OVERSAMPLENR        ,       155     },      
-{      187*OVERSAMPLENR        ,       150     },      
-{      207*OVERSAMPLENR        ,       145     },      
-{      230*OVERSAMPLENR        ,       140     },      
-{      254*OVERSAMPLENR        ,       135     },      
-{      282*OVERSAMPLENR        ,       130     },      
-{      312*OVERSAMPLENR        ,       125     },      
-{      344*OVERSAMPLENR        ,       120     },      
-{      379*OVERSAMPLENR        ,       115     },      
-{      416*OVERSAMPLENR        ,       110     },      
-{      455*OVERSAMPLENR        ,       105     },      
-{      496*OVERSAMPLENR        ,       100     },      
-{      539*OVERSAMPLENR        ,       95      },      
-{      582*OVERSAMPLENR        ,       90      },      
-{      625*OVERSAMPLENR        ,       85      },      
-{      668*OVERSAMPLENR        ,       80      },      
-{      710*OVERSAMPLENR        ,       75      },      
-{      750*OVERSAMPLENR        ,       70      },      
-{      787*OVERSAMPLENR        ,       65      },      
-{      822*OVERSAMPLENR        ,       60      },      
-{      854*OVERSAMPLENR        ,       55      },      
-{      882*OVERSAMPLENR        ,       50      },      
-{      907*OVERSAMPLENR        ,       45      },      
-{      929*OVERSAMPLENR        ,       40      },      
-{      947*OVERSAMPLENR        ,       35      },      
-{      963*OVERSAMPLENR        ,       30      },      
-{      976*OVERSAMPLENR        ,       25      },      
-{      986*OVERSAMPLENR        ,       20      },      
-{      995*OVERSAMPLENR        ,       15      },      
-{      1002*OVERSAMPLENR       ,       10      },      
-{      1007*OVERSAMPLENR       ,       5       },      
+{      13*OVERSAMPLENR ,       300     },
+{      14*OVERSAMPLENR ,       295     },
+{      16*OVERSAMPLENR ,       290     },
+{      17*OVERSAMPLENR ,       285     },
+{      18*OVERSAMPLENR ,       280     },
+{      19*OVERSAMPLENR ,       275     },
+{      21*OVERSAMPLENR ,       270     },
+{      22*OVERSAMPLENR ,       265     },
+{      24*OVERSAMPLENR ,       260     },
+{      26*OVERSAMPLENR ,       255     },
+{      28*OVERSAMPLENR ,       250     },
+{      31*OVERSAMPLENR ,       245     },
+{      33*OVERSAMPLENR ,       240     },
+{      36*OVERSAMPLENR ,       235     },
+{      40*OVERSAMPLENR ,       230     },
+{      43*OVERSAMPLENR ,       225     },
+{      47*OVERSAMPLENR ,       220     },
+{      52*OVERSAMPLENR ,       215     },
+{      57*OVERSAMPLENR ,       210     },
+{      62*OVERSAMPLENR ,       205     },
+{      68*OVERSAMPLENR ,       200     },
+{      75*OVERSAMPLENR ,       195     },
+{      83*OVERSAMPLENR ,       190     },
+{      91*OVERSAMPLENR ,       185     },
+{      101*OVERSAMPLENR        ,       180     },
+{      112*OVERSAMPLENR        ,       175     },
+{      123*OVERSAMPLENR        ,       170     },
+{      137*OVERSAMPLENR        ,       165     },
+{      152*OVERSAMPLENR        ,       160     },
+{      168*OVERSAMPLENR        ,       155     },
+{      187*OVERSAMPLENR        ,       150     },
+{      207*OVERSAMPLENR        ,       145     },
+{      230*OVERSAMPLENR        ,       140     },
+{      254*OVERSAMPLENR        ,       135     },
+{      282*OVERSAMPLENR        ,       130     },
+{      312*OVERSAMPLENR        ,       125     },
+{      344*OVERSAMPLENR        ,       120     },
+{      379*OVERSAMPLENR        ,       115     },
+{      416*OVERSAMPLENR        ,       110     },
+{      455*OVERSAMPLENR        ,       105     },
+{      496*OVERSAMPLENR        ,       100     },
+{      539*OVERSAMPLENR        ,       95      },
+{      582*OVERSAMPLENR        ,       90      },
+{      625*OVERSAMPLENR        ,       85      },
+{      668*OVERSAMPLENR        ,       80      },
+{      710*OVERSAMPLENR        ,       75      },
+{      750*OVERSAMPLENR        ,       70      },
+{      787*OVERSAMPLENR        ,       65      },
+{      822*OVERSAMPLENR        ,       60      },
+{      854*OVERSAMPLENR        ,       55      },
+{      882*OVERSAMPLENR        ,       50      },
+{      907*OVERSAMPLENR        ,       45      },
+{      929*OVERSAMPLENR        ,       40      },
+{      947*OVERSAMPLENR        ,       35      },
+{      963*OVERSAMPLENR        ,       30      },
+{      976*OVERSAMPLENR        ,       25      },
+{      986*OVERSAMPLENR        ,       20      },
+{      995*OVERSAMPLENR        ,       15      },
+{      1002*OVERSAMPLENR       ,       10      },
+{      1007*OVERSAMPLENR       ,       5       },
 {      1012*OVERSAMPLENR       ,       0       }       //safety
 
 };
@@ -210,7 +210,7 @@ const short temptable_169[][2] PROGMEM = {
 
 #if (THERMISTORHEATER_0 == 170) || (THERMISTORHEATER_1 == 170) || (THERMISTORHEATER_2 == 170) || (THERMISTORBED == 170) || (defined THERMISTOR_HOTSWAP && THERMISTOR_HOTSWAP_IS_SUPPORTED(170))
 
-const short temptable_170[][2] PROGMEM = { 
+const short temptable_170[][2] PROGMEM = {
 {23*OVERSAMPLENR,300},
 {25*OVERSAMPLENR,295},
 {26*OVERSAMPLENR,290},
@@ -975,7 +975,7 @@ const short temptable_51[][2] PROGMEM = {
 };
 #endif
 
-#if (THERMISTORHEATER_0 == 52) || (THERMISTORHEATER_1 == 52) || (THERMISTORHEATER_2 == 52) || (THERMISTORBED == 52) || (defined THERMISTOR_HOTSWAP && THERMISTOR_HOTSWAP_IS_SUPPORTED(52)) 
+#if (THERMISTORHEATER_0 == 52) || (THERMISTORHEATER_1 == 52) || (THERMISTORHEATER_2 == 52) || (THERMISTORBED == 52) || (defined THERMISTOR_HOTSWAP && THERMISTOR_HOTSWAP_IS_SUPPORTED(52))
 // 200k ATC Semitec 204GT-2 (WITH 1kohm RESISTOR FOR PULLUP, R9 ON SANGUINOLOLU! NOT FOR 4.7kohm PULLUP! THIS IS NOT NORMAL!)
 // Verified by linagee. Source: http://shop.arcol.hu/static/datasheets/thermistors.pdf
 // Calculated using 1kohm pullup, voltage divider math, and manufacturer provided temp/resistance
@@ -1058,7 +1058,7 @@ const short temptable_55[][2] PROGMEM = {
 #endif
 
 #if (THERMISTORHEATER_0 == 60) || (THERMISTORHEATER_1 == 60) || (THERMISTORHEATER_2 == 60) || (THERMISTORBED == 60) || (defined THERMISTOR_HOTSWAP && THERMISTOR_HOTSWAP_IS_SUPPORTED(60)) // Maker's Tool Works Kapton Bed Thermister
-// ./createTemperatureLookup.py --r0=100000 --t0=25 --r1=0 --r2=4700 --beta=3950 
+// ./createTemperatureLookup.py --r0=100000 --t0=25 --r1=0 --r2=4700 --beta=3950
 // r0: 100000
 // t0: 25
 // r1: 0 (parallel with rTherm)
@@ -1141,7 +1141,7 @@ const short temptable_60[][2] PROGMEM = {
    {1008*OVERSAMPLENR, 0},
 };
 #endif
-#if (THERMISTORBED == 12) 
+#if (THERMISTORBED == 12)
 //100k 0603 SMD Vishay NTCS0603E3104FXT (4.7k pullup) (calibrated for Makibox hot bed)
 const short temptable_12[][2] PROGMEM = {
    {35*OVERSAMPLENR, 180}, //top rating 180C
@@ -1178,7 +1178,7 @@ const short temptable_12[][2] PROGMEM = {
 #endif
 
 // Pt1000 and Pt100 handling
-// 
+//
 // Rt=R0*(1+a*T+b*T*T) [for T>0]
 // a=3.9083E-3, b=-5.775E-7
 
@@ -1190,7 +1190,7 @@ const short temptable_12[][2] PROGMEM = {
 
 #if (THERMISTORHEATER_0 == 110) || (THERMISTORHEATER_1 == 110) || (THERMISTORHEATER_2 == 110) || (THERMISTORBED == 110) || (defined THERMISTOR_HOTSWAP && THERMISTOR_HOTSWAP_IS_SUPPORTED(110)) // Pt100 with 1k0 pullup
 const short temptable_110[][2] PROGMEM = {
-// only few values are needed as the curve is very flat  
+// only few values are needed as the curve is very flat
   PtLine(0,100,1000)
   PtLine(50,100,1000)
   PtLine(100,100,1000)
@@ -1202,7 +1202,7 @@ const short temptable_110[][2] PROGMEM = {
 #endif
 #if (THERMISTORHEATER_0 == 147) || (THERMISTORHEATER_1 == 147) || (THERMISTORHEATER_2 == 147) || (THERMISTORBED == 147) || (defined THERMISTOR_HOTSWAP && THERMISTOR_HOTSWAP_IS_SUPPORTED(147)) // Pt100 with 4k7 pullup
 const short temptable_147[][2] PROGMEM = {
-// only few values are needed as the curve is very flat  
+// only few values are needed as the curve is very flat
   PtLine(0,100,4700)
   PtLine(50,100,4700)
   PtLine(100,100,4700)
@@ -1231,7 +1231,7 @@ const short temptable_1010[][2] PROGMEM = {
 #endif
 #if (THERMISTORHEATER_0 == 1047) || (THERMISTORHEATER_1 == 1047) || (THERMISTORHEATER_2 == 1047) || (THERMISTORBED == 1047) || (defined THERMISTOR_HOTSWAP && THERMISTOR_HOTSWAP_IS_SUPPORTED(1047)) // Pt1000 with 4k7 pullup
 const short temptable_1047[][2] PROGMEM = {
-// only few values are needed as the curve is very flat  
+// only few values are needed as the curve is very flat
   PtLine(0,1000,4700)
   PtLine(50,1000,4700)
   PtLine(100,1000,4700)

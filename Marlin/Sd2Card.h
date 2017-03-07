@@ -183,7 +183,7 @@ class Sd2Card {
   /**
    * Read a card's CID register. The CID contains card identification
    * information such as Manufacturer ID, Product name, Product serial
-   * number and Manufacturing date. 
+   * number and Manufacturing date.
    *
    * \param[out] cid pointer to area for returned data.
    *
@@ -238,6 +238,3 @@ class Sd2Card {
   bool writeData(uint8_t token, const uint8_t* src);
 };
 #endif  // Sd2Card_h
-
-
-#endif

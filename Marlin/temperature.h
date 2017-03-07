@@ -19,7 +19,7 @@
 */
 
 #ifndef temperature_h
-#define temperature_h 
+#define temperature_h
 
 #include "Marlin.h"
 #include "planner.h"
@@ -50,10 +50,10 @@ bool blue_fading_read();*/
 
 // low level conversion routines
 // do not use these routines and variables outside of temperature.cpp
-extern int target_temperature[EXTRUDERS];  
-extern float current_temperature[EXTRUDERS];
+extern int target_temperature[HEATERS];
+extern float current_temperature[HEATERS];
 #ifdef SHOW_TEMP_ADC_VALUES
-  extern int current_temperature_raw[EXTRUDERS];
+  extern int current_temperature_raw[HEATERS];
   extern int current_temperature_bed_raw;
 #endif
 extern int current_pressure_raw_value;
@@ -87,26 +87,28 @@ extern float current_temperature_bed;
 #ifdef PIDTEMPBED
   extern float bedKp,bedKi,bedKd;
 #endif
-  
-  
+
+
 #ifdef BABYSTEPPING
   extern volatile int babystepsTodo[3];
 #endif
-  
+
 //high level conversion routines, for use outside of temperature.cpp
 //inline so that there is no performance decrease.
 //deg=degreeCelsius
 
-FORCE_INLINE float degHotend(uint8_t extruder) {  
-  return current_temperature[extruder];
+#define EtoH(ext) extruder_heater_mapping[ext]
+
+FORCE_INLINE float degHotend(uint8_t extruder) {
+  return current_temperature[EtoH(extruder)];
 };
 
 #ifdef SHOW_TEMP_ADC_VALUES
-  FORCE_INLINE float rawHotendTemp(uint8_t extruder) {  
-    return current_temperature_raw[extruder];
+  FORCE_INLINE float rawHotendTemp(uint8_t extruder) {
+    return current_temperature_raw[EtoH(extruder)];
   };
 
-  FORCE_INLINE float rawBedTemp() {  
+  FORCE_INLINE float rawBedTemp() {
     return current_temperature_bed_raw;
   };
 #endif
@@ -115,32 +117,32 @@ FORCE_INLINE float degBed() {
   return current_temperature_bed;
 };
 
-FORCE_INLINE float degTargetHotend(uint8_t extruder) {  
-  return target_temperature[extruder];
+FORCE_INLINE float degTargetHotend(uint8_t extruder) {
+  return target_temperature[EtoH(extruder)];
 };
 
-FORCE_INLINE float degTargetBed() {   
+FORCE_INLINE float degTargetBed() {
   return target_temperature_bed;
 };
 
-FORCE_INLINE void setTargetHotend(const float &celsius, uint8_t extruder) {  
-  target_temperature[extruder] = celsius;
+FORCE_INLINE void setTargetHotend(const float &celsius, uint8_t extruder) {
+  target_temperature[EtoH(extruder)] = celsius;
 };
 
-FORCE_INLINE void setTargetBed(const float &celsius) {  
+FORCE_INLINE void setTargetBed(const float &celsius) {
   target_temperature_bed = celsius;
 };
 
-FORCE_INLINE bool isHeatingHotend(uint8_t extruder){  
-  return target_temperature[extruder] > current_temperature[extruder];
+FORCE_INLINE bool isHeatingHotend(uint8_t extruder){
+  return target_temperature[EtoH(extruder)] > current_temperature[EtoH(extruder)];
 };
 
 FORCE_INLINE bool isHeatingBed() {
   return target_temperature_bed > current_temperature_bed;
 };
 
-FORCE_INLINE bool isCoolingHotend(uint8_t extruder) {  
-  return target_temperature[extruder] < current_temperature[extruder];
+FORCE_INLINE bool isCoolingHotend(uint8_t extruder) {
+  return target_temperature[EtoH(extruder)] < current_temperature[EtoH(extruder)];
 };
 
 FORCE_INLINE bool isCoolingBed() {
@@ -184,7 +186,7 @@ FORCE_INLINE float MainCurrent() {
 #define setTargetHotend0(_celsius) setTargetHotend((_celsius), 0)
 #define isHeatingHotend0() isHeatingHotend(0)
 #define isCoolingHotend0() isCoolingHotend(0)
-#if EXTRUDERS > 1
+#if HEATERS > 1
 #define degHotend1() degHotend(1)
 #define degTargetHotend1() degTargetHotend(1)
 #define setTargetHotend1(_celsius) setTargetHotend((_celsius), 1)
@@ -193,7 +195,7 @@ FORCE_INLINE float MainCurrent() {
 #else
 #define setTargetHotend1(_celsius) do{}while(0)
 #endif
-#if EXTRUDERS > 2
+#if HEATERS > 2
 #define degHotend2() degHotend(2)
 #define degTargetHotend2() degTargetHotend(2)
 #define setTargetHotend2(_celsius) setTargetHotend((_celsius), 2)
@@ -202,7 +204,7 @@ FORCE_INLINE float MainCurrent() {
 #else
 #define setTargetHotend2(_celsius) do{}while(0)
 #endif
-#if EXTRUDERS > 3
+#if HEATERS > 3
 #error Invalid number of extruders
 #endif
 
@@ -233,4 +235,3 @@ FORCE_INLINE void autotempShutdown(){
 void PID_autotune(float temp, int extruder, int ncycles);
 
 #endif
-
