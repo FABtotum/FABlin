@@ -835,12 +835,12 @@ void tool_change (uint8_t id)
 void FabtotumHeads_init ()
 {
    // Factory heads definitions
-   tools.factory[FAB_HEADS_hybrid_ID].mode = WORKING_MODE_HYBRID;
+   //tools.factory[FAB_HEADS_hybrid_ID].mode = WORKING_MODE_HYBRID;
    tools.factory[FAB_HEADS_hybrid_ID].extruders= 1;
    tools.factory[FAB_HEADS_hybrid_ID].heaters  = 1;
    tools.factory[FAB_HEADS_hybrid_ID].maxtemp = 235;
    tools.factory[FAB_HEADS_hybrid_ID].serial  = TOOL_SERIAL_TWI;
-   tools.factory[FAB_HEADS_hybrid_ID].mods  = "M563 P0 D0 H1 S1\n";
+//   tools.factory[FAB_HEADS_hybrid_ID].mods  = "M563 P0 D0 H1 S1\n";
 
    tools.factory[FAB_HEADS_print_v2_ID].mode = WORKING_MODE_FFF;
    tools.factory[FAB_HEADS_print_v2_ID].extruders= 1;
@@ -849,7 +849,7 @@ void FabtotumHeads_init ()
    tools.factory[FAB_HEADS_mill_v2_ID].mode = WORKING_MODE_CNC;
    tools.factory[FAB_HEADS_mill_v2_ID].extruders= 0;
    tools.factory[FAB_HEADS_mill_v2_ID].heaters  = 0;
-   tools.factory[FAB_HEADS_mill_v2_ID].mods = "M563 P0 D-1 H0 S0\n";
+   //tools.factory[FAB_HEADS_mill_v2_ID].mods = "M563 P0 D-1 H0 S0\n";
 
    tools.factory[FAB_HEADS_laser_ID].mode = WORKING_MODE_LASER;
    tools.factory[FAB_HEADS_laser_ID].extruders= 0;
@@ -857,10 +857,12 @@ void FabtotumHeads_init ()
    tools.factory[FAB_HEADS_laser_ID].thtable = 3;
    tools.factory[FAB_HEADS_laser_ID].maxtemp = 80;
 
-  tools.factory[FAB_HEADS_5th_axis_ID].mods = "M563 P0 D1\nM563 P1 D0\n";
+  tools.factory[FAB_HEADS_5th_axis_ID].extruders = 1 << 1;
+  tools.factory[FAB_HEADS_5th_axis_ID].mods = "M563 P1 D0\n";
 
    tools.factory[FAB_HEADS_direct_ID].mode = WORKING_MODE_FFF;
-   tools.factory[FAB_HEADS_direct_ID].mods = "M563 P0 D2 S0\nM563 P2 D0\nM92 E98.30\nM720\n";
+   tools.factory[FAB_HEADS_direct_ID].extruders = 1 << 2;
+   tools.factory[FAB_HEADS_direct_ID].mods = "M563 P2 D0\nM92 E98.30\nM720\n";
 
    tool_change(installed_head_id);
 }
