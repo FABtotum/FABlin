@@ -539,7 +539,7 @@ bool i2c_timeout=false;
 bool zeroed_far_from_home_x=true;
 bool zeroed_far_from_home_y=true;
 
-float safe_probing_offset=1;        //it will probe until the (probe length - safe_probing_offset) is reached
+float safe_probing_offset=0;        //it will probe until the (probe length - safe_probing_offset) is reached
 
 #ifdef THERMISTOR_HOTSWAP
 uint8_t extruder_0_thermistor_index = THERMISTOR_HOTSWAP_DEFAULT_INDEX;
@@ -1531,6 +1531,7 @@ static void run_fast_z_probe(float feedrateProbing) {
     zPosition = st_get_position_mm(Z_AXIS);
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS]);
 
+    current_position[Z_AXIS] = zPosition;
 }
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
