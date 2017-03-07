@@ -785,14 +785,17 @@ void tool_change (uint8_t id)
 
   // Reset default tool configurations
   tools.define(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-  tools.define(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_5th_axis_SMART);
-  tools.define(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
+  tools.define(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+  tools.define(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
 
   if (id <= HEADS) {
     //installed_head = &(tools.factory[id]);
     tools.load(active_tool, id);
   }
   installed_head_id = id;
+
+  // Reselect active tool to make any tool configuration modification effective
+  tools.change(active_tool);
 
    // Forcefully reset mode...
    working_mode_change(installed_head->mode, true);
@@ -812,31 +815,12 @@ void tool_change (uint8_t id)
    }
 #endif
 
-LOG_DEBUGPGM("tool_change: serial");
-LOG_DEBUG_R(installed_head->serial);
-  // Preconfigure head serial interface (Wire / Serial4 / SmartHead)
-  switch (installed_head->serial)
-  {
-    case TOOL_SERIAL_SER:
-      SmartHead.serial(true);
-      // There ain't no automatic serial interface configuration at the moment
-      // However Serial4 has RX4 = 67 and TX4 = 11 by default
-      break;
-    case TOOL_SERIAL_TWI:
-      SmartHead.wire(true);
-      break;
-    default:
-      SmartHead.wire(false);
-      SmartHead.serial(false);
-  }
-LOG_DEBUG_R(TWCR);
-
   // Set head placement status to the expected value (to be checked by subsequent procedures)
   if (installed_head_id > 1)
   if (installed_head_id != 3)
     head_placed = true;
 
-  // Set hardcoded head modification codes
+  // Set hardcoded head modification codes to be run
   if (installed_head->mods) {
     modl = 0;
     modi = 0;
@@ -844,14 +828,6 @@ LOG_DEBUG_R(TWCR);
     modl = strlen(mods);
   }
 
-
-LOG_DEBUGPGM("tool_change: tool.change");
-  // Reselect active tool to make any tool configuration modification effective
-  tools.change(active_tool);
-LOG_DEBUG_R(TWCR);
-
-LOG_DEBUGPGM("tool_change: Read_Head_Info");
-LOG_DEBUG_R(TWCR);
   // And try to read head info if available
   Read_Head_Info();
 }
@@ -6251,7 +6227,6 @@ void manage_amb_color_fading()
 
 void Read_Head_Info(bool force)
 {
-LOG_DEBUGPGM("Read_Head_Info");
   // Dummy heads can't be read...
   if (head_is_dummy)
   {
@@ -6268,7 +6243,6 @@ LOG_DEBUGPGM("Read_Head_Info");
     }
   }
 
-LOG_DEBUG_R(installed_head->serial);
   if (installed_head->serial == TOOL_SERIAL_TWI)
   {
     SERIAL_HEAD_0=I2C_read(SERIAL_N_FAM_DEV_CODE);

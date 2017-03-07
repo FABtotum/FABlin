@@ -40,11 +40,15 @@ void tools_s::load (uint8_t tool, uint8_t id)
  * Max tools number is statically set to 3 at present.
  *
  */
-void tools_s::define(uint8_t tool, unsigned int drive, unsigned int heater, uint8_t serial)
+void tools_s::define(uint8_t tool, int8_t drive, unsigned int heater, uint8_t serial)
 {
    tool_extruder_mapping[tool] = drive;
    tool_heater_mapping[tool] = heater;
    tool_twi_support[tool] = serial != 0;
+
+   magazine[tool].extruders = drive >= 0? 1 << drive : 0;
+   magazine[tool].serial = serial;
+   magazine[tool].heaters = 1 << heater;
 }
 
 /**
@@ -56,10 +60,22 @@ void tools_s::define(uint8_t tool, unsigned int drive, unsigned int heater, uint
  */
 uint8_t tools_s::change (uint8_t tool)
 {
-   installed_head = &magazine[tool];
+   // Load first selected extruder into map
+   tool_extruder_mapping[tool] = -1;
+   for (uint8_t e = 0; e < EXTRUDERS; e++) {
+      if (magazine[tool].extruders & (1 << e)) {
+         tool_extruder_mapping[tool] = e;
+         break;
+      }
+   }
 
+   // Load serial communication setting
+   tool_twi_support[tool] = magazine[tool].serial != 0;
+
+   // Set globals
    active_extruder = tool_extruder_mapping[tool];
    head_is_dummy = !tool_twi_support[tool];
+   installed_head = &magazine[tool];
 
 #ifdef SMART_COMM
    if (installed_head_id <= FAB_HEADS_laser_ID)
@@ -69,9 +85,7 @@ uint8_t tools_s::change (uint8_t tool)
       if (head_is_dummy) {
          TWCR = 0;
       } else {
-LOG_DEBUGPGM("tools.change: Wire.begin");
          Wire.begin();
-LOG_DEBUG_R(TWCR);
       }
 #ifdef SMART_COMM
    }

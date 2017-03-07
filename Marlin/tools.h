@@ -21,7 +21,7 @@ typedef struct tool_s {
 
 extern struct tools_s
 {
-   void    define (uint8_t, unsigned int=0, unsigned int=0, uint8_t=0);
+   void    define (uint8_t, int8_t=0, unsigned int=0, uint8_t=0);
    uint8_t change (uint8_t);
    void    load   (uint8_t, uint8_t);
 
