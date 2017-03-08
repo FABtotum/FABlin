@@ -1427,7 +1427,7 @@ static void axis_is_at_home(int axis) {
   min_pos[axis] =          base_min_pos(axis) + add_homeing[axis];
   max_pos[axis] =          base_max_pos(axis) + add_homeing[axis];
 
-  if(axis==Z_AXIS && home_Z_reverse){current_position[axis] = (Z_MAX_POS+Z_PROBE_OFFSET_FROM_EXTRUDER);}
+  if(axis==Z_AXIS && home_Z_reverse){current_position[axis] = (Z_MAX_POS);}
   if(axis==X_AXIS && x_axis_endstop_sel){current_position[axis] = (X_MAX_POS);}
 }
 
@@ -2255,7 +2255,13 @@ void process_commands()
           }
         }
         #ifdef ENABLE_AUTO_BED_LEVELING
-          if((home_all_axis) || (code_seen(axis_codes[Z_AXIS]))) {
+          // should only be modified if the probe has been used (G28)
+          // in case of G27 the z-max endstop value should be preserved
+          if( ( (home_all_axis) || 
+                (code_seen(axis_codes[Z_AXIS]))
+              ) && 
+              z_probe_activation ) 
+          {
             current_position[Z_AXIS] += zprobe_zoffset;  //Add Z_Probe offset (the distance is negative)
           }
         #endif
