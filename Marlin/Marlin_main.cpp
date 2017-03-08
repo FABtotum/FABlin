@@ -67,7 +67,7 @@
 #endif
 
 #include "tools.h"
-#include "modes.h"
+//#include "modes.h"
 #include "Configuration_heads.h"
 
 #include <SoftwareSerial.h>
