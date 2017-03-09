@@ -569,6 +569,7 @@ namespace Laser
   bool enabled = false;
   uint8_t power = 0;
   bool    synchronized = false;
+  unsigned long max_inactive_time = 0;
 
   void enable (void);
   void disable (void);
@@ -2257,10 +2258,10 @@ void process_commands()
         #ifdef ENABLE_AUTO_BED_LEVELING
           // should only be modified if the probe has been used (G28)
           // in case of G27 the z-max endstop value should be preserved
-          if( ( (home_all_axis) || 
+          if( ( (home_all_axis) ||
                 (code_seen(axis_codes[Z_AXIS]))
-              ) && 
-              z_probe_activation ) 
+              ) &&
+              z_probe_activation )
           {
             current_position[Z_AXIS] += zprobe_zoffset;  //Add Z_Probe offset (the distance is negative)
           }
@@ -2853,10 +2854,12 @@ void process_commands()
      *  depends on whether M60 or M61 was issued last.
      */
     case 62:
+    {
       if (Laser::synchronized)
         st_synchronize();
       Laser::power = 0;
-      break;
+    }
+    break;
 
     case 104: // M104
       if(setTargetedHotend(104)){
@@ -3220,6 +3223,51 @@ void process_commands()
       code_seen('S');
       max_inactive_time = code_value() * 1000;
       break;
+
+    /*
+     * Command: M86
+     *
+     * Set laser security timeout
+     *
+     * Syntax:
+     * > M86 [S<timeout>]
+     *
+     * Parameters:
+     *  S<timeout> - timeout in seconds; 0 disables timeout
+     *
+     * Description:
+     * This command sets or resets laser security timeout. When using
+     * M60 commands, after no movement is done for more then the defined
+     * amount of time, the laser is automatically turned down. For M61,
+     * security timeout is the same as the stepper drivers' timeout
+     * (~20 secs).
+     *
+     * If the *S* parameter is not specified the command outputs the
+     * currently set value.
+     *
+     * See also:
+     *  <M60>
+     *  <M62>
+     */
+    case 86:
+    {
+      if (code_seen('S'))
+      {
+        unsigned long timeout = code_value_long() * 1000;
+        //if (timeout) {
+          Laser::max_inactive_time = timeout;
+        /*} else {
+          Laser::max_inactive_time = DEFAULT_DEACTIVE_TIME * 1000l;
+        }*/
+      }
+      else
+      {
+        SERIAL_PROTOCOLLN(Laser::max_inactive_time / 1000);
+        SERIAL_ECHOLNPGM(MSG_OK);
+      }
+    }
+    break;
+
     case 92: // M92
       for(int8_t i=0; i < NUM_AXIS; i++)
       {
@@ -5953,10 +6001,12 @@ void handle_status_leds(void) {
 
 void manage_inactivity()
 {
-
-  if (max_steppers_inactive_time){
-    if( (millis() - previous_millis_cmd) >  max_steppers_inactive_time){
-        if(blocks_queued() == false) {
+  if (max_steppers_inactive_time)
+  {
+    unsigned int elapsed = millis() - previous_millis_cmd;
+    if (elapsed >  max_steppers_inactive_time)
+    {
+        if (blocks_queued() == false) {
             //steppers disabled
             disable_x();
             disable_y();
@@ -5966,7 +6016,11 @@ void manage_inactivity()
             disable_e2();
 
             // Zero laser power whether it's active or not
-            Laser::power = 0;
+            if (Laser::synchronized) {
+              Laser::power = 0;
+            } else if (Laser::max_inactive_time && elapsed > Laser::max_inactive_time) {
+              Laser::power = 0;
+            }
         }
     }
   }
