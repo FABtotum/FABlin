@@ -13,7 +13,7 @@ typedef struct tool_s {
    uint8_t extruders:3;
    uint8_t heaters:3;
    uint8_t thtable = THERMISTOR_HOTSWAP_DEFAULT_INDEX;
-   int16_t mintemp = HEATER_0_MINTEMP;
+   int8_t  mintemp = HEATER_0_MINTEMP;
    int16_t maxtemp = HEATER_0_MAXTEMP;
    const char *mods = NULL;
 } tool_t;

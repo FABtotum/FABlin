@@ -93,6 +93,11 @@ extern float current_temperature_bed;
   extern volatile int babystepsTodo[3];
 #endif
 
+#ifdef THERMISTOR_HOTSWAP
+extern volatile int minttemp[HEATERS];
+extern volatile int maxttemp[HEATERS];
+#endif
+
 //high level conversion routines, for use outside of temperature.cpp
 //inline so that there is no performance decrease.
 //deg=degreeCelsius
@@ -215,7 +220,8 @@ FORCE_INLINE float MainCurrent() {
 
 //#define MAX_PWM    127
 
-void heater_0_init_maxtemp (int16_t);
+void init_mintemp (int8_t, uint8_t=1);
+void heater_0_init_maxtemp (int16_t, uint8_t=1);
 int getHeaterPower(int heater);
 void disable_heater();
 void setWatch();

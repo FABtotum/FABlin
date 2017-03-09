@@ -160,11 +160,12 @@ static volatile bool temp_meas_ready = false;
 // Init min and max temp with extreme values to prevent false errors during startup
 static int minttemp_raw[HEATERS] = ARRAY_BY_EXTRUDERS( HEATER_0_RAW_LO_TEMP , HEATER_1_RAW_LO_TEMP , HEATER_2_RAW_LO_TEMP );
 static int maxttemp_raw[HEATERS] = ARRAY_BY_EXTRUDERS( HEATER_0_RAW_HI_TEMP , HEATER_1_RAW_HI_TEMP , HEATER_2_RAW_HI_TEMP );
-static int minttemp[HEATERS] = ARRAY_BY_EXTRUDERS( 0, 0, 0 );
 
 #ifdef THERMISTOR_HOTSWAP
-int maxttemp[HEATERS] = ARRAY_BY_EXTRUDERS( 16383, 16383, 16383 );
+volatile int minttemp[HEATERS] = ARRAY_BY_EXTRUDERS( 0, 0, 0 );
+volatile int maxttemp[HEATERS] = ARRAY_BY_EXTRUDERS( 16383, 16383, 16383 );
 #else
+static int minttemp[HEATERS] = ARRAY_BY_EXTRUDERS( 0, 0, 0 );
 static int maxttemp[HEATERS] = ARRAY_BY_EXTRUDERS( 16383, 16383, 16383 );
 #endif
 
@@ -756,17 +757,61 @@ static void updateTemperaturesFromRawValues()
     CRITICAL_SECTION_END;
 }
 
-void heater_0_init_maxtemp (int16_t value)
+void init_mintemp (int8_t value, uint8_t heater)
 {
-#ifdef HEATER_0_MAXTEMP
-  while(analog2temp(maxttemp_raw[0], 0) > value) {
-#if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
-    maxttemp_raw[0] -= OVERSAMPLENR;
-#else
-    maxttemp_raw[0] += OVERSAMPLENR;
+LOG_DEBUGPGM("init_mintemp");
+  switch (heater)
+  {
+    // case 0 is for bed
+
+#if HEATERS > 0
+    case 1:
+SERIAL_DEBUG(heater);
+SERIAL_DEBUG(value);
+SERIAL_DEBUG(HEATER_0_RAW_LO_TEMP);
+SERIAL_DEBUG(HEATER_0_RAW_HI_TEMP);
+  #if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
+    minttemp_raw[0] = 0;
+  #else
+    minttemp_raw[0] = 1024 *OVERSAMPLENR;
+  #endif
+SERIAL_DEBUG(minttemp_raw[0]);
+      while (analog2temp(minttemp_raw[0], 0) < value) {
+SERIAL_DEBUG(minttemp_raw[0]);
+  #if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
+        minttemp_raw[0] += OVERSAMPLENR;
+  #else
+        minttemp_raw[0] -= OVERSAMPLENR;
+  #endif
+      }
+      break;
 #endif
   }
+}
+
+void heater_0_init_maxtemp (int16_t value, uint8_t heater)
+{
+  switch (heater)
+  {
+#if HEATERS > 0
+    case 1:
+//  #ifdef HEATER_0_MAXTEMP
+  #if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
+      maxttemp_raw[0] = 1024 *OVERSAMPLENR;
+  #else
+      maxttemp_raw[0] = 0;
+  #endif
+      while(analog2temp(maxttemp_raw[0], 0) > value) {
+  #if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
+        maxttemp_raw[0] -= OVERSAMPLENR;
+  #else
+        maxttemp_raw[0] += OVERSAMPLENR;
+  #endif
+      }
+      break;
+//  #endif
 #endif
+  }
 }
 
 void tp_init()

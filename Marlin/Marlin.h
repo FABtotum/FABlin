@@ -307,7 +307,7 @@ namespace ThermistorHotswap
   void setTable (const unsigned short);
 }
 
-extern int maxttemp[HEATERS];
+//extern int maxttemp[HEATERS];
 #ifdef TEMP_SENSOR_1_AS_REDUNDANT
 extern void *heater_ttbl_map[2];
 extern uint8_t heater_ttbllen_map[2];
