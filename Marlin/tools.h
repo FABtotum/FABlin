@@ -2,7 +2,6 @@
 #define _TOOLS_H_
 
 #include <stdint.h>
-//#include "modes.h"
 
 #define TOOL_SERIAL_NONE 0
 #define TOOL_SERIAL_SER  1

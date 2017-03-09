@@ -93,6 +93,7 @@ const char echomagic[] PROGMEM ="echo:";
   #define LOG_DEBUG(x)      SERIAL_PROTOCOLLN(x)
   #define LOG_DEBUG_F(x,y)  SERIAL_PROTOCOLLN_F(x,y)
   #define LOG_DEBUGPGM(msg) SERIAL_PROTOCOLLNPGM(msg)
+  #define SERIAL_DEBUG(var)  SERIAL_PROTOCOLPGM(#var " = "); SERIAL_PROTOCOLLN(var)
   #define LOG_DEBUG_R(reg)  do {                      \
     SERIAL_PROTOCOLPGM(#reg "=");                     \
     for (int i=7; i >= 0; i--) {                      \
@@ -104,6 +105,7 @@ const char echomagic[] PROGMEM ="echo:";
   #define LOG_DEBUG(x)
   #define LOG_DEBUG_F(x,y)
   #define LOG_DEBUGPGM(msg)
+  #define SERIAL_DEBUG(var)
   #define LOG_DEBUG_R(reg)
 #endif
 
