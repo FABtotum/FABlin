@@ -197,8 +197,6 @@
 // M61 S<0-255> - Finish moves and set laser level
 // M62 - Turn off laser
 
-// M85 - Set laser's M60 inactivity shutdown timer with parameter S<seconds>. To disable set zero (default)
-
 // M450 S<1-3> - Query or change working mode
 
 // M563 [Pn [D<0-2>] [S<0,1>]] - Edit tool definition or query defined tools
@@ -281,6 +279,8 @@
 // M802 - returns supported thermistor types by index
 // M803 - changes/reads the current extruder0 thermistor input
 // M804 - changes/reads the current automatic fan on temp change configuration.
+
+// M852 - Set laser's M60 inactivity shutdown timer with parameter S<seconds>. To disable set zero (default)
 
 // M998 - Restart after being killed
 // M999 - Restart after being stopped
@@ -782,6 +782,14 @@ void working_mode_echo ()
   }
 }
 
+void set_mods (const char* modstring)
+{
+  modl = 0;
+  modi = 0;
+  mods = modstring;
+  modl = strlen(modstring);
+}
+
 void tool_change (uint8_t id)
 {
   // Shutdown head
@@ -826,10 +834,7 @@ void tool_change (uint8_t id)
 
   // Set hardcoded head modification codes to be run
   if (installed_head->mods) {
-    modl = 0;
-    modi = 0;
-    mods = installed_head->mods;
-    modl = strlen(mods);
+    set_mods(installed_head->mods);
   }
 
   // And try to read head info if available
@@ -838,13 +843,17 @@ void tool_change (uint8_t id)
 
 void FabtotumHeads_init ()
 {
+  tools.factory[0].mode = 0;
+  tools.factory[0].serial = 0;
+  tools.factory[0].extruders = 0;
+  tools.factory[0].heaters = 0;
+  tools.factory[0].mintemp = 0;
+
    // Factory heads definitions
-   //tools.factory[FAB_HEADS_hybrid_ID].mode = WORKING_MODE_HYBRID;
    tools.factory[FAB_HEADS_hybrid_ID].extruders= 1;
    tools.factory[FAB_HEADS_hybrid_ID].heaters  = 1;
    tools.factory[FAB_HEADS_hybrid_ID].maxtemp = 235;
    tools.factory[FAB_HEADS_hybrid_ID].serial  = TOOL_SERIAL_TWI;
-//   tools.factory[FAB_HEADS_hybrid_ID].mods  = "M563 P0 D0 H1 S1\n";
 
    tools.factory[FAB_HEADS_print_v2_ID].mode = WORKING_MODE_FFF;
    tools.factory[FAB_HEADS_print_v2_ID].extruders= 1;
@@ -866,13 +875,13 @@ void FabtotumHeads_init ()
 
    tools.factory[FAB_HEADS_direct_ID].mode = WORKING_MODE_FFF;
    tools.factory[FAB_HEADS_direct_ID].extruders = 1 << 2;
-   tools.factory[FAB_HEADS_direct_ID].mods = "M563 P2 D0\nM92 E98.30\nM720\n";
+   tools.factory[FAB_HEADS_direct_ID].mods = "M563 P2 D0\nM92 E98.30\nM203 E32\nM204 S2000 T525\nM720\n";
 
    tool_change(installed_head_id);
 }
 
 /*
- * Shut-down dangerous things connected to the mounted tool upon a forced stop
+ * Shut-down anything connected to the head upon a forced stop
  */
 void StopTool ()
 {
@@ -3227,7 +3236,7 @@ void process_commands()
       break;
 
     /*
-     * Command: M86
+     * Command: M852
      *
      * Set laser security timeout
      *
@@ -3251,7 +3260,7 @@ void process_commands()
      *  <M60>
      *  <M62>
      */
-    case 86:
+    case 852:
     {
       if (code_seen('S'))
       {
