@@ -197,6 +197,8 @@
 // M61 S<0-255> - Finish moves and set laser level
 // M62 - Turn off laser
 
+// M85 - Set laser's M60 inactivity shutdown timer with parameter S<seconds>. To disable set zero (default)
+
 // M450 S<1-3> - Query or change working mode
 
 // M563 [Pn [D<0-2>] [S<0,1>]] - Edit tool definition or query defined tools
