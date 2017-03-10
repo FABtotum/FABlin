@@ -5487,6 +5487,7 @@ void process_commands()
     {
       int value;
       uint8_t heater = 1;
+      bool notset = true;
 
       if (code_seen('P'))
       {
@@ -5503,8 +5504,12 @@ void process_commands()
         if (mintemp < -127) mintemp = -127;
 
         minttemp[heater-1] = mintemp;
+        CRITICAL_SECTION_START
         init_mintemp(mintemp, heater);
+        CRITICAL_SECTION_END
+        notset = false;
       }
+
       if (code_seen('S'))
       {
         value = code_value();
@@ -5515,11 +5520,14 @@ void process_commands()
           heater_0_init_maxtemp(value, heater);
           CRITICAL_SECTION_END
         }
+        notset = false;
       }
 
-      SERIAL_PROTOCOL(minttemp[heater-1]);
-      SERIAL_PROTOCOLPGM(" / ");
-      SERIAL_PROTOCOLLN(maxttemp[heater-1]);
+      if (notset) {
+        SERIAL_PROTOCOL(minttemp[heater-1]);
+        SERIAL_PROTOCOLPGM(" / ");
+        SERIAL_PROTOCOLLN(maxttemp[heater-1]);
+      }
     }
     break;
 

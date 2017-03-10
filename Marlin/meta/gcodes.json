@@ -922,13 +922,20 @@
 		}
 	},
 	"M801": {
-		"desc": "Read/Write extruder maximum temperature",
+		"desc": "Read/Write extruder minimum and maximum temperature",
 		"params": {
+			"R": {
+				"desc": "Extruder minimum temperature",
+				"type": "float",
+				"unit": "&#8451;",
+				"range": [-127,127],
+				"opt": true
+			},
 			"S": {
 				"desc": "Extruder maximum temperature",
 				"type": "float",
 				"unit": "&#8451;",
-				"range": [150,300],
+				"range": [0,300],
 				"opt": true
 			}
 		}

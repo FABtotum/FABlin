@@ -162,8 +162,8 @@ static int minttemp_raw[HEATERS] = ARRAY_BY_EXTRUDERS( HEATER_0_RAW_LO_TEMP , HE
 static int maxttemp_raw[HEATERS] = ARRAY_BY_EXTRUDERS( HEATER_0_RAW_HI_TEMP , HEATER_1_RAW_HI_TEMP , HEATER_2_RAW_HI_TEMP );
 
 #ifdef THERMISTOR_HOTSWAP
-volatile int minttemp[HEATERS] = ARRAY_BY_EXTRUDERS( 0, 0, 0 );
-volatile int maxttemp[HEATERS] = ARRAY_BY_EXTRUDERS( 16383, 16383, 16383 );
+int minttemp[HEATERS] = ARRAY_BY_EXTRUDERS( 0, 0, 0 );
+int maxttemp[HEATERS] = ARRAY_BY_EXTRUDERS( 16383, 16383, 16383 );
 #else
 static int minttemp[HEATERS] = ARRAY_BY_EXTRUDERS( 0, 0, 0 );
 static int maxttemp[HEATERS] = ARRAY_BY_EXTRUDERS( 16383, 16383, 16383 );

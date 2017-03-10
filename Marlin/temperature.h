@@ -94,8 +94,8 @@ extern float current_temperature_bed;
 #endif
 
 #ifdef THERMISTOR_HOTSWAP
-extern volatile int minttemp[HEATERS];
-extern volatile int maxttemp[HEATERS];
+extern int minttemp[HEATERS];
+extern int maxttemp[HEATERS];
 #endif
 
 //high level conversion routines, for use outside of temperature.cpp
