@@ -871,6 +871,7 @@ void FabtotumHeads_init ()
    tools.factory[FAB_HEADS_laser_ID].maxtemp = 80;
 
   tools.factory[FAB_HEADS_5th_axis_ID].extruders = 1 << 1;
+  tools.factory[FAB_HEADS_5th_axis_ID].mintemp  = 0;
   tools.factory[FAB_HEADS_5th_axis_ID].mods = "M563 P1 D0\n";
 
    tools.factory[FAB_HEADS_direct_ID].mode = WORKING_MODE_FFF;
