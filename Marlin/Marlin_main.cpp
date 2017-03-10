@@ -1439,8 +1439,9 @@ static void axis_is_at_home(int axis) {
   min_pos[axis] =          base_min_pos(axis) + add_homeing[axis];
   max_pos[axis] =          base_max_pos(axis) + add_homeing[axis];
 
-  if(axis==Z_AXIS && home_Z_reverse){current_position[axis] = (Z_MAX_POS);}
-  if(axis==X_AXIS && x_axis_endstop_sel){current_position[axis] = (X_MAX_POS);}
+  if ((axis==Z_AXIS && home_Z_reverse)  || (axis==X_AXIS && x_axis_endstop_sel)) {
+    current_position[axis] = max_pos[axis];
+  }
 }
 
 #ifdef ENABLE_AUTO_BED_LEVELING
