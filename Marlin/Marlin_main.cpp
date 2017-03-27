@@ -876,7 +876,7 @@ void FabtotumHeads_init ()
 
    tools.factory[FAB_HEADS_direct_ID].mode = WORKING_MODE_FFF;
    tools.factory[FAB_HEADS_direct_ID].extruders = 1 << 2;
-   tools.factory[FAB_HEADS_direct_ID].mods = "M563 P2 D0\nM92 E98.30\nM203 E32\nM204 S2000 T525\nM720\n";
+   tools.factory[FAB_HEADS_direct_ID].mods = "M563 P2 D0\nM720\n";
 
    tool_change(installed_head_id);
 }
@@ -3961,13 +3961,12 @@ void process_commands()
        } else {
           target_tool = active_tool;
 
-         SERIAL_ECHOLNPGM("ok Tools defined:");
+         //SERIAL_ECHOLNPGM("Tools defined:");
 
          // Output tool definitions
          for (target_tool = 0; target_tool < EXTRUDERS; target_tool++)
          {
-            SERIAL_ECHO_START;
-            SERIAL_ECHOPAIR(" T", (unsigned long)target_tool);
+            SERIAL_ECHOPAIR("T", (unsigned long)target_tool);
             int8_t extruder = tool_extruder_mapping[target_tool];
             if (extruder >= 0) {
                SERIAL_ECHOPAIR(": Drive=", (unsigned long)(tool_extruder_mapping[target_tool]));
