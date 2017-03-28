@@ -357,10 +357,10 @@ float extruder_offset[NUM_EXTRUDER_OFFSETS][EXTRUDERS] = {
 uint8_t active_tool = 0;     // Active logical tool
 uint8_t active_extruder = 0; // Active actual extruder
 bool head_is_dummy = false;  // Head reaquires TWI silencing
-uint8_t tool_extruder_mapping[] = { 0, 1, 2 };  // Tool to drive mapping
+uint8_t tool_extruder_mapping[EXTRUDERS] = { 0, 1, 2 };  // Tool to drive mapping
 uint8_t extruder_heater_mapping[EXTRUDERS];     // Extruder to heater mapping
-int8_t tool_heater_mapping[]   = { 0, -1, 0 };  // Tool to heater mapping
-bool    tool_twi_support[]      = { true, false, false };  // Tool TWI support
+int8_t tool_heater_mapping[EXTRUDERS]   = { 0, -1, 0 };  // Tool to heater mapping
+bool    tool_twi_support[EXTRUDERS]      = { true, false, false };  // Tool TWI support
 int fanSpeed=0;
 
 #ifdef SERVO_ENDSTOPS
@@ -3980,7 +3980,7 @@ void process_commands()
               SERIAL_ECHOLNPGM(" Serial=off");
            }
          }
-         return;
+         break;
        }
 
        // Assign drive
