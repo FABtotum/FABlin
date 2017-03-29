@@ -67,9 +67,11 @@
 
 #define SERIAL_PROTOCOL(x) (MYSERIAL.print(x))
 #define SERIAL_PROTOCOL_F(x,y) (MYSERIAL.print(x,y))
+#define SERIAL_PROTOCOL_P(x) do { serialprintPGM(x); } while (0)
 #define SERIAL_PROTOCOLPGM(x) (serialprintPGM(PSTR(x)))
 #define SERIAL_PROTOCOLLN(x) (MYSERIAL.print(x),MYSERIAL.write('\n'))
 #define SERIAL_PROTOCOLLN_F(x,y) (MYSERIAL.print(x,y),MYSERIAL.write('\n'))
+#define SERIAL_PROTOCOLLN_P(x) do { serialprintPGM(x); MYSERIAL.write('\n'); } while (0)
 #define SERIAL_PROTOCOLLNPGM(x) (serialprintPGM(PSTR(x)),MYSERIAL.write('\n'))
 
 
@@ -88,6 +90,7 @@ const char echomagic[] PROGMEM ="echo:";
 #define SERIAL_ECHOLNPGM(x) SERIAL_PROTOCOLLNPGM(x)
 
 #define SERIAL_ECHOPAIR(name,value) (serial_echopair_P(PSTR(name),(value)))
+#define SERIAL_ECHOPAIR_P(name,value) (serial_echopair_P(name,(value)))
 
 #ifdef DEBUG
   #define LOG_DEBUG(x)      SERIAL_PROTOCOLLN(x)

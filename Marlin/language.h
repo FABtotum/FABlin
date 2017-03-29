@@ -62,6 +62,8 @@
 #define STRINGIFY_(n) #n
 #define STRINGIFY(n) STRINGIFY_(n)
 
+#define PSTRING(label,string) const char label[] PROGMEM = string;
+
 
 // Common LCD messages
 /* nothing here as of yet */
@@ -70,7 +72,8 @@
 #define MSG_MARLIN "Marlin"
 #define MSG_MARLIN_FABTOTUM "Marlin for FABtotum Personal Fabricator"
 
-#define MSG_WORKING_MODE "Working Mode:"
+//#define MSG_WORKING_MODE "Working Mode:"
+PSTRING( PMSG_WORKING_MODE, "Working Mode:" )
 #define MSG_WORKING_MODE_HYBRID "Hybrid"
 #define MSG_WORKING_MODE_FFF    "FFF"
 #define MSG_WORKING_MODE_LASER  "Laser"
@@ -78,6 +81,11 @@
 #define MSG_WORKING_MODE_SCAN   "Scan"
 #define MSG_WORKING_MODE_SLA    "SLA"
 
+#define MSG_WS_E " E"
+#define MSG_WS_T " T"
+#define MSG_WS_X " X"
+#define MSG_WS_Y " Y"
+#define MSG_WS_Z " Z"
 
 #if LANGUAGE_CHOICE == 1
 
@@ -2688,3 +2696,13 @@
 #endif
 
 #endif // ifndef LANGUAGE_H
+
+
+PSTRING(PMSG_WS_E,MSG_WS_E)
+PSTRING(PMSG_WS_T,MSG_WS_T)
+PSTRING(PMSG_WS_X,MSG_WS_X)
+PSTRING(PMSG_WS_Y,MSG_WS_Y)
+PSTRING(PMSG_WS_Z,MSG_WS_Z)
+
+PSTRING(PMSG_ENDSTOP_HIT,MSG_ENDSTOP_HIT)
+PSTRING(PMSG_ENDSTOP_OPEN,MSG_ENDSTOP_HIT)

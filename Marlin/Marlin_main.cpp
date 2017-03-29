@@ -758,27 +758,27 @@ void working_mode_change (uint8_t new_mode, bool reset = false)
 
 void working_mode_echo ()
 {
+  SERIAL_PROTOCOL_P(PMSG_WORKING_MODE);
   switch (working_mode)
   {
     case WORKING_MODE_HYBRID:
-      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_HYBRID);
+      SERIAL_PROTOCOLLNPGM(" " MSG_WORKING_MODE_HYBRID);
       break;
 
     case WORKING_MODE_FFF:
-      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_FFF);
+      SERIAL_ECHOLNPGM(" " MSG_WORKING_MODE_FFF);
       break;
 
     case WORKING_MODE_LASER:
-      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_LASER);
+      SERIAL_ECHOLNPGM(" " MSG_WORKING_MODE_LASER);
       break;
 
     case WORKING_MODE_CNC:
-      SERIAL_ECHOLNPGM(MSG_WORKING_MODE " " MSG_WORKING_MODE_CNC);
+      SERIAL_ECHOLNPGM(" " MSG_WORKING_MODE_CNC);
       break;
 
     default:
-      SERIAL_ECHOPAIR(MSG_WORKING_MODE, (unsigned long)working_mode);
-      SERIAL_ECHOLNPGM("");
+      SERIAL_ECHOLN((unsigned long)working_mode);
   }
 }
 
@@ -6425,7 +6425,6 @@ void Read_Head_Info(bool force)
 
 char I2C_read(byte i2c_register)
 {
-LOG_DEBUGPGM("I2C_read");
   char byte_read;
   Wire.beginTransmission(SERIAL_ID_ADDR);      //starts communication
   Wire.write(i2c_register);                         //Sends the register we wish to read
