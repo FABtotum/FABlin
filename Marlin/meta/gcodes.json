@@ -333,7 +333,7 @@
 		"desc": "Turn fan off"
 	},
 	"M109": {
-		"desc": "Wait for extrucer temperature to reach target. If S flag is used, waits only when heating. When R flag is used waits both for heating and cooling.",
+		"desc": "Wait for extruder temperature to reach target. If S flag is used, waits only when heating. When R flag is used waits both for heating and cooling.",
 		"params": {
 			"S": {
 				"desc": "Wait only when heating",
@@ -374,10 +374,10 @@
 		"reply":"Reporting endstop status<br>x_min: open<br>x_max: open<br>y_min: open<br>y_max: open<br>z_min: open<br>z_max: open<br>ok"
 	},
 	"M120": {
-		"desc": "Enable endstop detection"
+		"desc": "Disable endstop detection"
 	},
 	"M121": {
-		"desc": "Disable endstop detection"
+		"desc": "Enable endstop detection"
 	},
 	"M140": {
 		"desc": "Set bed target temperature",
