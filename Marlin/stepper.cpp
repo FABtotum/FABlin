@@ -201,6 +201,13 @@ void checkHitEndstops()
    endstop_x_hit=false;
    endstop_y_hit=false;
    endstop_z_hit=false;
+
+  // turn down laser on endstop hit
+  if (working_mode == WORKING_MODE_LASER)
+  {
+    Laser::setPower(0);
+  }
+
 #if defined(ABORT_ON_ENDSTOP_HIT_FEATURE_ENABLED) && defined(SDSUPPORT)
    if (abort_on_endstop_hit)
    {
