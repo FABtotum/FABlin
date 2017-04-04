@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <Wire.h>
 #include "Marlin.h"
+#include "Laser.h"
 
 #ifdef ENABLE_AUTO_BED_LEVELING
 #include "vector_3.h"
@@ -566,21 +567,6 @@ static bool   feedback_responses  = false;  // Wether to feed back responses on 
 
 uint8_t working_mode = WORKING_MODE_HYBRID;
 
-namespace Laser
-{
-  bool enabled = false;
-  uint8_t power = 0;
-  bool    synchronized = false;
-  unsigned long max_inactive_time = 0;
-
-  void enable (void);
-  void disable (void);
-
-  inline bool isEnabled (void);
-
-  void setPower (uint16_t);
-}
-
 static unsigned short int z_endstop_bug_workaround = 0;
 
 const char* mods = NULL;
@@ -725,6 +711,16 @@ void servo_init()
   delay(PROBE_SERVO_DEACTIVATION_DELAY);
   servos[servo_endstops[Z_AXIS]].detach();
   #endif
+}
+
+inline void servo_attach (uint8_t idx, uint8_t pin)
+{
+  servos[idx].attach(pin);
+}
+
+void servo_detach (uint8_t idx)
+{
+  servos[idx].detach();
 }
 
 void working_mode_change (uint8_t new_mode, bool reset = false)
@@ -6683,7 +6679,7 @@ bool setTargetedHotend(int code){
     }
   return false;
 }
-
+/*
 inline bool Laser::isEnabled ()
 {
   // Test power for Laser head
@@ -6731,3 +6727,4 @@ void Laser::setPower (uint16_t power)
     fanSpeed = EXTRUDER_AUTO_FAN_SPEED;
   }
 }
+*/

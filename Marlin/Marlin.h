@@ -241,6 +241,9 @@ void manage_fab_soft_pwm(void);
 void Read_Head_Info(bool=false);
 char I2C_read(byte i2c_register);
 
+void servo_attach (uint8_t, uint8_t=0);
+void servo_detach (uint8_t);
+
 #ifdef FAST_PWM_FAN
 void setPwmFrequency(uint8_t pin, int val);
 #endif

@@ -21,8 +21,9 @@
 /* The timer calculations of this module informed by the 'RepRap cartesian firmware' by Zack Smith
    and Philipp Tiefenbacher. */
 
-#include "Marlin.h"
 #include "stepper.h"
+#include "Marlin.h"
+#include "Laser.h"
 #include "planner.h"
 #include "temperature.h"
 #include "ultralcd.h"
