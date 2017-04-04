@@ -1015,18 +1015,24 @@ void setup()
   setup_killpin();
   setup_powerhold();
   MYSERIAL.begin(BAUDRATE);
-  SERIAL_PROTOCOLLNPGM("start");
-  SERIAL_ECHO_START;
+  /*SERIAL_PROTOCOLLNPGM("start");
+  SERIAL_ECHO_START;*/
 
   // Check startup - does nothing if bootloader sets MCUSR to 0
+  
   byte mcu = MCUSR;
+  #if MOTHERBOARD != 25
+  // turn output off for totumduino
   if(mcu & 1) SERIAL_ECHOLNPGM(MSG_POWERUP);
   if(mcu & 2) SERIAL_ECHOLNPGM(MSG_EXTERNAL_RESET);
   if(mcu & 4) SERIAL_ECHOLNPGM(MSG_BROWNOUT_RESET);
   if(mcu & 8) SERIAL_ECHOLNPGM(MSG_WATCHDOG_RESET);
   if(mcu & 32) SERIAL_ECHOLNPGM(MSG_SOFTWARE_RESET);
+  #endif
   MCUSR=0;
 
+  #if MOTHERBOARD != 25
+  // turn output off for totumduino
   SERIAL_ECHOPGM(MSG_MARLIN_FABTOTUM);
   SERIAL_ECHOLNPGM(STRING_BUILD_VERSION);
   #ifdef STRING_BUILD_DATE
@@ -1043,6 +1049,7 @@ void setup()
   SERIAL_ECHO(freeMemory());
   SERIAL_ECHOPGM(MSG_PLANNER_BUFFER_BYTES);
   SERIAL_ECHOLN((int)sizeof(block_t)*BLOCK_BUFFER_SIZE);
+  #endif
   for(int8_t i = 0; i < BUFSIZE; i++)
   {
     fromsd[i] = false;
@@ -1064,8 +1071,11 @@ void setup()
   FabtotumIO_init();
   FabtotumHeads_init();
 
+  #if MOTHERBOARD != 25
+  // no lcd on totumduino
   lcd_init();
   _delay_ms(1000);	// wait 1sec to display the splash screen
+  #endif
 
   #if defined(CONTROLLERFAN_PIN) && CONTROLLERFAN_PIN > -1
     SET_OUTPUT(CONTROLLERFAN_PIN); //Set pin used for driver cooling fan
