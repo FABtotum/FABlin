@@ -801,50 +801,54 @@ void set_mods (const char* modstring)
 
 void tool_change (uint8_t id)
 {
+  head_placed = false;
+
   // Shutdown head
   StopTool();
 
-  // Reset default tool configurations
-  tools.define(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-  tools.define(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-  tools.define(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+  if (id <= HEADS)
+  {
+    // Reset default tool configurations
+    tools.define(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+    tools.define(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+    tools.define(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
 
-  if (id <= HEADS) {
     //installed_head = &(tools.factory[id]);
     tools.load(active_tool, id);
-  }
-  installed_head_id = id;
 
-  // Reselect active tool to make any tool configuration modification effective
-  tools.change(active_tool);
+    // Reselect active tool to make any tool configuration modification effective
+    tools.change(active_tool);
 
-   // Forcefully reset mode...
-   working_mode_change(installed_head->mode, true);
+     // Forcefully reset mode...
+    working_mode_change(installed_head->mode, true);
 
    // Update heaters max temp
 #if (EXTRUDERS > 0)
-  if (installed_head->maxtemp > installed_head->mintemp)
-  {
-    // Activate custom thermistor table
-    // Important: do this before changing max temp cause we need correct raw values
-    ThermistorHotswap::setTable(installed_head->thtable);
+    if (installed_head->maxtemp > installed_head->mintemp)
+    {
+      // Activate custom thermistor table
+      // Important: do this before changing max temp cause we need correct raw values
+      ThermistorHotswap::setTable(installed_head->thtable);
 
-      maxttemp[0] = installed_head->maxtemp;
-      CRITICAL_SECTION_START
-      heater_0_init_maxtemp(installed_head->maxtemp);
-      CRITICAL_SECTION_END
-   }
+        maxttemp[0] = installed_head->maxtemp;
+        CRITICAL_SECTION_START
+        heater_0_init_maxtemp(installed_head->maxtemp);
+        CRITICAL_SECTION_END
+     }
 #endif
 
-  // Set head placement status to the expected value (to be checked by subsequent procedures)
-  if (installed_head_id > 1)
-  if (installed_head_id != 3)
-    head_placed = true;
+    // Set hardcoded head modification codes to be run
+    if (installed_head->mods) {
+      set_mods(installed_head->mods);
+    }
 
-  // Set hardcoded head modification codes to be run
-  if (installed_head->mods) {
-    set_mods(installed_head->mods);
   }
+  installed_head_id = id;
+
+  // Set head placement status to the expected value (to be checked by subsequent procedures)
+  /*if (installed_head_id > 1)
+  if (installed_head_id != 3)
+    head_placed = true;*/
 
   // And try to read head info if available
   Read_Head_Info();
@@ -968,10 +972,6 @@ void FabtotumIO_init()
 
    LIGHT_SIGN_ON();
 
-   //TCCR1A= _BV(COM1A1) | _BV(COM1B1) | _BV(WGM10);
-   //TCCR1B= _BV(WGM12) | _BV(CS11) | _BV(CS10);
-
-   //FabSoftPwm_TMR=0;
    FabSoftPwm_LMT=MAX_PWM;
    HeadLightSoftPwm=0;
    LaserSoftPwm=0;
@@ -986,25 +986,6 @@ void FabtotumIO_init()
    enable_door_kill=true;
    rpm = 0;
 
-  // Particular tool definitions
-  // TODO: move these in a flash-mem table of factory-supported heads and load
-  //       definitions accordingly
-  /*switch (installed_head_id)
-  {
-    case FAB_HEADS_direct_ID:
-       defineTool(0, FAB_HEADS_direct_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
-       defineTool(2, FAB_HEADS_default_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-       break;
-    case FAB_HEADS_mill_v2_ID:
-       defineTool(0, -1, -1, FAB_HEADS_mill_v2_SMART);
-       break;
-    default:
-      defineTool(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-  }
-
-  // Load starting tool (T0)
-  loadTool(0);*/
-
    set_amb_color(0,0,0);
    set_amb_color_fading(true,true,false,fading_speed);
 
@@ -1016,9 +997,6 @@ void FabtotumIO_init()
    BEEP_OFF()
 
   z_endstop_bug_workaround = fab_batch_number >= 3? 255 : 0;
-
-  // SmartHead is configured as Two-Wire bus by default
-  //SmartHead.wire(true);
 }
 
 void setup()
@@ -6496,6 +6474,7 @@ void Read_Head_Info(bool force)
       Wire.begin();
 #endif
     } else {
+      head_placed = true;
       return;
     }
   }

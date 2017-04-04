@@ -1490,119 +1490,73 @@ ISR(TIMER0_COMPB_vect)
     mon_5V_raw_value = 0;
     main_curr_raw_value = 0;
 
+    if (working_mode != WORKING_MODE_CNC)
+    {
 #if HEATER_0_RAW_LO_TEMP > HEATER_0_RAW_HI_TEMP
-    if(current_temperature_raw[0] <= maxttemp_raw[0]) {
+      if(current_temperature_raw[0] <= maxttemp_raw[0]) {
 #else
-    if(current_temperature_raw[0] >= maxttemp_raw[0]) {
+      if(current_temperature_raw[0] >= maxttemp_raw[0]) {
 #endif
-        max_temp_error(0);
-    }
+          max_temp_error(0);
+      }
+
 #if HEATER_0_RAW_LO_TEMP > HEATER_0_RAW_HI_TEMP
-    if(current_temperature_raw[0] >= minttemp_raw[0]) {
+      if(current_temperature_raw[0] >= minttemp_raw[0]) {
 #else
-    if(current_temperature_raw[0] <= minttemp_raw[0]) {
+      if(current_temperature_raw[0] <= minttemp_raw[0]) {
 #endif
-	min_temp_error(0);
-    }
+      min_temp_error(0);
+      }
+
 #if HEATERS > 1
-#if HEATER_1_RAW_LO_TEMP > HEATER_1_RAW_HI_TEMP
-    if(current_temperature_raw[1] <= maxttemp_raw[1]) {
-#else
-    if(current_temperature_raw[1] >= maxttemp_raw[1]) {
+  #if HEATER_1_RAW_LO_TEMP > HEATER_1_RAW_HI_TEMP
+      if(current_temperature_raw[1] <= maxttemp_raw[1]) {
+  #else
+      if(current_temperature_raw[1] >= maxttemp_raw[1]) {
+  #endif
+          max_temp_error(1);
+      }
+
+  #if HEATER_1_RAW_LO_TEMP > HEATER_1_RAW_HI_TEMP
+      if(current_temperature_raw[1] >= minttemp_raw[1]) {
+  #else
+      if(current_temperature_raw[1] <= minttemp_raw[1]) {
+  #endif
+          min_temp_error(1);
+      }
 #endif
-        max_temp_error(1);
-    }
-#if HEATER_1_RAW_LO_TEMP > HEATER_1_RAW_HI_TEMP
-    if(current_temperature_raw[1] >= minttemp_raw[1]) {
-#else
-    if(current_temperature_raw[1] <= minttemp_raw[1]) {
-#endif
-        min_temp_error(1);
-    }
-#endif
+
 #if HEATERS > 2
-#if HEATER_2_RAW_LO_TEMP > HEATER_2_RAW_HI_TEMP
-    if(current_temperature_raw[2] <= maxttemp_raw[2]) {
-#else
-    if(current_temperature_raw[2] >= maxttemp_raw[2]) {
-#endif
-        max_temp_error(2);
-    }
-#if HEATER_2_RAW_LO_TEMP > HEATER_2_RAW_HI_TEMP
-    if(current_temperature_raw[2] >= minttemp_raw[2]) {
-#else
-    if(current_temperature_raw[2] <= minttemp_raw[2]) {
-#endif
-        min_temp_error(2);
-    }
+  #if HEATER_2_RAW_LO_TEMP > HEATER_2_RAW_HI_TEMP
+      if(current_temperature_raw[2] <= maxttemp_raw[2]) {
+  #else
+      if(current_temperature_raw[2] >= maxttemp_raw[2]) {
+  #endif
+          max_temp_error(2);
+      }
+
+  #if HEATER_2_RAW_LO_TEMP > HEATER_2_RAW_HI_TEMP
+      if(current_temperature_raw[2] >= minttemp_raw[2]) {
+  #else
+      if(current_temperature_raw[2] <= minttemp_raw[2]) {
+  #endif
+          min_temp_error(2);
+      }
 #endif
 
   /* No bed MINTEMP error? */
 #if defined(BED_MAXTEMP) && (TEMP_SENSOR_BED != 0)
-# if HEATER_BED_RAW_LO_TEMP > HEATER_BED_RAW_HI_TEMP
-    if(current_temperature_bed_raw <= bed_maxttemp_raw) {
-#else
-    if(current_temperature_bed_raw >= bed_maxttemp_raw) {
-#endif
-       target_temperature_bed = 0;
-       bed_max_temp_error();
-    }
-#endif
-
-
-/*
-  FabSoftPwm_TMR_t=FabSoftPwm_TMR_t+1;
-  if(FabSoftPwm_TMR_t>LaserSoftPwm_t && LaserSoftPwm_t<MAX_PWM) LASER_GATE_OFF();
-  if(FabSoftPwm_TMR_t>HeadLightSoftPwm_t && HeadLightSoftPwm_t<MAX_PWM) HEAD_LIGHT_OFF();
-  if(FabSoftPwm_TMR_t>RedSoftPwm_t && RedSoftPwm_t<MAX_PWM) RED_OFF();
-  if(FabSoftPwm_TMR_t>GreenSoftPwm_t && GreenSoftPwm_t<MAX_PWM) GREEN_OFF();
-  if(FabSoftPwm_TMR_t>BlueSoftPwm_t && BlueSoftPwm_t<MAX_PWM) BLUE_OFF();
-  if(FabSoftPwm_TMR_t>FabSoftPwm_LMT_t)
-    {
-      if(LaserSoftPwm_t>0)LASER_GATE_ON();
-      if(HeadLightSoftPwm_t>0)HEAD_LIGHT_ON();
-      if(RedSoftPwm_t>0)RED_ON();
-      if(GreenSoftPwm_t>0)GREEN_ON();
-      if(BlueSoftPwm_t>0)BLUE_ON();
-      FabSoftPwm_TMR_t=0;
-    }
-
-  if(red_fading || green_fading || blue_fading)
-  {
-    fading_started=true;
-  if(led_update_cycles>fading_speed)
-      {
-      if(slope)
-        {
-          if(red_fading) {RedSoftPwm_t=RedSoftPwm_t+1;}
-          if(green_fading){GreenSoftPwm_t=GreenSoftPwm_t+1;}
-          if(blue_fading){BlueSoftPwm_t=BlueSoftPwm_t+1;}
-        }
-      else
-        {
-          if(red_fading){RedSoftPwm_t=RedSoftPwm_t-1;}
-          if(green_fading){GreenSoftPwm_t=GreenSoftPwm_t-1;}
-          if(blue_fading){BlueSoftPwm_t=BlueSoftPwm_t-1;}
-        }
-      if(((RedSoftPwm_t==MAX_PWM || RedSoftPwm_t==0) && red_fading) || ((GreenSoftPwm_t==MAX_PWM || GreenSoftPwm_t==0) && green_fading) || ((BlueSoftPwm_t==MAX_PWM || BlueSoftPwm_t==0) && blue_fading))
-        {slope=!slope;}
-
-      led_update_cycles=0;
+  #if HEATER_BED_RAW_LO_TEMP > HEATER_BED_RAW_HI_TEMP
+      if(current_temperature_bed_raw <= bed_maxttemp_raw) {
+  #else
+      if(current_temperature_bed_raw >= bed_maxttemp_raw) {
+  #endif
+         target_temperature_bed = 0;
+         bed_max_temp_error();
       }
-   led_update_cycles=led_update_cycles+1;
-  }
-  if(!red_fading && !green_fading && !blue_fading && fading_started)
-    {
-      led_update_cycles=0;
-      fading_started=false;
-      slope=true;
+#endif
     }
-
-    */
-
-
-
-  }
+  }  // if (working_mode != WORKING_MODE_CNC)
 
 #ifdef BABYSTEPPING
   for(uint8_t axis=0;axis<3;axis++)
