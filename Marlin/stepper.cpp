@@ -23,15 +23,19 @@
 
 #include "stepper.h"
 #include "Marlin.h"
-#include "Laser.h"
 #include "planner.h"
 #include "temperature.h"
 #include "ultralcd.h"
 #include "language.h"
 #include "cardreader.h"
 #include "speed_lookuptable.h"
+
 #if defined(DIGIPOTSS_PIN) && DIGIPOTSS_PIN > -1
 #include <SPI.h>
+#endif
+
+#ifdef ENABLE_LASER_MODE
+  #include "Laser.h"
 #endif
 
 
@@ -203,11 +207,13 @@ void checkHitEndstops()
    endstop_y_hit=false;
    endstop_z_hit=false;
 
+#ifdef ENABLE_LASER_MODE
   // turn down laser on endstop hit
   if (working_mode == WORKING_MODE_LASER)
   {
     Laser::setPower(0);
   }
+#endif
 
 #if defined(ABORT_ON_ENDSTOP_HIT_FEATURE_ENABLED) && defined(SDSUPPORT)
    if (abort_on_endstop_hit)

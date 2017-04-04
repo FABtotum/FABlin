@@ -31,7 +31,6 @@
 #include <errno.h>
 #include <Wire.h>
 #include "Marlin.h"
-#include "Laser.h"
 
 #ifdef ENABLE_AUTO_BED_LEVELING
 #include "vector_3.h"
@@ -73,6 +72,10 @@
 
 #include <SoftwareSerial.h>
 #include <SmartComm.h>
+
+#ifdef ENABLE_LASER_MODE
+  #include "Laser.h"
+#endif
 
 // look here for descriptions of G-codes: http://linuxcnc.org/handbook/gcode/g-code.html
 // http://objects.reprap.org/wiki/Mendel_User_Manual:_RepRapGCodes
@@ -731,17 +734,21 @@ void working_mode_change (uint8_t new_mode, bool reset = false)
   // Deinit previous mode
   switch (working_mode)
   {
+#ifdef ENABLE_LASER_MODE
     case WORKING_MODE_LASER:
       Laser::disable();
       break;
+#endif
   }
 
    // Init new mode
   switch (new_mode)
   {
+#ifdef ENABLE_LASER_MODE
     case WORKING_MODE_LASER:
       Laser::enable();
       break;
+#endif
 
     case WORKING_MODE_CNC:
     case WORKING_MODE_HYBRID:
@@ -1932,6 +1939,7 @@ void ThermistorHotswap::setTable (const unsigned short value)
 
 #endif // defined(THERMISTOR_HOTSWAP)
 
+#ifdef ENABLE_LASER_MODE
 FORCE_INLINE void process_laser_power ()
 {
   if (IsStopped()) return;
@@ -1961,6 +1969,7 @@ FORCE_INLINE void process_laser_power ()
     Laser::setPower(MAX_PWM);
   }
 }
+#endif
 
 void process_commands()
 {
@@ -2823,6 +2832,7 @@ void process_commands()
       }
      break;
 
+#ifdef ENABLE_LASER_MODE
     /*
      * Command: M60
      *
@@ -2879,6 +2889,7 @@ void process_commands()
       Laser::power = 0;
     }
     break;
+#endif
 
     case 104: // M104
       if(setTargetedHotend(104)){
@@ -3243,6 +3254,8 @@ void process_commands()
       max_inactive_time = code_value() * 1000;
       break;
 
+
+#ifdef ENABLE_LASER_MODE
     /*
      * Command: M852
      *
@@ -3286,6 +3299,7 @@ void process_commands()
       }
     }
     break;
+#endif
 
     case 92: // M92
       for(int8_t i=0; i < NUM_AXIS; i++)
@@ -6062,12 +6076,14 @@ void manage_inactivity()
             disable_e1();
             disable_e2();
 
+#ifdef ENABLE_LASER_MODE
             // Zero laser power whether it's active or not
             if (Laser::synchronized) {
               Laser::power = 0;
             } else if (Laser::max_inactive_time && elapsed > Laser::max_inactive_time) {
               Laser::power = 0;
             }
+#endif
         }
     }
   }
@@ -6092,8 +6108,10 @@ void manage_inactivity()
           SERVO1_OFF();
           rpm=0;
 
+#ifdef ENABLE_LASER_MODE
           // Disable laser subsystem
           Laser::disable();
+#endif
 
           // warning
           RPI_ERROR_ACK_ON();
@@ -6272,7 +6290,9 @@ void manage_fab_soft_pwm()
 
   if (FabSoftPwm_TMR == 0)
   {
+#ifdef ENABLE_LASER_MODE
     if (Laser::power > 0) WRITE(SERVO0_PIN,1);
+#endif
 
     if(LaserSoftPwm>0)LASER_GATE_ON();
     if(HeadLightSoftPwm>0)HEAD_LIGHT_ON();
@@ -6282,7 +6302,9 @@ void manage_fab_soft_pwm()
   }
   else
   {
+#ifdef ENABLE_LASER_MODE
     if (FabSoftPwm_TMR > Laser::power) WRITE(SERVO0_PIN,0);
+#endif
 
     if(FabSoftPwm_TMR>LaserSoftPwm && LaserSoftPwm<MAX_PWM) LASER_GATE_OFF();
     if(FabSoftPwm_TMR>HeadLightSoftPwm && HeadLightSoftPwm<MAX_PWM) HEAD_LIGHT_OFF();
@@ -6554,14 +6576,16 @@ void Stop()
   store_last_amb_color();
 
   // Disable any subsystem work
+#ifdef ENABLE_LASER_MODE
   Laser::disable();
+#endif
 
   // Disable any possible output to the head
   disable_heater();
   MILL_MOTOR_OFF();
-  #ifdef FAST_PWM_FAN
+#ifdef FAST_PWM_FAN
   setPwmFrequency(FAN_PIN, 0);
-  #endif
+#endif
   fanSpeed = 0;
 
   set_amb_color(MAX_PWM,MAX_PWM,0);
@@ -6679,52 +6703,3 @@ bool setTargetedHotend(int code){
     }
   return false;
 }
-/*
-inline bool Laser::isEnabled ()
-{
-  // Test power for Laser head
-  if (installed_head_id == FAB_HEADS_laser_ID) {
-    Laser::enabled = READ(HEATER_0_PIN);
-  }
-
-  return Laser::enabled;
-}
-
-void Laser::enable ()
-{
-  // Laser tools use servo 0 pwm, in the future this may be configurable
-  SERVO1_ON();
-  servos[0].detach();
-
-  // Enable supplementary +24v power for fabtotum laser head
-  if (installed_head_id == FAB_HEADS_laser_ID) {
-    disable_heater();
-    WRITE(HEATER_0_PIN, 1);
-  }
-}
-
-void Laser::disable ()
-{
-  Laser::power = 0;
-
-  // Disable supplementary +24v power for fabtotum laser head
-  if (installed_head_id == FAB_HEADS_laser_ID) {
-    WRITE(HEATER_0_PIN, 0);
-  }
-}
-
-void Laser::setPower (uint16_t power)
-{
-  if (power > MAX_PWM) {
-    Laser::power = MAX_PWM;
-  } else if (power < 0) {
-    Laser::power = 0;
-  } else {
-    Laser::power = power;
-  }
-
-  if (Laser::power && !fanSpeed) {
-    fanSpeed = EXTRUDER_AUTO_FAN_SPEED;
-  }
-}
-*/
