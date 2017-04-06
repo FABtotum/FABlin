@@ -4693,12 +4693,11 @@ void process_commands()
 
     case 730:   // M730 - READ LAST ERROR CODE
     {
-      RPI_ERROR_ACK_OFF();
       SERIAL_PROTOCOL("ERROR ");
       SERIAL_PROTOCOL(": ");
       SERIAL_PROTOCOLLN(ERROR_CODE);
+      return;
     }
-    break;
 
     case 731:   // M731 - Disable kill on Door Open
     {
@@ -5449,7 +5448,7 @@ void process_commands()
        if (head_is_dummy) {
          SERIAL_ERROR_START;
           SERIAL_ERRORLNPGM("Smart head communication disabled by active tool definition");
-          break;
+          return;
        }
 
       int8_t port = forward_commands_to;
@@ -5460,7 +5459,7 @@ void process_commands()
       if (port < 0) {
          SERIAL_ERROR_START;
          SERIAL_ERRORLNPGM("Communication interface not specified");
-         break;
+         return;
       }
 
       if (code_seen(LINE_FORWARDING_ENCLOSING_CHAR))
@@ -5646,29 +5645,26 @@ void process_commands()
     break;
 #endif
 
-
-
-   case 998: // M998: Restart after being killed
+      case 998: // M998: Restart after being killed
       {
-      triggered_kill=false;
-      Stopped = false;
-      FlushSerialRequestResend();
-      restore_last_amb_color();
-      RPI_ERROR_ACK_OFF();
+        triggered_kill=false;
+        Stopped = false;
+        FlushSerialRequestResend();
+        restore_last_amb_color();
+        RPI_ERROR_ACK_OFF();
+        return;  // 'OK' is already printed from inside FlushSerialRequestResend()
       }
-    break;
 
-    case 999: // M999: Restart after being stopped
+      case 999: // M999: Restart after being stopped
       {
-      Stopped = false;
-      lcd_reset_alert_level();
-      gcode_LastN = Stopped_gcode_LastN;
-      FlushSerialRequestResend();
-      restore_last_amb_color();
-      RPI_ERROR_ACK_OFF();
-      //Read_Head_Info();
+        Stopped = false;
+        lcd_reset_alert_level();
+        gcode_LastN = Stopped_gcode_LastN;
+        FlushSerialRequestResend();
+        restore_last_amb_color();
+        RPI_ERROR_ACK_OFF();
+        return;  // 'OK' is already printed from inside FlushSerialRequestResend()
       }
-    break;
     }
   }
 
