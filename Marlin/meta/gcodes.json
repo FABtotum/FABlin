@@ -390,6 +390,30 @@
 			}
 		}
 	},
+	"M150": {
+		"desc": "Set ambient light color and glowing speed",
+		"params": {
+			"R": {
+				"desc": "Red intensity",
+				"type": "number",
+				"range": [0,255]
+			},
+			"U": {
+				"desc": "Green intensity",
+				"type": "number",
+				"range": [0,255]
+			},
+			"B": {
+				"desc": "Blue intensity",
+				"type": "number",
+				"range": [0,255]
+			},
+			"S": {
+				"desc": "Glowing speed. 0 disables glowing",
+				"type": "number",
+				"range": [0,255]
+		}
+	},
 	"M190": {
 		"desc": "Wait for bed temperature to reach target. If S flag is used, waits only when heating. When R flag is used waits both for heating and cooling.",
 		"params": {
@@ -604,7 +628,21 @@
 		}
 	},
 	"M300": {
-		"desc": "Buzzer beep"
+		"desc": "Buzzer beep",
+		"params": {
+			"S": {
+				"desc": "Number of beeps",
+				"type": "number"
+			},
+			"D": {
+				"desc": "Duration of the beep in number of 10ms",
+				"type": "float"
+			},
+			"P": {
+				"desc": "Pause between beeps in number of 10ms",
+				"type": "float"
+			}
+		}
 	},
 	"M301": {
 		"desc": "Set PID parameters P I and D for nozzle heater",
@@ -973,12 +1011,22 @@
 			}
 		}
 	},
-	
+	"M852": {
+		"desc": "Set laser's M60 inactivity shutdown timeout",
+		"params": {
+			"S": {
+				"desc": "Timeout duration in seconds. 0 disables timeout (sets it to the max value)",
+				"type": "number",
+				"unit": "sec"
+			}
+		}
+	},
+
 	"M998": {
 		"desc": "Restart after being killed"
 	},
 	"M999": {
 		"desc": "Restart after being stopped"
 	}
-	
+
 }
