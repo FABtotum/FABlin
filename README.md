@@ -33,36 +33,30 @@ now included in the repository. To compile the firmware simply run:
 
   platformio run
 
-To directly flash the firmware onto TOTUMduino, run:
+inside this repository's root folder. To upload the firmware on the board
+or flash it directly into it refer to [platformio documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
+`platformio.ini` has a default definition for using an AVRISP-mk2 usb
+programmer. To directly flash the firmware onto TOTUMduino using that
+defintion, run:
 
   platformio run -t program
-
-`platformio.ini` has a default definition for using an AVRISP-mk2 usb
-programmer. To flash or upload the firmware through other means refer
-to [platformio
-documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
 
 
 Latest Changes
 --------------
 
-### Version 1.0.0097.2
-- Head state is not reset after M999: this makes possible (again) to use
-  other machine functions while the head is disabled after an error
-  occurred.
-- Fixed G28 not setting X/Y as homed after G28 without arguments
-- Lowered min heater temperature down to 10 degrees
-- Setting laser power to 0 actually turns off the laser beam
-- Ambient color correctly reset after homing
+### Version 1.0.0098
 
-### Version 1.0.0097.1
-- Min power level for laser
-- Auto fan on when laser active
-- Better diagnostic messages for laser head
-
-### Version: 1.0.0097
-- Final laser support: moved dedicated commands from M6/7 to M60/1/2
-- Broadened number of cases in which head misplacement is detected
-- Workaround for false z-min endstop triggerings
+- Improved homing procedure for partial homing
+- Better laser timeout management: M60 has a longer, configurable, timeout; M61 retains a short immutable timeout
+- Laser is turned down when carriage hits X or Y endstops
+- Added support for head-embedded feeders
+- Improved support for custom heads
+- Support for setting min temp with M801's R parameter
+- Improved G30 positioning
+- M150 command can set rgb led glowing speed
+- Modified M300 command to play sequences of beeps
+- Firmware startup messages suppressed
+- Various small fixes and improvements
 
 For the complete changelog, see [ChangeLog](ChangeLog.txt).
