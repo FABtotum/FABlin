@@ -417,8 +417,8 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 #define Y_HOME_DIR -1
 #define Z_HOME_DIR -1
 
-#define min_software_endstops false // If true, axis won't move to coordinates less than HOME_POS.
-#define max_software_endstops false  // If true, axis won't move to coordinates greater than the defined lengths below.
+//#define min_software_endstops false // If true, axis won't move to coordinates less than HOME_POS.
+//#define max_software_endstops false  // If true, axis won't move to coordinates greater than the defined lengths below.
 
 // Travel limits after homing
 #define X_MAX_POS 214

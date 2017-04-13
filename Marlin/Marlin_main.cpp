@@ -345,6 +345,9 @@ bool X_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic of the 
 bool Y_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
 bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
 
+bool min_software_endstops = false; // If true, axis won't move to coordinates less than HOME_POS.
+bool max_software_endstops = false;  // If true, axis won't move to coordinates greater than the defined lengths below.
+
 // Extruder offset
 #if EXTRUDERS > 1
 #ifndef DUAL_X_CARRIAGE
@@ -4033,6 +4036,27 @@ void process_commands()
 
       }
       break;
+
+    case 564:
+    {
+      for (unsigned int a = 0; a < 3; a++)
+      {
+        if (code_seen(axis_codes[a])) {
+          max_pos[a] = code_value();
+        }
+      }
+
+      if (code_seen('S')) {
+        if (code_value_long() == 1) {
+          min_software_endstops = true;
+          max_software_endstops = true;
+        } else {
+          min_software_endstops = false;
+          max_software_endstops = false;
+        }
+      }
+    }
+    break;
 
     /**
     * M575 P B R T S - Set communication params
