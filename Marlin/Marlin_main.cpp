@@ -76,6 +76,9 @@
 #ifdef ENABLE_LASER_MODE
   #include "Laser.h"
 #endif
+#ifdef ENABLE_SCAN_MODE
+  #include "FABlin_Scan.h"
+#endif
 
 // look here for descriptions of G-codes: http://linuxcnc.org/handbook/gcode/g-code.html
 // http://objects.reprap.org/wiki/Mendel_User_Manual:_RepRapGCodes
@@ -745,6 +748,12 @@ void working_mode_change (uint8_t new_mode, bool reset = false)
       Laser::disable();
       break;
 #endif
+
+#ifdef ENABLE_SCAN_MODE
+    case WORKING_MODE_SCAN:
+      Scan::disable();
+      break;
+#endif
   }
 
    // Init new mode
@@ -766,10 +775,11 @@ void working_mode_change (uint8_t new_mode, bool reset = false)
       break;
 #endif
 
-    case WORKING_MODE_CNC:
-    case WORKING_MODE_HYBRID:
-      servo_init();
+#ifdef ENABLE_SCAN_MODE
+    case WORKING_MODE_SCAN:
+      Scan::enable();
       break;
+#endif
   }
 
    working_mode = new_mode;
@@ -6081,7 +6091,12 @@ void controllerFan()
 //static bool blue_led = false;
 static uint32_t stat_update = 0;
 
-void handle_status_leds(void) {
+void handle_status_leds (void)
+{
+  #ifdef ENABLE_SCAN_MODE
+  if (working_mode == WORKING_MODE_SCAN) return;
+  #endif
+
   float max_temp = 0.0;
   if(millis() > stat_update) {
      stat_update += 500; // Update every 0.5s

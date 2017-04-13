@@ -891,6 +891,10 @@
 #define E2_DIR_PIN         20
 #define E2_ENABLE_PIN      23
 
+#define SCAN_STEP_PIN      53
+#define SCAN_ENABLE_PIN    68//A14
+#define SCAN_BED_ON_PIN     8
+
 #define LED_PIN            13
 
 #define BEEPER	4
