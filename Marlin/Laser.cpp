@@ -27,7 +27,7 @@ namespace Laser
 
 	  // Enable supplementary +24v power for fabtotum laser head
 	  if (installed_head_id == FAB_HEADS_laser_ID) {
-		 disable_heater();
+		 tp_disable_heater();
 		 WRITE(HEATER_0_PIN, 1);
 	  }
 	}
@@ -38,6 +38,7 @@ namespace Laser
 
 	  // Disable supplementary +24v power for fabtotum laser head
 	  if (installed_head_id == FAB_HEADS_laser_ID) {
+		 tp_enable_heater();
 		 WRITE(HEATER_0_PIN, 0);
 	  }
 	}

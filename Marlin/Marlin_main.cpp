@@ -750,6 +750,16 @@ void working_mode_change (uint8_t new_mode, bool reset = false)
    // Init new mode
   switch (new_mode)
   {
+    case WORKING_MODE_HYBRID:
+      tp_init();
+    case WORKING_MODE_CNC:
+      servo_init();
+      break;
+
+    case WORKING_MODE_FFF:
+      tp_init();
+      break;
+
 #ifdef ENABLE_LASER_MODE
     case WORKING_MODE_LASER:
       Laser::enable();
