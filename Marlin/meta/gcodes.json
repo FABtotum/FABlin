@@ -249,9 +249,6 @@
 	"M17": {
 		"desc": "Enable power to all stepper motors"
 	},
-	"M18": {
-		"desc": "Disable power to all stepper motors"
-	},
 	"M31": {
 		"desc": "Time since last M109"
 	},
@@ -412,6 +409,7 @@
 				"desc": "Glowing speed. 0 disables glowing",
 				"type": "number",
 				"range": [0,255]
+			}
 		}
 	},
 	"M190": {
