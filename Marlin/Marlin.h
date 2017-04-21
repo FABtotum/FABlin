@@ -462,6 +462,7 @@ extern uint8_t working_mode;
 #define ERROR_Y_MAX_ENDSTOP  108
 #define ERROR_Y_MIN_ENDSTOP  109
 #define ERROR_IDLE_SAFETY    110
+#define ERROR_WIRE_END       111
 
 //error codes for FABUI configurable functionalities
 #define ERROR_Y_BOTH_TRIGGERED   120

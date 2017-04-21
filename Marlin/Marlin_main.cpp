@@ -6247,6 +6247,21 @@ void manage_inactivity()
      enable_door_kill=true;                    // REARM the killing process if the user closes the front door
     }
 
+#if defined(WIRE_END_PIN) && WIRE_END_PIN > -1
+  if (!RPI_ERROR_STATUS())
+  #if defined(WIRE_END_INVERTING)
+  if (WIRE_END_STATUS() == WIRE_END_INVERTING)
+  #else
+  if (WIRE_END_STATUS() == 0)
+  #endif
+  {
+    if (current_block != NULL && current_block->steps_e) {
+      RPI_ERROR_ACK_ON();
+      ERROR_CODE=ERROR_WIRE_END;
+    }
+  }
+#endif
+
  manage_secure_endstop();
  manage_fab_soft_pwm();                        // manage light
  manage_amb_color_fading();                    // manage ligth fading

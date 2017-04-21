@@ -441,6 +441,9 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
  #define EXTERNAL_ENDSTOP_Z_PROBING_PIN 71
  #define EXTERNAL_Z_ENDSTOP_INVERTING true
 #endif
+
+#define WIRE_END_INVERTING true
+
 //============================= Bed Auto Leveling ===========================
 
 #define ENABLE_AUTO_BED_LEVELING // Delete the comment to enable (remove // at the start of the line)
