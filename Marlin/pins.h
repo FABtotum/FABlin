@@ -887,13 +887,13 @@
 #define E1_ENABLE_PIN      30
 
 // 3rd drive: directdrive feeder
-#define E2_STEP_PIN        21
+#define E2_STEP_PIN        53//21
 #define E2_DIR_PIN         20
-#define E2_ENABLE_PIN      23
+#define E2_ENABLE_PIN      8//68//23
 
 #define SCAN_STEP_PIN      53
-#define SCAN_ENABLE_PIN    68//A14
-#define SCAN_BED_ON_PIN     8
+#define SCAN_ENABLE_PIN    8//68//A14
+#define SCAN_BED_ON_PIN    68//8
 
 #define LED_PIN            13
 

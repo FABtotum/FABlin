@@ -1028,7 +1028,7 @@ void setup()
   SERIAL_ECHO_START;*/
 
   // Check startup - does nothing if bootloader sets MCUSR to 0
-  
+
   byte mcu = MCUSR;
   #if MOTHERBOARD != 25
   // turn output off for totumduino
@@ -3729,35 +3729,35 @@ void process_commands()
         byte beeps = code_value();
         byte dur = 5;
         byte pause = 5;
-        
+
         if( code_seen('D') )
         {
           dur = code_value();
           if(dur < 1)
             dur = 1;
         }
-        
+
         if( code_seen('P') )
         {
           pause = code_value();
           if(pause < 1)
             pause = 1;
         }
-        
+
         if(beeps > 10)
           beeps = 10;
         if(beeps < 1)
           beeps = 1;
-        
+
         byte dd;
-        
+
         while(beeps--)
         {
           BEEP_ON()
           dd = dur;
           while(dd--)
             _delay_ms(10);
-            
+
           BEEP_OFF()
           dd = pause;
           while(dd--)
@@ -3910,6 +3910,22 @@ void process_commands()
     }
     break;
 #endif
+
+    case 403:
+    {
+      if (code_seen('S')) {
+        WRITE(SCAN_STEP_PIN, code_value_long()!=0? !INVERT_E2_STEP_PIN : INVERT_E2_STEP_PIN);
+      }
+
+      if (code_seen('E')) {
+        WRITE(SCAN_ENABLE_PIN,code_value_long()!=0? E2_ENABLE_ON : !E2_ENABLE_ON);
+      }
+
+      if (code_seen('V')) {
+        WRITE(SCAN_BED_ON_PIN,code_value_long()!=0? SCAN_BED_ON : !SCAN_BED_ON);
+      }
+    }
+    break;
 
     case 450:
     {

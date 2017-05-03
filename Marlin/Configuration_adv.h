@@ -227,6 +227,9 @@
 #define INVERT_Y_STEP_PIN false
 #define INVERT_Z_STEP_PIN false
 #define INVERT_E_STEP_PIN false
+#define INVERT_E0_STEP_PIN INVERT_E_STEP_PIN
+#define INVERT_E1_STEP_PIN INVERT_E_STEP_PIN
+#define INVERT_E2_STEP_PIN true
 
 //default idle for totumduino
 #define DEFAULT_DEACTIVE_TIME 600 //600 =10 minutes and shutting down everything

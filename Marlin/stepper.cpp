@@ -763,45 +763,45 @@ ISR(TIMER1_COMPA_vect)
     // Set E direction (Depends on E direction + advance)
     for(unsigned char i=0; i<4;i++) {
       if (e_steps[0] != 0) {
-        WRITE(E0_STEP_PIN, INVERT_E_STEP_PIN);
+        WRITE(E0_STEP_PIN, INVERT_E0_STEP_PIN);
         if (e_steps[0] < 0) {
           WRITE(E0_DIR_PIN, INVERT_E0_DIR);
           e_steps[0]++;
-          WRITE(E0_STEP_PIN, !INVERT_E_STEP_PIN);
+          WRITE(E0_STEP_PIN, !INVERT_E0_STEP_PIN);
         }
         else if (e_steps[0] > 0) {
           WRITE(E0_DIR_PIN, !INVERT_E0_DIR);
           e_steps[0]--;
-          WRITE(E0_STEP_PIN, !INVERT_E_STEP_PIN);
+          WRITE(E0_STEP_PIN, !INVERT_E0_STEP_PIN);
         }
       }
  #if EXTRUDERS > 1
       if (e_steps[1] != 0) {
-        WRITE(E1_STEP_PIN, INVERT_E_STEP_PIN);
+        WRITE(E1_STEP_PIN, INVERT_E1_STEP_PIN);
         if (e_steps[1] < 0) {
           WRITE(E1_DIR_PIN, INVERT_E1_DIR);
           e_steps[1]++;
-          WRITE(E1_STEP_PIN, !INVERT_E_STEP_PIN);
+          WRITE(E1_STEP_PIN, !INVERT_E1_STEP_PIN);
         }
         else if (e_steps[1] > 0) {
           WRITE(E1_DIR_PIN, !INVERT_E1_DIR);
           e_steps[1]--;
-          WRITE(E1_STEP_PIN, !INVERT_E_STEP_PIN);
+          WRITE(E1_STEP_PIN, !INVERT_E1_STEP_PIN);
         }
       }
  #endif
  #if EXTRUDERS > 2
       if (e_steps[2] != 0) {
-        WRITE(E2_STEP_PIN, INVERT_E_STEP_PIN);
+        WRITE(E2_STEP_PIN, INVERT_E2_STEP_PIN);
         if (e_steps[2] < 0) {
           WRITE(E2_DIR_PIN, INVERT_E2_DIR);
           e_steps[2]++;
-          WRITE(E2_STEP_PIN, !INVERT_E_STEP_PIN);
+          WRITE(E2_STEP_PIN, !INVERT_E2_STEP_PIN);
         }
         else if (e_steps[2] > 0) {
           WRITE(E2_DIR_PIN, !INVERT_E2_DIR);
           e_steps[2]--;
-          WRITE(E2_STEP_PIN, !INVERT_E_STEP_PIN);
+          WRITE(E2_STEP_PIN, !INVERT_E2_STEP_PIN);
         }
       }
  #endif
@@ -962,17 +962,17 @@ void st_init()
   #endif
   #if defined(E0_STEP_PIN) && (E0_STEP_PIN > -1)
     SET_OUTPUT(E0_STEP_PIN);
-    WRITE(E0_STEP_PIN,INVERT_E_STEP_PIN);
+    WRITE(E0_STEP_PIN,INVERT_E0_STEP_PIN);
     disable_e0();
   #endif
   #if defined(E1_STEP_PIN) && (E1_STEP_PIN > -1)
     SET_OUTPUT(E1_STEP_PIN);
-    WRITE(E1_STEP_PIN,INVERT_E_STEP_PIN);
+    WRITE(E1_STEP_PIN,INVERT_E1_STEP_PIN);
     disable_e1();
   #endif
   #if defined(E2_STEP_PIN) && (E2_STEP_PIN > -1)
     SET_OUTPUT(E2_STEP_PIN);
-    WRITE(E2_STEP_PIN,INVERT_E_STEP_PIN);
+    WRITE(E2_STEP_PIN,INVERT_E2_STEP_PIN);
     disable_e2();
   #endif
 
