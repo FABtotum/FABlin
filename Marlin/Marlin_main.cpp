@@ -4696,7 +4696,7 @@ void process_commands()
       SERIAL_PROTOCOL("ERROR ");
       SERIAL_PROTOCOL(": ");
       SERIAL_PROTOCOLLN(ERROR_CODE);
-      return;
+      break;
     }
 
     case 731:   // M731 - Disable kill on Door Open
