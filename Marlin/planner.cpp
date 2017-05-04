@@ -480,6 +480,7 @@ void check_axes_activity()
     disable_e0();
     disable_e1();
     disable_e2();
+    disable_e3();
   }
 #if defined(FAN_PIN) && FAN_PIN > -1
   #ifdef FAN_KICKSTART_TIME
@@ -677,6 +678,7 @@ block->steps_x = labs((target[X_AXIS]-position[X_AXIS]) - (target[Y_AXIS]-positi
     enable_e0();
     enable_e1();
     enable_e2();
+    enable_e3();
   }
 
   if (block->steps_e == 0)

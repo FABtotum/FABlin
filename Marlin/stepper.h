@@ -22,8 +22,26 @@
 #define stepper_h
 
 #include "planner.h"
+/*#include "pins.h"
+#include "Configuration.h"
+#include "Configuration_adv.h"*/
 
-#if EXTRUDERS > 2
+/*
+#if EXTRUDERS > 3
+  #define WRITE_E_STEP(v) { \
+    if (current_block->active_extruder == 2) { \
+      WRITE(E2_STEP_PIN, v^INVERT_E_STEP_PIN^INVERT_E2_STEP_PIN); \
+    } else { \
+      if (current_block->active_extruder == 1) { \
+        WRITE(E1_STEP_PIN, v^INVERT_E_STEP_PIN^INVERT_E1_STEP_PIN); \
+      } else { \
+        WRITE(E0_STEP_PIN, v^INVERT_E_STEP_PIN^INVERT_E0_STEP_PIN); \
+      } \
+    } \
+  }
+  #define NORM_E_DIR() { if(current_block->active_extruder == 2) { WRITE(E2_DIR_PIN, !INVERT_E2_DIR); } else { if(current_block->active_extruder == 1) { WRITE(E1_DIR_PIN, !INVERT_E1_DIR); } else { WRITE(E0_DIR_PIN, !INVERT_E0_DIR); }}}
+  #define REV_E_DIR() { if(current_block->active_extruder == 2) { WRITE(E2_DIR_PIN, INVERT_E2_DIR); } else { if(current_block->active_extruder == 1) { WRITE(E1_DIR_PIN, INVERT_E1_DIR); } else { WRITE(E0_DIR_PIN, INVERT_E0_DIR); }}}
+#elif EXTRUDERS > 2
   #define WRITE_E_STEP(v) { \
     if (current_block->active_extruder == 2) { \
       WRITE(E2_STEP_PIN, v^INVERT_E_STEP_PIN^INVERT_E2_STEP_PIN); \
@@ -67,6 +85,7 @@
   #define NORM_E_DIR() WRITE(E0_DIR_PIN, !INVERT_E0_DIR)
   #define REV_E_DIR() WRITE(E0_DIR_PIN, INVERT_E0_DIR)
 #endif
+*/
 
 #ifdef ABORT_ON_ENDSTOP_HIT_FEATURE_ENABLED
 extern bool abort_on_endstop_hit;

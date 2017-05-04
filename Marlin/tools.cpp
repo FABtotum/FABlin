@@ -37,18 +37,16 @@ void tools_s::load (uint8_t tool, uint8_t id)
  * A tool can be a physical addon (head) to be harnessed, or a different
  * configuration of equipped hardware.
  *
- * Max tools number is statically set to 3 at present.
- *
  */
-void tools_s::define(uint8_t tool, int8_t drive, unsigned int heater, uint8_t serial)
+void tools_s::define(uint8_t tool, int8_t drive, int8_t heater, uint8_t serial)
 {
    tool_extruder_mapping[tool] = drive;
    tool_heater_mapping[tool] = heater;
    tool_twi_support[tool] = serial != 0;
 
-   magazine[tool].extruders = drive >= 0? 1 << drive : 0;
    magazine[tool].serial = serial;
-   magazine[tool].heaters = 1 << heater;
+   magazine[tool].extruders = (drive >= 0)? (1 << drive) : 0;
+   magazine[tool].heaters = (heater >= 0)? (1 << heater) : 0;
 }
 
 /**

@@ -85,7 +85,7 @@
 // #define MACHINE_UUID "00000000-0000-0000-0000-000000000000"
 
 // This defines the number of extruders
-#define EXTRUDERS 3
+#define EXTRUDERS 4
 
 // This defines the number of heaters (this can be != EXTRUDERS)
 #define HEATERS 1
@@ -396,7 +396,8 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 #define E_ENABLE_ON  0 // For all extruders
 #define E0_ENABLE_ON E_ENABLE_ON
 #define E1_ENABLE_ON E_ENABLE_ON
-#define E2_ENABLE_ON 1
+#define E2_ENABLE_ON E_ENABLE_ON
+#define E3_ENABLE_ON 1
 
 // Disables axis when it's not being used.
 #define DISABLE_X false
@@ -410,6 +411,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 #define INVERT_E0_DIR true   // for direct drive extruder v9 set to true, for geared extruder set to false
 #define INVERT_E1_DIR false    // for direct drive extruder v9 set to true, for geared extruder set to false
 #define INVERT_E2_DIR true   // for direct drive extruder v9 set to true, for geared extruder set to false
+#define INVERT_E3_DIR true
 
 // ENDSTOP SETTINGS:
 // Sets direction of endstops when homing; 1=MAX, -1=MIN
@@ -836,6 +838,9 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 //
 #define SERVO_ENDSTOPS {-1, -1, 1} // Servo index for X, Y, Z. Disable with -1
 #define SERVO_ENDSTOP_ANGLES {0,0, 0,0, 127,26} // X,Y,Z Axis Extend and Retract angles
+
+#define HEAD_DRIVE_INDEX 2
+#define BED_DRIVE_INDEX  3
 
 //
 // SmartComm module

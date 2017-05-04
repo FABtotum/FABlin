@@ -316,17 +316,23 @@ int extrudemultiply=100; //100->1 200->2
 int extruder_multiply[EXTRUDERS] = {100
   #if EXTRUDERS > 1
     , 100
-    #if EXTRUDERS > 2
-      , 100
-    #endif
+  #if EXTRUDERS > 2
+    , 100
+  #if EXTRUDERS > 3
+    , 100
+  #endif
+  #endif
   #endif
 };
 float volumetric_multiplier[EXTRUDERS] = {1.0
   #if EXTRUDERS > 1
     , 1.0
-    #if EXTRUDERS > 2
-      , 1.0
-    #endif
+  #if EXTRUDERS > 2
+    , 1.0
+  #if EXTRUDERS > 3
+    , 1.0
+  #endif
+  #endif
   #endif
 };
 float current_position[NUM_AXIS] = { 0.0, 0.0, 0.0, 0.0 };
@@ -368,10 +374,10 @@ float extruder_offset[NUM_EXTRUDER_OFFSETS][EXTRUDERS] = {
 uint8_t active_tool = 0;     // Active logical tool
 uint8_t active_extruder = 0; // Active actual extruder
 bool head_is_dummy = false;  // Head reaquires TWI silencing
-uint8_t tool_extruder_mapping[EXTRUDERS] = { 0, 1, 2 };  // Tool to drive mapping
+uint8_t tool_extruder_mapping[EXTRUDERS]/* = { 0, 1, 2, ... }*/;  // Tool to drive mapping
 uint8_t extruder_heater_mapping[EXTRUDERS];     // Extruder to heater mapping
-int8_t tool_heater_mapping[EXTRUDERS]   = { 0, -1, 0 };  // Tool to heater mapping
-bool    tool_twi_support[EXTRUDERS]      = { true, false, false };  // Tool TWI support
+int8_t tool_heater_mapping[EXTRUDERS]/*   = { 0, -1, 0, ... }*/;  // Tool to heater mapping
+bool    tool_twi_support[EXTRUDERS]/*      = { true, false, false, ... }*/;  // Tool TWI support
 int fanSpeed=0;
 
 #ifdef SERVO_ENDSTOPS
@@ -1019,8 +1025,39 @@ void FabtotumIO_init()
   z_endstop_bug_workaround = fab_batch_number >= 3? 255 : 0;
 }
 
+/*
+ * Function: init
+ *
+ * Initialize data structures
+ *
+ * Description:
+ *  This function is called at the start of `setup`. Here you can put
+ *  complex initialization code required by the firmware's logic.
+ *
+ */
+FORCE_INLINE void init ()
+{
+  // tool_extruder_mapping <- {0, 1, 2, ...}
+  for (unsigned int i = 0; i < EXTRUDERS; i++) {
+    tool_extruder_mapping[i] = i;
+  }
+
+  // tool_heater_mapping <- {0, -1, 0, -1}
+#if EXTRUDERS > 1
+  tool_heater_mapping[1] = -1;
+#endif
+#if EXTRUDERS > 3
+  tool_heater_mapping[3] = -1;
+#endif
+
+  // tool_twi_support <- {true, false, ...}
+  tool_twi_support[0] = true;
+}
+
 void setup()
 {
+  init();
+
   setup_killpin();
   setup_powerhold();
   MYSERIAL.begin(BAUDRATE);
@@ -2685,6 +2722,7 @@ void process_commands()
         enable_e0();
         enable_e1();
         enable_e2();
+        enable_e3();
       break;
 
 #ifdef SDSUPPORT
@@ -3200,6 +3238,7 @@ void process_commands()
         disable_e0();
         disable_e1();
         disable_e2();
+        disable_e3();
         finishAndDisableSteppers();
         fanSpeed = 0;
         delay(1000); // Wait a little before to switch off
@@ -3237,6 +3276,7 @@ void process_commands()
           disable_e0();
           disable_e1();
           disable_e2();
+          disable_e3();
           finishAndDisableSteppers();
         }
         else
@@ -3250,6 +3290,7 @@ void process_commands()
               disable_e0();
               disable_e1();
               disable_e2();
+              disable_e3();
             }
           #endif
         }
@@ -3914,11 +3955,11 @@ void process_commands()
     case 403:
     {
       if (code_seen('S')) {
-        WRITE(SCAN_STEP_PIN, code_value_long()!=0? !INVERT_E2_STEP_PIN : INVERT_E2_STEP_PIN);
+        WRITE(E3_STEP_PIN, code_value_long()!=0? !INVERT_E3_STEP_PIN : INVERT_E3_STEP_PIN);
       }
 
       if (code_seen('E')) {
-        WRITE(SCAN_ENABLE_PIN,code_value_long()!=0? E2_ENABLE_ON : !E2_ENABLE_ON);
+        WRITE(E3_ENABLE_PIN,code_value_long()!=0? E3_ENABLE_ON : !E3_ENABLE_ON);
       }
 
       if (code_seen('V')) {
@@ -4225,6 +4266,7 @@ void process_commands()
         disable_e0();
         disable_e1();
         disable_e2();
+        disable_e3();
         delay(100);
         LCD_ALERTMESSAGEPGM(MSG_FILAMENTCHANGE);
         uint8_t cnt=0;
@@ -4679,6 +4721,7 @@ void process_commands()
       disable_e0();
       disable_e1();
       disable_e2();
+      disable_e3();
 
       //outro tune
       if (!silent){
@@ -5725,7 +5768,7 @@ void process_commands()
 
   else if(code_seen('T'))
   {
-    tmp_extruder = code_value();
+    tmp_extruder = code_value_long();
     tmp_extruder = tools.change(tmp_extruder);
     if(tmp_extruder >= EXTRUDERS) {
       SERIAL_ECHO_START;
@@ -6074,6 +6117,9 @@ void controllerFan()
     lastMotorCheck = millis();
 
     if(!READ(X_ENABLE_PIN) || !READ(Y_ENABLE_PIN) || !READ(Z_ENABLE_PIN) || (soft_pwm_bed > 0)
+    #if EXTRUDERS > 3
+       || !READ(E3_ENABLE_PIN)
+    #endif
     #if EXTRUDERS > 2
        || !READ(E2_ENABLE_PIN)
     #endif
@@ -6156,6 +6202,7 @@ void manage_inactivity()
             disable_e0();
             disable_e1();
             disable_e2();
+            disable_e3();
 
 #ifdef ENABLE_LASER_MODE
             // Zero laser power whether it's active or not
@@ -6182,6 +6229,7 @@ void manage_inactivity()
           disable_e0();
           disable_e1();
           disable_e2();
+          disable_e3();
 
           // disable heating & motors
           disable_heater();
@@ -6599,6 +6647,7 @@ void kill_by_door()
   disable_e0();
   disable_e1();
   disable_e2();
+  disable_e3();
 
   set_amb_color(MAX_PWM,0,0);
 
@@ -6650,6 +6699,7 @@ void kill()
   disable_e0();
   disable_e1();
   disable_e2();
+  disable_e3();
 
   set_amb_color(MAX_PWM,0,0);
 

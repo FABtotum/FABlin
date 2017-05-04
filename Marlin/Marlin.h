@@ -189,16 +189,35 @@ void manage_inactivity();
 #endif
 
 #if (EXTRUDERS > 2) && defined(E2_ENABLE_PIN) && (E2_ENABLE_PIN > -1)
-  #define enable_e2() WRITE(E2_ENABLE_PIN, E2_ENABLE_ON)
-  #define disable_e2() WRITE(E2_ENABLE_PIN,!E2_ENABLE_ON)
+  #if defined(HEAD_DRIVE_INDEX) && HEAD_DRIVE_INDEX > -1
+	#define enable_e2()  do { if (active_extruder==HEAD_DRIVE_INDEX) WRITE(E2_ENABLE_PIN, E2_ENABLE_ON); } while (0)
+	#define disable_e2() do { if (active_extruder==HEAD_DRIVE_INDEX) WRITE(E2_ENABLE_PIN,!E2_ENABLE_ON); } while (0)
+  #else
+    #define enable_e2()  WRITE(E2_ENABLE_PIN, E2_ENABLE_ON)
+	#define disable_e2() WRITE(E2_ENABLE_PIN,!E2_ENABLE_ON)
+  #endif
 #else
   #define enable_e2()  /* nothing */
   #define disable_e2() /* nothing */
 #endif
 
+#if (EXTRUDERS > 3) && defined(E3_ENABLE_PIN) && (E3_ENABLE_PIN > -1)
+  #if defined(BED_DRIVE_INDEX) && BED_DRIVE_INDEX > -1
+    #define enable_e3()  do { if (active_extruder==BED_DRIVE_INDEX) WRITE(E3_ENABLE_PIN, E3_ENABLE_ON); } while (0)
+    #define disable_e3() do { if (active_extruder==BED_DRIVE_INDEX) WRITE(E3_ENABLE_PIN,!E3_ENABLE_ON); } while (0)
+  #else
+    #define enable_e3()  WRITE(E3_ENABLE_PIN, E3_ENABLE_ON)
+	#define disable_e3() WRITE(E3_ENABLE_PIN,!E3_ENABLE_ON)
+  #endif
+#else
+  #define enable_e3()  /* nothing */
+  #define disable_e3() /* nothing */
+#endif
+
 #define INVALID_EXTRUDER 252
 #define INVALID_EXTRUDER_1 (INVALID_EXTRUDER | 1)
 #define INVALID_EXTRUDER_2 (INVALID_EXTRUDER | 2)
+#define INVALID_EXTRUDER_3 (INVALID_EXTRUDER | 3)
 
 
 enum AxisEnum {X_AXIS=0, Y_AXIS=1, Z_AXIS=2, E_AXIS=3};

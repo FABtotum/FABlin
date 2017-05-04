@@ -184,6 +184,96 @@ asm volatile ( \
 #define DISABLE_STEPPER_DRIVER_INTERRUPT() TIMSK1 &= ~(1<<OCIE1A)
 
 
+FORCE_INLINE void WRITE_E_STEP (uint8_t v)
+{
+#if EXTRUDERS > 1
+  switch (current_block->active_extruder)
+  {
+    case 0:
+#endif
+      WRITE(E0_STEP_PIN, v^INVERT_E_STEP_PIN^INVERT_E0_STEP_PIN);
+#if EXTRUDERS > 1
+      break;
+
+    case 1:
+      WRITE(E1_STEP_PIN, v^INVERT_E_STEP_PIN^INVERT_E1_STEP_PIN);
+      break;
+
+  #if EXTRUDERS > 2
+    case 2:
+      WRITE(E2_STEP_PIN, v^INVERT_E_STEP_PIN^INVERT_E2_STEP_PIN);
+      break;
+  #endif
+
+  #if EXTRUDERS > 3
+    case 3:
+      WRITE(E3_STEP_PIN, v^INVERT_E_STEP_PIN^INVERT_E3_STEP_PIN);
+      break;
+  #endif
+  }
+#endif
+}
+
+FORCE_INLINE void NORM_E_DIR ()
+{
+#if EXTRUDERS > 1
+  switch (current_block->active_extruder)
+  {
+    case 0:
+#endif
+      WRITE(E0_DIR_PIN, !INVERT_E0_DIR);
+#if EXTRUDERS > 1
+      break;
+
+    case 1:
+      WRITE(E1_DIR_PIN, !INVERT_E1_DIR);
+      break;
+
+  #if EXTRUDERS > 2
+    case 2:
+      WRITE(E2_DIR_PIN, !INVERT_E2_DIR);
+      break;
+  #endif
+
+/*  #if EXTRUDERS > 3
+    case 3:
+      WRITE(E3_DIR_PIN, !INVERT_E3_DIR);
+      break;
+  #endif*/
+  }
+#endif
+}
+
+FORCE_INLINE void REV_E_DIR ()
+{
+#if EXTRUDERS > 1
+  switch (current_block->active_extruder)
+  {
+    case 0:
+#endif
+      WRITE(E0_DIR_PIN, INVERT_E0_DIR);
+#if EXTRUDERS > 1
+      break;
+
+    case 1:
+      WRITE(E1_DIR_PIN, INVERT_E1_DIR);
+      break;
+
+  #if EXTRUDERS > 2
+    case 2:
+      WRITE(E2_DIR_PIN, INVERT_E2_DIR);
+      break;
+  #endif
+
+  /*#if EXTRUDERS > 3
+    case 3:
+      WRITE(E3_DIR_PIN, INVERT_E3_DIR);
+      break;
+  #endif*/
+  }
+#endif
+}
+
 void checkHitEndstops()
 {
  if( endstop_x_hit || endstop_y_hit || endstop_z_hit) {
@@ -975,6 +1065,11 @@ void st_init()
     WRITE(E2_STEP_PIN,INVERT_E2_STEP_PIN);
     disable_e2();
   #endif
+  #if defined(E3_STEP_PIN) && (E3_STEP_PIN > -1)
+    SET_OUTPUT(E3_STEP_PIN);
+    WRITE(E3_STEP_PIN,INVERT_E3_STEP_PIN);
+    disable_e3();
+  #endif
 
   // waveform generation = 0100 = CTC
   TCCR1B &= ~(1<<WGM13);
@@ -1066,6 +1161,7 @@ void finishAndDisableSteppers()
   disable_e0();
   disable_e1();
   disable_e2();
+  disable_e3();
 }
 
 void quickStop()
