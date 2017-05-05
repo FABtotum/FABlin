@@ -506,7 +506,7 @@ bool triggered_kill=false;
 bool enable_door_kill=true;
 bool enable_permanent_door_kill=true;
 bool rpi_recovery_flag=false;
-bool wire_end_detection = false; // If true, wire_end error is triggered
+volatile bool wire_end_detection = false; // If true, wire_end error is triggered
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
 bool enable_secure_switch_zprobe=false;
@@ -5690,6 +5690,7 @@ void process_commands()
 
       case 999: // M999: Restart after being stopped
       {
+        ERROR_CODE = 0;
         Stopped = false;
         lcd_reset_alert_level();
         gcode_LastN = Stopped_gcode_LastN;
