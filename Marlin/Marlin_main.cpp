@@ -283,6 +283,7 @@
 // M802 - returns supported thermistor types by index
 // M803 - changes/reads the current extruder0 thermistor input
 // M804 - changes/reads the current automatic fan on temp change configuration.
+// M805 - changes/reads the current wire_end detection configuration.
 
 // M852 - Set laser's M60 inactivity shutdown timer with parameter S<seconds>. To disable set zero (default)
 
@@ -505,6 +506,7 @@ bool triggered_kill=false;
 bool enable_door_kill=true;
 bool enable_permanent_door_kill=true;
 bool rpi_recovery_flag=false;
+bool wire_end_detection = false; // If true, wire_end error is triggered
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
 bool enable_secure_switch_zprobe=false;
@@ -531,6 +533,7 @@ volatile bool min_x_endstop_triggered=false;
 volatile bool max_x_endstop_triggered=false;
 volatile bool min_y_endstop_triggered=false;
 volatile bool max_y_endstop_triggered=false;
+volatile bool wire_end_triggered=false;
 
 byte SERIAL_HEAD_0=0;
 byte SERIAL_HEAD_1=0;
@@ -947,7 +950,8 @@ void FabtotumIO_init()
    GREEN_OFF();
    BLUE_OFF();
    analogWrite(BLUE_PIN,255);
-
+   RPI_ERROR_ACK_OFF();
+   
    //analogWrite(HEATER_0_PIN,0);
 
    HOT_LED_OFF();
@@ -4696,8 +4700,8 @@ void process_commands()
       SERIAL_PROTOCOL("ERROR ");
       SERIAL_PROTOCOL(": ");
       SERIAL_PROTOCOLLN(ERROR_CODE);
-      return;
     }
+    break;
 
     case 731:   // M731 - Disable kill on Door Open
     {
@@ -4957,7 +4961,11 @@ void process_commands()
    case 740: // M740 - read WIRE_END sensor
       {
         //SERIAL_PROTOCOLPGM(MSG_WIRE_END);
-        SERIAL_PROTOCOLLN((WIRE_END_STATUS()?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
+        #if defined(WIRE_END_INVERTING)
+        SERIAL_PROTOCOLLN(( (WIRE_END_STATUS() == WIRE_END_INVERTING)?MSG_ENDSTOP_OPEN:MSG_ENDSTOP_HIT));
+        #else
+        SERIAL_PROTOCOLLN(( (WIRE_END_STATUS() == 0)?MSG_ENDSTOP_OPEN:MSG_ENDSTOP_HIT));
+        #endif
       }
       break;
 
@@ -5645,6 +5653,31 @@ void process_commands()
     break;
 #endif
 
+
+#if defined(WIRE_END_PIN) && WIRE_END_PIN > -1
+    case 805:   // M805 - changes/reads the current wire_end detection configuration.
+		//
+		// M805 S1 enables this wire_end detection (default is enabled)
+		// M805 S0 disables this wire_end detection
+		// M805 returns the current setting 1/0 (enabled/disabled)
+    {
+      int value;
+
+      if (code_seen('S'))
+      {
+        value = code_value();
+
+        wire_end_detection = (value==0?false:true);
+        wire_end_triggered = false;
+      }
+      else
+      {
+        SERIAL_PROTOCOLLN_F((wire_end_detection==false?0:1),DEC);
+      }
+    }
+    break;
+#endif
+
       case 998: // M998: Restart after being killed
       {
         triggered_kill=false;
@@ -6251,7 +6284,11 @@ void manage_inactivity()
   if (WIRE_END_STATUS() == 0)
   #endif
   {
-    if (current_block != NULL && current_block->steps_e) {
+    if ( (current_block != NULL && current_block->steps_e) &&
+         (wire_end_detection == true) &&
+         (!wire_end_triggered))
+    {
+      wire_end_triggered = true;
       RPI_ERROR_ACK_ON();
       ERROR_CODE=ERROR_WIRE_END;
     }
