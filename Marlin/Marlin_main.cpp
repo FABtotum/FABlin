@@ -3981,66 +3981,73 @@ void process_commands()
        *    S - Whether tool supports communication (0,1)
        */
     case 563: // M563 [Pn [Dn] [Hn] [Sn]] - Define tool
-      {
-         // Select target (logical) tool
-         unsigned long target_tool;
-        if (code_seen('P')) {
-          target_tool = code_value_long();
-       } else {
-          target_tool = active_tool;
+    {
+      bool codes_seen = false;
 
-         //SERIAL_ECHOLNPGM("Tools defined:");
-
-         // Output tool definitions
-         for (target_tool = 0; target_tool < EXTRUDERS; target_tool++)
-         {
-            SERIAL_ECHOPAIR("T", (unsigned long)target_tool);
-            int8_t extruder = tool_extruder_mapping[target_tool];
-            if (extruder >= 0) {
-               SERIAL_ECHOPAIR(": Drive=", (unsigned long)(tool_extruder_mapping[target_tool]));
-               SERIAL_ECHOPAIR(" Heater=", (unsigned long)(EtoH(tool_extruder_mapping[target_tool])+1));
-            } else {
-               SERIAL_ECHOPGM(" Drive/Heater=undef.");
-            }
-            if (tool_twi_support[target_tool]) {
-              SERIAL_ECHOLNPGM(" Serial=on");
-           } else {
-              SERIAL_ECHOLNPGM(" Serial=off");
-           }
-         }
-         break;
-       }
+      // Select target (logical) tool
+      unsigned long target_tool = active_tool;
+      if (code_seen('P')) {
+        codes_seen = true;
+        target_tool = code_value_long();
+      }
 
        // Assign drive
       int8_t drive;
-        if (code_seen('D')) {
-          drive = code_value_long();
-        } else  {
-           drive = -1;
-        }
+      if (code_seen('D')) {
+        codes_seen = true;
+        drive = code_value_long();
+      } else  {
+        drive = -1;
+      }
 
         // Assign heater
-        int8_t heater;
-        if (code_seen('H')) {
-           heater = code_value_long();
-        } else  {
-           heater = -1;
-        }
+      int8_t heater;
+      if (code_seen('H')) {
+        codes_seen = true;
+        heater = code_value_long();
+      } else  {
+        heater = -1;
+      }
 
-        bool twi;
-        if (code_seen('S')) {
-           twi = code_value_long()==1 ? true : false;
-        } else {
-           twi = false;
-        }
-
+      bool twi;
+      if (code_seen('S')) {
+        codes_seen = true;
+        twi = code_value_long()==1 ? true : false;
+      } else {
+        twi = false;
+      }
+ 
+      if (codes_seen)
+      {
         tools.define(target_tool, drive, heater, twi);
 
         // Reselect active tool to reload definition
         tools.change(active_tool);
-
       }
-      break;
+      else
+      {
+        target_tool = active_tool;
+
+        // Output tool definitions
+        for (target_tool = 0; target_tool < EXTRUDERS; target_tool++)
+        {
+          SERIAL_ECHOPAIR("T", (unsigned long)target_tool);
+          int8_t extruder = tool_extruder_mapping[target_tool];
+          if (extruder >= 0) {
+             SERIAL_ECHOPAIR(": Drive=", (unsigned long)(tool_extruder_mapping[target_tool]));
+             SERIAL_ECHOPAIR(" Heater=", (unsigned long)(EtoH(tool_extruder_mapping[target_tool])+1));
+          } else {
+             SERIAL_ECHOPGM(" Drive/Heater=undef.");
+          }
+          if (tool_twi_support[target_tool]) {
+            SERIAL_ECHOLNPGM(" Serial=on");
+          } else {
+            SERIAL_ECHOLNPGM(" Serial=off");
+          }
+        }
+      }
+    }  
+    break;
 
     case 564:
     {
