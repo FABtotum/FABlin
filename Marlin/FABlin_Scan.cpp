@@ -1,5 +1,6 @@
 #include "FABlin_Scan.h"
 #include "temperature.h"
+#include "planner.h"
 
 namespace Scan
 {
@@ -13,11 +14,18 @@ namespace Scan
 		SET_OUTPUT(SCAN_BED_ON_PIN);
 
 		WRITE(SCAN_BED_ON_PIN, SCAN_BED_ON);
-		delay(1000);
+
+#ifdef PREVENT_DANGEROUS_EXTRUDE
+		set_extrude_min_temp(NOT_A_TEMPERATURE);
+#endif
 	}
 
 	void disable ()
 	{
 		WRITE(SCAN_BED_ON_PIN, !SCAN_BED_ON);
+
+#ifdef PREVENT_DANGEROUS_EXTRUDE
+		set_extrude_min_temp(EXTRUDE_MINTEMP);
+#endif
 	}
 }
