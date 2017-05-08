@@ -5355,14 +5355,14 @@ void process_commands()
           int PRISM_UV=code_value();
           if (PRISM_UV==1){
               PRISM = true;
-              SERIAL_PROTOCOL("PRISM UV ON!");
+              SERIAL_PROTOCOLLN("PRISM UV ON!");
           }
           if (PRISM_UV==0){
               PRISM = false;
-              SERIAL_PROTOCOL("PRISM UV OFF!");
+              SERIAL_PROTOCOLLN("PRISM UV OFF!");
           }
       }else{
-              SERIAL_PROTOCOL("Usage: M785 S[0-1]");
+              SERIAL_PROTOCOLLN("Usage: M785 S[0-1]");
       }
     }
     break;
@@ -5393,7 +5393,7 @@ void process_commands()
     case 786: // M786 - external power on/off pin control
       {
         //kill external power supply.
-        SERIAL_PROTOCOL("SHUTDOWN!");
+        SERIAL_PROTOCOLLN("SHUTDOWN!");
         digitalWrite(51, LOW);
       }
       break;
