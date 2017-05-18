@@ -6,7 +6,7 @@
  */
 
 // 0 (for default) + the effective number of heads
-#define HEADS 7
+#define HEADS 9
 
 // 0 .. 99 are reserved
 #define FAB_HEADS_default_ID     0
@@ -31,6 +31,10 @@
 #define FAB_HEADS_direct_DRIVE  2
 #define FAB_HEADS_direct_HEATER 1
 #define FAB_HEADS_direct_SMART  0
+
+#define FAB_HEADS_laser_pro_ID  7
+
+#define FAB_HEADS_digitizer_ID  8
 
 // 100 ... are free for public use
 #define FAB_HEADS_thirdparty_ID 100
