@@ -905,53 +905,12 @@ void FabtotumHeads_init ()
  */
 void StopTool ()
 {
-//<<<<<<< 2155cb7ec812e3daeea95055cdea392090fb8fec
    #if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
       // Shut down +24V line if FABtotum DirectDrive head is present
       //if (installed_head_id==FAB_HEADS_direct_ID) {
          MILL_MOTOR_OFF();
       //}
    #endif
-/*=======
-BEEP_ON();
-
-pinMode(RED_PIN,OUTPUT);
-pinMode(GREEN_PIN,OUTPUT);
-SET_OUTPUT(BLUE_PIN);
-pinMode(HOT_LED_PIN,OUTPUT);
-pinMode(DOOR_OPEN_PIN,INPUT);
-pinMode(HEAD_LIGHT_PIN,OUTPUT);
-pinMode(LASER_GATE_PIN,OUTPUT);
-pinMode(MILL_MOTOR_ON_PIN,OUTPUT);
-pinMode(NOT_SERVO1_ON_PIN,OUTPUT);
-#if (NUM_SERVOS > 1)
-pinMode(NOT_SERVO2_ON_PIN,OUTPUT);
-#endif
-
-//setting analog as input
-pinMode(MAIN_CURRENT_SENSE_PIN,INPUT);
-pinMode(MON_5V_PIN,INPUT);
-pinMode(MON_24V_PIN,INPUT);
-#ifdef PRESSURE_ANALOG_PIN
-pinMode(analogInputToDigitalPin(PRESSURE_ANALOG_PIN),INPUT);
-#endif
-
-pinMode(NOT_REEL_LENS_OPEN_PIN,OUTPUT);
-
-//POWER MABNAHGEMENT
-pinMode(51, OUTPUT);  //set external PSU shutdown pin (Optional on I2C)
-digitalWrite(51, HIGH);
-
-//fastio init
-// SET_INPUT(IO)  ; SET_OUTPUT(IO);
-SET_INPUT(WIRE_END_PIN);
-SET_OUTPUT(NOT_RASPI_PWR_ON_PIN);
-SET_INPUT(NOT_SECURE_SW_PIN);
-SET_OUTPUT(NOT_REEL_LENS_OPEN_PIN);
-SET_OUTPUT(LIGHT_SIGN_ON_PIN);
-SET_OUTPUT(RPI_RECOVERY_PIN);
-
->>>>>>> Statically configured IRSD z-probe:*/
 
    fanSpeed = 0;
 
@@ -960,6 +919,11 @@ SET_OUTPUT(RPI_RECOVERY_PIN);
 
 void FabtotumIO_init()
 {
+  digitalWrite(SDA,0);
+  digitalWrite(SCL,0);
+  pinMode(SDA,INPUT);
+  pinMode(SCL,INPUT);
+
    BEEP_ON()
 
    pinMode(RED_PIN,OUTPUT);
