@@ -2958,7 +2958,7 @@ void process_commands()
     case 43:
     {
       if (code_seen('R')) {
-        debug.in_n  = 0xFF & code_value_long();
+        debug.in_n  = code_value_long();
         if (debug.in_n < 0) {
           debug.in_inv = 1;
           debug.in_n = -debug.in_n;
@@ -2972,7 +2972,7 @@ void process_commands()
       }
 
       if (code_seen('P')) {
-        debug.out_n = 0xFF & code_value_long();
+        debug.out_n = code_value_long();
         if (debug.out_n < 0) {
           debug.out_inv = 1;
           debug.out_n = -debug.out_n;
