@@ -587,6 +587,14 @@ const char* mods = NULL;
 uint8_t modl = 0;
 uint8_t modi = 0;
 
+struct debug_s {
+  int in_n  = -1;
+  int out_n = LED_PIN;
+  uint8_t in_pu:1;
+  uint8_t in_inv:1;
+  uint8_t out_inv:1;
+} debug;
+
 //===========================================================================
 //=============================Routines======================================
 //===========================================================================
@@ -1161,6 +1169,14 @@ inline void manage_head ()
    }
 }
 
+inline void manage_debug_io ()
+{
+  if (debug.in_n < 0) return;
+
+  bool value = digitalRead(debug.in_n) ^ debug.in_inv;
+  digitalWrite(debug.out_n, value ^ debug.out_inv);
+}
+
 void loop()
 {
   if(buflen < (BUFSIZE-1))
@@ -1210,6 +1226,7 @@ void loop()
   manage_inactivity();
   checkHitEndstops();
   manage_head();
+  manage_debug_io();
   lcd_update();
 }
 
@@ -2019,6 +2036,15 @@ FORCE_INLINE void process_laser_power ()
   }
 }
 #endif
+
+inline bool check_sensitive_pins (unsigned int pin_number)
+{
+  for (unsigned int i = 0; i < (unsigned int)(sizeof(sensitive_pins)/sizeof(int)); i++)
+  if (sensitive_pins[i] == pin_number) {
+      return true;
+  }
+  return false;
+}
 
 void process_commands()
 {
@@ -2853,33 +2879,119 @@ void process_commands()
       autotempShutdown();
       }
       break;
-    case 42: //M42 -Change pin status via gcode
-      if (code_seen('S'))
-      {
-        int pin_status = code_value();
-        int pin_number = LED_PIN;
-        if (code_seen('P') && pin_status >= 0 && pin_status <= 255)
-          pin_number = code_value();
-        for(int8_t i = 0; i < (int8_t)sizeof(sensitive_pins); i++)
-        {
-          if (sensitive_pins[i] == pin_number)
-          {
-            pin_number = -1;
-            break;
-          }
-        }
-      #if defined(FAN_PIN) && FAN_PIN > -1
-        if (pin_number == FAN_PIN)
-          fanSpeed = pin_status;
-      #endif
-        if (pin_number > -1)
-        {
-          pinMode(pin_number, OUTPUT);
-          digitalWrite(pin_number, pin_status);
-          analogWrite(pin_number, pin_status);
+
+#ifdef DEBUG
+    case 41:
+    {
+      for (uint8_t i = 0; i < (uint8_t)(sizeof(sensitive_pins)/sizeof(int)); i++) {
+        SERIAL_PROTOCOLPGM(" ");
+        SERIAL_PROTOCOL(sensitive_pins[i]);
+      }
+      SERIAL_PROTOCOLLNPGM("");
+      break;
+    }
+#endif
+
+    case 42: //M42 - Change or read pin status via gcode
+    {
+      int pin_number = LED_PIN, pin_status=-1;
+      bool pullup;
+
+      if (code_seen('R')) {
+        pullup = code_value_long() != 0;
+      }
+
+      if (code_seen('S')) {
+        pin_status = code_value_long();
+        if (pin_status < 0 || pin_status > 255) {
+          SERIAL_ERROR_START;
+          SERIAL_PROTOCOLLNPGM(": out of bound");
+          return;
         }
       }
-     break;
+
+      if (code_seen('P')) {
+        pin_number = code_value_long();
+      }
+
+      if (check_sensitive_pins(pin_number)) {
+        SERIAL_ERROR_START;
+        SERIAL_PROTOCOLLNPGM(": sensitive pin");
+        return;
+      }
+
+    #if defined(FAN_PIN) && FAN_PIN > -1
+      if (pin_number == FAN_PIN)
+        fanSpeed = pin_status;
+    #endif
+
+      if (pin_number > -1)
+      {
+        if (pin_status < 0) {
+          // read
+          pinMode(pin_number, INPUT);
+          digitalWrite(pin_number, pullup);
+          delay(1);
+          pin_status = digitalRead(pin_number);
+        } else {
+          //Write
+          pinMode(pin_number, OUTPUT);
+          if (pin_status > 1) {
+            analogWrite(pin_number, pin_status);
+          } else {
+            digitalWrite(pin_number, pin_status);
+          }
+        }
+      }
+
+      SERIAL_PROTOCOLPGM(MSG_OK);
+      SERIAL_PROTOCOLPGM(" ");
+      SERIAL_PROTOCOLLN(pin_status);
+      return;
+    }
+
+    /*
+     * Command: M43
+     *
+     * Configure debug output(s)
+     */
+    case 43:
+    {
+      if (code_seen('R')) {
+        debug.in_n  = 0xFF & code_value_long();
+        if (debug.in_n < 0) {
+          debug.in_inv = 1;
+          debug.in_n = -debug.in_n;
+        } else if (debug.in_n == 0) {
+          debug.in_n = -1;
+        }
+      }
+
+      if (code_seen('S')) {
+        debug.in_pu = code_value_long() != 0;
+      }
+
+      if (code_seen('P')) {
+        debug.out_n = 0xFF & code_value_long();
+        if (debug.out_n < 0) {
+          debug.out_inv = 1;
+          debug.out_n = -debug.out_n;
+        } else if (debug.out_n == 0) {
+          debug.out_n = -1;
+        }
+      }
+
+      if (debug.in_n > 1) {
+        pinMode(debug.in_n, INPUT);
+        digitalWrite(debug.in_n, debug.in_pu);
+      }
+
+      if (debug.out_n > 1) {
+        pinMode(debug.out_n, OUTPUT);
+      }
+
+      break;
+    }
 
 #ifdef ENABLE_LASER_MODE
     /*
