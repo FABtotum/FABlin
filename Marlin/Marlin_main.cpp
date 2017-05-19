@@ -919,10 +919,10 @@ void StopTool ()
 
 void FabtotumIO_init()
 {
-  digitalWrite(SDA,0);
-  digitalWrite(SCL,0);
-  pinMode(SDA,INPUT);
-  pinMode(SCL,INPUT);
+  digitalWrite(I2C_SDA,0);
+  digitalWrite(I2C_SCL,0);
+  pinMode(I2C_SDA,INPUT);
+  pinMode(I2C_SCL,INPUT);
 
    BEEP_ON()
 
@@ -5556,8 +5556,9 @@ void process_commands()
 
     case 794:
     {
-      SERIAL_ECHO_START;
-      SERIAL_ECHOLN(mods);
+      cbi(TWCR,TWEN);
+      pinMode(I2C_SDA, OUTPUT);
+      digitalWrite(I2C_SDA, !digitalRead(I2C_SDA));
     }
     break;
 
