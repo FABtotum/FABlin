@@ -80,6 +80,11 @@
   #include "FABlin_Scan.h"
 #endif
 
+#ifdef IRSD
+#include "irsd.h"
+#endif
+
+
 // look here for descriptions of G-codes: http://linuxcnc.org/handbook/gcode/g-code.html
 // http://objects.reprap.org/wiki/Mendel_User_Manual:_RepRapGCodes
 
@@ -591,6 +596,14 @@ const char* mods = NULL;
 uint8_t modl = 0;
 uint8_t modi = 0;
 
+struct debug_s {
+  int in_n  = -1;
+  int out_n = LED_PIN;
+  uint8_t in_pu:1;
+  uint8_t in_inv:1;
+  uint8_t out_inv:1;
+} debug;
+
 //===========================================================================
 //=============================Routines======================================
 //===========================================================================
@@ -725,9 +738,13 @@ void servo_init()
   }
   #endif
 
-  #if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
-  delay(PROBE_SERVO_DEACTIVATION_DELAY);
-  servos[servo_endstops[Z_AXIS]].detach();
+  #ifdef SERVO_ENDSTOPS
+  if (servo_endstops[Z_AXIS] > -1) {
+    #if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
+    delay(PROBE_SERVO_DEACTIVATION_DELAY);
+    #endif
+    servos[servo_endstops[Z_AXIS]].detach();
+  }
   #endif
 }
 
@@ -940,6 +957,11 @@ void StopTool ()
 
 void FabtotumIO_init()
 {
+  digitalWrite(I2C_SDA,0);
+  digitalWrite(I2C_SCL,0);
+  pinMode(I2C_SDA,INPUT);
+  pinMode(I2C_SCL,INPUT);
+
    BEEP_ON()
 
    pinMode(RED_PIN,OUTPUT);
@@ -981,7 +1003,7 @@ void FabtotumIO_init()
    BLUE_OFF();
    analogWrite(BLUE_PIN,255);
    RPI_ERROR_ACK_OFF();
-   
+
    //analogWrite(HEATER_0_PIN,0);
 
    HOT_LED_OFF();
@@ -989,7 +1011,11 @@ void FabtotumIO_init()
    HEAD_LIGHT_OFF();
    LASER_GATE_OFF();
 
-   MILL_MOTOR_OFF();
+  MILL_MOTOR_OFF();
+  SERVO1_OFF();
+#if (NUM_SERVOS > 1)
+  SERVO2_OFF();
+#endif
 
    SERVO1_OFF();
    SERVO2_OFF();
@@ -1005,8 +1031,10 @@ void FabtotumIO_init()
    GreenSoftPwm=0;
    BlueSoftPwm=0;
 
-   servos[0].write(SERVO_SPINDLE_ZERO);       //set Zero POS for SERVO1  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
-   servos[1].write(950);        //set Zero POS for SERVO2  (servo probe)
+  servos[0].write(SERVO_SPINDLE_ZERO);       //set Zero POS for SERVO1  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
+  #if NUM_SERVOS > 1
+  servos[1].write(950);        //set Zero POS for SERVO2  (servo probe)
+  #endif
 
    triggered_kill=false;
    enable_door_kill=true;
@@ -1023,6 +1051,18 @@ void FabtotumIO_init()
    BEEP_OFF()
 
   z_endstop_bug_workaround = fab_batch_number >= 3? 255 : 0;
+
+  // Init IRSD unit if installed
+#ifdef IRSD
+  irsd_init();
+#endif
+
+  // Init external probe if configured
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+  pinMode(EXTERNAL_ENDSTOP_Z_PROBING_PIN, INPUT);
+  enable_external_z_endstop(false);
+  ENABLE_SECURE_SWITCH_ZPROBE();
+#endif
 }
 
 /*
@@ -1167,6 +1207,14 @@ inline void manage_head ()
    }
 }
 
+inline void manage_debug_io ()
+{
+  if (debug.in_n < 0) return;
+
+  bool value = digitalRead(debug.in_n) ^ debug.in_inv;
+  digitalWrite(debug.out_n, value ^ debug.out_inv);
+}
+
 void loop()
 {
   if(buflen < (BUFSIZE-1))
@@ -1216,6 +1264,7 @@ void loop()
   manage_inactivity();
   checkHitEndstops();
   manage_head();
+  manage_debug_io();
   lcd_update();
 }
 
@@ -1678,44 +1727,56 @@ static void clean_up_after_endstop_move() {
     previous_millis_cmd = millis();
 }
 
-static void engage_z_probe() {
-    // Engage Z Servo endstop if enabled
-    #ifdef SERVO_ENDSTOPS
-    if (servo_endstops[Z_AXIS] > -1) {
-      SERVO2_ON();
-    //_delay_ms(500);
-#if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
-        servos[servo_endstops[Z_AXIS]].attach(0);
-#endif
-        servos[servo_endstops[Z_AXIS]].write(servo_endstop_angles[Z_AXIS * 2]);
-#if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
-        delay(PROBE_SERVO_DEACTIVATION_DELAY);
-        servos[servo_endstops[Z_AXIS]].detach();
-#endif
-    _delay_ms(500);
-    SERVO2_OFF();
-    }
-    #endif
-}
-
-static void retract_z_probe() {
-    // Retract Z Servo endstop if enabled
-    #ifdef SERVO_ENDSTOPS
-    if (servo_endstops[Z_AXIS] > -1) {
+static void engage_z_probe()
+{
+  // Engage Z Servo endstop if enabled
+ #ifdef SERVO_ENDSTOPS
+  if (servo_endstops[Z_AXIS] > -1) {
     SERVO2_ON();
     //_delay_ms(500);
 #if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
-        servos[servo_endstops[Z_AXIS]].attach(0);
+    servos[servo_endstops[Z_AXIS]].attach(0);
 #endif
-        servos[servo_endstops[Z_AXIS]].write(servo_endstop_angles[Z_AXIS * 2 + 1]);
+    servos[servo_endstops[Z_AXIS]].write(servo_endstop_angles[Z_AXIS * 2]);
 #if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
-        delay(PROBE_SERVO_DEACTIVATION_DELAY);
-        servos[servo_endstops[Z_AXIS]].detach();
+    delay(PROBE_SERVO_DEACTIVATION_DELAY);
+    servos[servo_endstops[Z_AXIS]].detach();
 #endif
-     _delay_ms(500);
-     SERVO2_OFF();
-    }
-    #endif
+    _delay_ms(500);
+    SERVO2_OFF();
+  }
+#endif
+
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+  enable_secure_switch_zprobe = true;
+  enable_external_z_endstop(true);
+#endif
+}
+
+static void retract_z_probe()
+{
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+  enable_external_z_endstop (false);
+#endif
+
+  // Retract Z Servo endstop if enabled
+#ifdef SERVO_ENDSTOPS
+  if (servo_endstops[Z_AXIS] > -1)
+  {
+    SERVO2_ON();
+    //_delay_ms(500);
+#if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
+    servos[servo_endstops[Z_AXIS]].attach(0);
+#endif
+    servos[servo_endstops[Z_AXIS]].write(servo_endstop_angles[Z_AXIS * 2 + 1]);
+#if defined (ENABLE_AUTO_BED_LEVELING) && (PROBE_SERVO_DEACTIVATION_DELAY > 0)
+    delay(PROBE_SERVO_DEACTIVATION_DELAY);
+    servos[servo_endstops[Z_AXIS]].detach();
+#endif
+   _delay_ms(500);
+   SERVO2_OFF();
+  }
+#endif
 }
 
 /// Probe bed height at position (x,y), returns the measured z value
@@ -2013,6 +2074,15 @@ FORCE_INLINE void process_laser_power ()
   }
 }
 #endif
+
+inline bool check_sensitive_pins (unsigned int pin_number)
+{
+  for (unsigned int i = 0; i < (unsigned int)(sizeof(sensitive_pins)/sizeof(int)); i++)
+  if (sensitive_pins[i] == pin_number) {
+      return true;
+  }
+  return false;
+}
 
 void process_commands()
 {
@@ -2848,33 +2918,119 @@ void process_commands()
       autotempShutdown();
       }
       break;
-    case 42: //M42 -Change pin status via gcode
-      if (code_seen('S'))
-      {
-        int pin_status = code_value();
-        int pin_number = LED_PIN;
-        if (code_seen('P') && pin_status >= 0 && pin_status <= 255)
-          pin_number = code_value();
-        for(int8_t i = 0; i < (int8_t)sizeof(sensitive_pins); i++)
-        {
-          if (sensitive_pins[i] == pin_number)
-          {
-            pin_number = -1;
-            break;
-          }
-        }
-      #if defined(FAN_PIN) && FAN_PIN > -1
-        if (pin_number == FAN_PIN)
-          fanSpeed = pin_status;
-      #endif
-        if (pin_number > -1)
-        {
-          pinMode(pin_number, OUTPUT);
-          digitalWrite(pin_number, pin_status);
-          analogWrite(pin_number, pin_status);
+
+#ifdef DEBUG
+    case 41:
+    {
+      for (uint8_t i = 0; i < (uint8_t)(sizeof(sensitive_pins)/sizeof(int)); i++) {
+        SERIAL_PROTOCOLPGM(" ");
+        SERIAL_PROTOCOL(sensitive_pins[i]);
+      }
+      SERIAL_PROTOCOLLNPGM("");
+      break;
+    }
+#endif
+
+    case 42: //M42 - Change or read pin status via gcode
+    {
+      int pin_number = LED_PIN, pin_status=-1;
+      bool pullup;
+
+      if (code_seen('R')) {
+        pullup = code_value_long() != 0;
+      }
+
+      if (code_seen('S')) {
+        pin_status = code_value_long();
+        if (pin_status < 0 || pin_status > 255) {
+          SERIAL_ERROR_START;
+          SERIAL_PROTOCOLLNPGM(": out of bound");
+          return;
         }
       }
-     break;
+
+      if (code_seen('P')) {
+        pin_number = code_value_long();
+      }
+
+      if (check_sensitive_pins(pin_number)) {
+        SERIAL_ERROR_START;
+        SERIAL_PROTOCOLLNPGM(": sensitive pin");
+        return;
+      }
+
+    #if defined(FAN_PIN) && FAN_PIN > -1
+      if (pin_number == FAN_PIN)
+        fanSpeed = pin_status;
+    #endif
+
+      if (pin_number > -1)
+      {
+        if (pin_status < 0) {
+          // read
+          pinMode(pin_number, INPUT);
+          digitalWrite(pin_number, pullup);
+          delay(1);
+          pin_status = digitalRead(pin_number);
+        } else {
+          //Write
+          pinMode(pin_number, OUTPUT);
+          if (pin_status > 1) {
+            analogWrite(pin_number, pin_status);
+          } else {
+            digitalWrite(pin_number, pin_status);
+          }
+        }
+      }
+
+      SERIAL_PROTOCOLPGM(MSG_OK);
+      SERIAL_PROTOCOLPGM(" ");
+      SERIAL_PROTOCOLLN(pin_status);
+      return;
+    }
+
+    /*
+     * Command: M43
+     *
+     * Configure debug output(s)
+     */
+    case 43:
+    {
+      if (code_seen('R')) {
+        debug.in_n  = code_value_long();
+        if (debug.in_n < 0) {
+          debug.in_inv = 1;
+          debug.in_n = -debug.in_n;
+        } else if (debug.in_n == 0) {
+          debug.in_n = -1;
+        }
+      }
+
+      if (code_seen('S')) {
+        debug.in_pu = code_value_long() != 0;
+      }
+
+      if (code_seen('P')) {
+        debug.out_n = code_value_long();
+        if (debug.out_n < 0) {
+          debug.out_inv = 1;
+          debug.out_n = -debug.out_n;
+        } else if (debug.out_n == 0) {
+          debug.out_n = -1;
+        }
+      }
+
+      if (debug.in_n > 1) {
+        pinMode(debug.in_n, INPUT);
+        digitalWrite(debug.in_n, debug.in_pu);
+      }
+
+      if (debug.out_n > 1) {
+        pinMode(debug.out_n, OUTPUT);
+      }
+
+      break;
+    }
 
 #ifdef ENABLE_LASER_MODE
     /*
@@ -3424,6 +3580,10 @@ void process_commands()
       #if defined(Z_MIN_PIN) && Z_MIN_PIN > -1
         SERIAL_PROTOCOLPGM(MSG_Z_MIN);
         SERIAL_PROTOCOLLN(((READ(Z_MIN_PIN)^Z_MIN_ENDSTOP_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
+      #endif
+      #if defined(EXTERNAL_ENDSTOP_Z_PROBING_PIN) && (EXTERNAL_ENDSTOP_Z_PROBING_PIN > -1)
+        SERIAL_PROTOCOLPGM("external_z_min: ");
+        SERIAL_PROTOCOLLN(((READ(EXTERNAL_ENDSTOP_Z_PROBING_PIN)^EXTERNAL_ENDSTOP_Z_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
       #endif
       #if defined(Z_MAX_PIN) && Z_MAX_PIN > -1
         SERIAL_PROTOCOLPGM(MSG_Z_MAX);
@@ -4071,7 +4231,7 @@ void process_commands()
       } else {
         twi = false;
       }
- 
+
       if (codes_seen)
       {
         tools.define(target_tool, drive, heater, twi);
@@ -4101,7 +4261,7 @@ void process_commands()
           }
         }
       }
-    }  
+    }
     break;
 
     case 564:
@@ -4642,7 +4802,7 @@ void process_commands()
     }
     break;
 
-
+#if (NUM_SERVOS > 1)
     case 724:// M724 - 5VDC SERVO_2 power ON
     {
       SERVO2_ON();
@@ -4653,7 +4813,7 @@ void process_commands()
       SERVO2_OFF();
     }
     break;
-
+#endif
 
     case 726:// M726 - 5VDC RASPBERRY PI power ON
     {
@@ -5100,11 +5260,11 @@ void process_commands()
         value = code_value();
         if(value>=1)
         {
-          enable_secure_switch_zprobe=true;
+          ENABLE_SECURE_SWITCH_ZPROBE();
         }
         else
         {
-          enable_secure_switch_zprobe=false;
+          DISABLE_SECURE_SWITCH_ZPROBE();
         }
       }
       else
@@ -5568,8 +5728,9 @@ void process_commands()
 
     case 794:
     {
-      SERIAL_ECHO_START;
-      SERIAL_ECHOLN(mods);
+      cbi(TWCR,TWEN);
+      pinMode(I2C_SDA, OUTPUT);
+      digitalWrite(I2C_SDA, !digitalRead(I2C_SDA));
     }
     break;
 

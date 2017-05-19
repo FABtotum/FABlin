@@ -938,8 +938,8 @@
 #define	DOOR_OPEN_PIN	49
 #define	HEAD_LIGHT_PIN	45
 #define	LASER_GATE_PIN	44
-//#define	SCL	21
-//#define	SDA	20
+#define	I2C_SCL	21
+#define	I2C_SDA	20
 #define	MILL_MOTOR_ON_PIN	41
 #define NOT_SERVO1_ON_PIN       23
 #define	NOT_SERVO2_ON_PIN	25

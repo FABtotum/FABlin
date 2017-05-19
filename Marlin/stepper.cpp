@@ -630,7 +630,7 @@ ISR(TIMER1_COMPA_vect)
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
       CHECK_EXTERNAL_Z_ENDSTOPS
       {
-          bool external_endstop=(READ(EXTERNAL_ENDSTOP_Z_PROBING_PIN) != EXTERNAL_Z_ENDSTOP_INVERTING);
+          bool external_endstop=(READ(EXTERNAL_ENDSTOP_Z_PROBING_PIN) != EXTERNAL_ENDSTOP_Z_INVERTING);
           if(external_endstop && old_external_z_endstop && (current_block->steps_z > 0)) {
             endstops_trigsteps[Z_AXIS] = count_position[Z_AXIS];
             endstop_z_hit=true;

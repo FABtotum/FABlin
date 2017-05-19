@@ -434,14 +434,29 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 #define Y_MAX_LENGTH (Y_MAX_POS - Y_MIN_POS)
 #define Z_MAX_LENGTH (Z_MAX_POS - Z_MIN_POS)
 
+//#define IRSD
+// Configuration for IRSD probe mounted in place of physical probe
+//#ifdef IRSD
+  #define IRSD_PIN              6
+  #define IRSD_PIN_INVERTING    0
+  #define IRSD_ENABLE_PIN      25
+  #define IRSD_ENABLE_INVERTING 1
+  #define IRSD_MODE_DIGITAL     1
+//#endif
+
 //= Z PROBING via endstop (e.g. electrical continuity between mill and PCB)==
 
 #define EXTERNAL_ENDSTOP_Z_PROBING
 //#undef EXTERNAL_ENDSTOP_Z_PROBING
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
- #define EXTERNAL_ENDSTOP_Z_PROBING_PIN 71
- #define EXTERNAL_Z_ENDSTOP_INVERTING true
+  #ifdef IRSD
+     #define EXTERNAL_ENDSTOP_Z_PROBING_PIN IRSD_PIN
+     #define EXTERNAL_ENDSTOP_Z_INVERTING   IRSD_PIN_INVERTING
+  #else
+     #define EXTERNAL_ENDSTOP_Z_PROBING_PIN 21
+     #define EXTERNAL_ENDSTOP_Z_INVERTING   0
+  #endif
 #endif
 
 #define WIRE_END_INVERTING true
@@ -829,14 +844,14 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 // leaving it undefined or defining as 0 will disable the servo subsystem
 // If unsure, leave commented / disabled
 //
-#define NUM_SERVOS 2 // Servo index starts with 0 for M280 command
+#define NUM_SERVOS 1 // Servo index starts with 0 for M280 command
 
 // Servo Endstops
 //
 // This allows for servo actuated endstops, primary usage is for the Z Axis to eliminate calibration or bed height changes.
 // Use M206 command to correct for switch height offset to actual nozzle height. Store that setting with M500.
 //
-#define SERVO_ENDSTOPS {-1, -1, 1} // Servo index for X, Y, Z. Disable with -1
+#define SERVO_ENDSTOPS {-1, -1, -1} // Servo index for X, Y, Z. Disable with -1
 #define SERVO_ENDSTOP_ANGLES {0,0, 0,0, 127,26} // X,Y,Z Axis Extend and Retract angles
 
 #define HEAD_DRIVE_INDEX 2
