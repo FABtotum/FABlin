@@ -151,7 +151,6 @@
 // M129 - EtoP Closed (BariCUDA EtoP = electricity to air pressure transducer by jmil)
 // M140 - Set bed target temp
 // M150 - Set ambient light fading color and speed R: Red<0-255> U(!): Green<0-255> B: Blue<0-255>, S: Speed<0-255>, S0 disables fading G for green does not work as it's a G command.
-// M155 S<interval> - Automatically send temperatures every <interval> seconds
 // M190 - Sxxx Wait for bed current temp to reach target temp. Waits only when heating
 //        Rxxx Wait for bed current temp to reach target temp. Waits when heating and cooling
 // M200 D<millimeters>- set filament diameter and set E axis units to cubic millimeters (use S0 to set back to millimeters).
@@ -195,8 +194,12 @@
 // M928 - Start SD logging (M928 filename.g) - ended by M29
 // M999 - Restart after being stopped by error
 
+// Implemented Marlin 1.1.x codes
+// ------------------------------
+// M155 - Auto-report temperatures with interval of S<seconds>. (Requires AUTO_REPORT_TEMPERATURES)
+
 // Implemented RepRap-like codes
-//-----------------------
+// -----------------------------
 // M563 [Pn [D<0-2>] [S<0,1>]] - Edit tool definition or query defined tools
 // M575 [P<port number>] R<rx address> T<tx address> [B<baud rate>] [S<option mask>] - Set communication port parameters
 
@@ -608,6 +611,7 @@ struct debug_s {
   uint8_t in_inv:1;
   uint8_t out_inv:1;
 } debug;
+
 
 //===========================================================================
 //=============================Routines======================================
@@ -1273,7 +1277,7 @@ void loop()
   lcd_update();
 }
 
-inline bool echo_temperature (bool abbrev=false)
+inline bool echo_temperatures (bool full=true)
 {
 #if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
   SERIAL_PROTOCOLPGM(" T:");
@@ -1286,7 +1290,7 @@ inline bool echo_temperature (bool abbrev=false)
   SERIAL_PROTOCOLPGM(" /");
   SERIAL_PROTOCOL_F(degTargetBed(),1);
   #endif //TEMP_BED_PIN
-  if (!abbrev)
+  if (full)
   for (int8_t cur_extruder = 0; cur_extruder < HEATERS; ++cur_extruder) {
     SERIAL_PROTOCOLPGM(" T");
     SERIAL_PROTOCOL(cur_extruder);
@@ -1300,7 +1304,7 @@ inline bool echo_temperature (bool abbrev=false)
   SERIAL_ERRORLNPGM(MSG_ERR_NO_THERMISTORS);
 #endif
 
-  if (!abbrev)
+  if (full)
   {
     SERIAL_PROTOCOLPGM(" @:");
 #ifdef EXTRUDER_WATTS
@@ -1415,7 +1419,7 @@ void get_command()
               SERIAL_PROTOCOLPGM(MSG_OK);
               if (auto_temp_interval != 0) {
                 if (millis() - previous_millis_temp > auto_temp_interval) {
-                  echo_temperature(true);
+                  echo_temperatures(false);
                   previous_millis_temp = millis();
                 }
               }
@@ -3692,6 +3696,7 @@ void process_commands()
       }
       break;
 
+#if defined(AUTO_REPORT_TEMPERATURES)
     /*
      * Command: M155
      *
@@ -3727,10 +3732,11 @@ void process_commands()
           auto_temp_interval = (long) (value * 1000);
         }
       } else {
-        auto_temp_interval = DEFAULT_AUTO_TEMP_INTERVAL;
+        auto_temp_interval = AUTO_REPORT_TEMPERATURES_DEFAULT_INTERVAL;
       }
       break;
     }
+#endif
 
     case 200: // M200 D<millimeters> set filament diameter and set E axis units to cubic millimeters (use S0 to set back to millimeters).
       {
