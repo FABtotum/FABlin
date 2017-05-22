@@ -75,7 +75,7 @@
 #define SERIAL_PROTOCOLLNPGM(x) (serialprintPGM(PSTR(x)),MYSERIAL.write('\n'))
 
 
-const char errormagic[] PROGMEM ="Error:";
+const char errormagic[] PROGMEM ="Error: ";
 const char echomagic[] PROGMEM ="echo:";
 #define SERIAL_ERROR_START (serialprintPGM(errormagic))
 #define SERIAL_ERROR(x) SERIAL_PROTOCOL(x)
