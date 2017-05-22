@@ -151,6 +151,7 @@
 // M129 - EtoP Closed (BariCUDA EtoP = electricity to air pressure transducer by jmil)
 // M140 - Set bed target temp
 // M150 - Set ambient light fading color and speed R: Red<0-255> U(!): Green<0-255> B: Blue<0-255>, S: Speed<0-255>, S0 disables fading G for green does not work as it's a G command.
+// M155 S<interval> - Automatically send temperatures every <interval> seconds
 // M190 - Sxxx Wait for bed current temp to reach target temp. Waits only when heating
 //        Rxxx Wait for bed current temp to reach target temp. Waits when heating and cooling
 // M200 D<millimeters>- set filament diameter and set E axis units to cubic millimeters (use S0 to set back to millimeters).
@@ -484,6 +485,10 @@ static unsigned long max_inactive_time = DEFAULT_DEACTIVE_TIME*1000l;
 // Statically #define this as long as it remains non configurable:
 //static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
 #define max_steppers_inactive_time  DEFAULT_STEPPERS_DEACTIVE_TIME*1000l
+
+//static bool auto_temp = false;
+static unsigned long auto_temp_interval = 0;
+static unsigned long previous_millis_temp = 0;
 
 unsigned long starttime=0;
 unsigned long stoptime=0;
@@ -1268,6 +1273,55 @@ void loop()
   lcd_update();
 }
 
+inline bool echo_temperature (bool abbrev=false)
+{
+#if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
+  SERIAL_PROTOCOLPGM(" T:");
+  SERIAL_PROTOCOL_F(degHotend(tmp_extruder),1);
+  SERIAL_PROTOCOLPGM(" /");
+  SERIAL_PROTOCOL_F(degTargetHotend(tmp_extruder),1);
+  #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
+  SERIAL_PROTOCOLPGM(" B:");
+  SERIAL_PROTOCOL_F(degBed(),1);
+  SERIAL_PROTOCOLPGM(" /");
+  SERIAL_PROTOCOL_F(degTargetBed(),1);
+  #endif //TEMP_BED_PIN
+  if (!abbrev)
+  for (int8_t cur_extruder = 0; cur_extruder < HEATERS; ++cur_extruder) {
+    SERIAL_PROTOCOLPGM(" T");
+    SERIAL_PROTOCOL(cur_extruder);
+    SERIAL_PROTOCOLPGM(":");
+    SERIAL_PROTOCOL_F(degHotend(cur_extruder),1);
+    SERIAL_PROTOCOLPGM(" /");
+    SERIAL_PROTOCOL_F(degTargetHotend(cur_extruder),1);
+  }
+#else
+  SERIAL_ERROR_START;
+  SERIAL_ERRORLNPGM(MSG_ERR_NO_THERMISTORS);
+#endif
+
+  if (!abbrev)
+  {
+    SERIAL_PROTOCOLPGM(" @:");
+#ifdef EXTRUDER_WATTS
+    SERIAL_PROTOCOL((EXTRUDER_WATTS * getHeaterPower(tmp_extruder))/127);
+    SERIAL_PROTOCOLPGM("W");
+#else
+    SERIAL_PROTOCOL(getHeaterPower(tmp_extruder));
+#endif
+
+    SERIAL_PROTOCOLPGM(" B@:");
+#ifdef BED_WATTS
+    SERIAL_PROTOCOL((BED_WATTS * getHeaterPower(-1))/127);
+    SERIAL_PROTOCOLPGM("W");
+#else
+    SERIAL_PROTOCOL(getHeaterPower(-1));
+#endif
+  }
+
+  SERIAL_PROTOCOLLN("");
+}
+
 void get_command()
 {
   while ((MYSERIAL.available() > 0  && buflen < BUFSIZE)
@@ -1358,7 +1412,14 @@ void get_command()
               if(card.saving)
                 break;
           #endif //SDSUPPORT
-              SERIAL_PROTOCOLLNPGM(MSG_OK);
+              SERIAL_PROTOCOLPGM(MSG_OK);
+              if (auto_temp_interval != 0) {
+                if (millis() - previous_millis_temp > auto_temp_interval) {
+                  echo_temperature(true);
+                  previous_millis_temp = millis();
+                }
+              }
+              SERIAL_PROTOCOLLNPGM("");
             }
             else {
               SERIAL_ERRORLNPGM(MSG_ERR_STOPPED);
@@ -2944,7 +3005,8 @@ void process_commands()
         pin_status = code_value_long();
         if (pin_status < 0 || pin_status > 255) {
           SERIAL_ERROR_START;
-          SERIAL_PROTOCOLLNPGM(": out of bound");
+          SERIAL_PROTOCOL_P(PERR_OUT_OF_BOUNDS);
+          SERIAL_PROTOCOLLN_P(PMSG_WS_S);
           return;
         }
       }
@@ -3629,6 +3691,47 @@ void process_commands()
 #endif // BLINKM
       }
       break;
+
+    /*
+     * Command: M155
+     *
+     * Automatically send temperatures
+     *
+     * Description:
+     * Enable or disable automatic temperature reporting. When this is enabled
+     * temperature readings are automatically appendend to the response of
+     * movement commands at regular intervals of time.
+     *
+     * Params:
+     *
+     *  S<interval> - The interval in seconds between sends. If <interval> < 1
+     *    disable sends. Max accepted value for <interval> is 60.
+     *
+     * Returns:
+     *
+     * 'ok' upon successful execution.
+     *
+     */
+    case 155:
+    {
+      if (code_seen('S')) {
+        double value = code_value();
+        if (auto_temp_interval < 1) {
+          auto_temp_interval = 0;
+        } else if (auto_temp_interval > 60) {
+          SERIAL_ERROR_START;
+          SERIAL_PROTOCOL_P(PERR_OUT_OF_BOUNDS);
+          SERIAL_PROTOCOLLN_P(PMSG_WS_S);
+          auto_temp_interval = 60*1000;
+        } else {
+          auto_temp_interval = (long) (value * 1000);
+        }
+      } else {
+        auto_temp_interval = DEFAULT_AUTO_TEMP_INTERVAL;
+      }
+      break;
+    }
+
     case 200: // M200 D<millimeters> set filament diameter and set E axis units to cubic millimeters (use S0 to set back to millimeters).
       {
         float area = .0;

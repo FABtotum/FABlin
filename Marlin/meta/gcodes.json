@@ -412,6 +412,16 @@
 			}
 		}
 	},
+	"M155": {
+		"desc": "Automatically send temperatures",
+		"params": {
+			"S": {
+				"desc": "Number of seconds to wait between sends. Values <1.0 disable them",
+				"type": "float",
+				"range": [0.0,60.0]
+			}
+		}
+	},
 	"M190": {
 		"desc": "Wait for bed temperature to reach target. If S flag is used, waits only when heating. When R flag is used waits both for heating and cooling.",
 		"params": {
