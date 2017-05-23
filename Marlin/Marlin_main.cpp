@@ -3563,6 +3563,8 @@ void process_commands()
 
       if (auto_temp_interval > 0) {
         report_temperatures_status |= TP_REPORT_AUTO;
+      } else {
+        report_temperatures_status &= ~TP_REPORT_AUTO;
       }
       break;
     }
