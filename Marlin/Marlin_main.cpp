@@ -598,6 +598,9 @@ struct debug_s {
   uint8_t out_inv:1;
 } debug;
 
+enum tp_report_t:uint8_t { TP_REPORT_NONE=0, TP_REPORT_AUTO=1, TP_REPORT_ONCE=2 };
+tp_report_t report_temperatures_status = TP_REPORT_NONE;
+
 
 //===========================================================================
 //=============================Routines======================================
@@ -1250,6 +1253,21 @@ inline bool echo_temperatures (bool full=true)
   SERIAL_PROTOCOLLN("");
 }
 
+FORCE_INLINE void auto_report_temperatures ()
+{
+  if (report_temperatures_status != 0)
+  {
+    if ((report_temperatures_status & TP_REPORT_ONCE) || ((millis() - previous_millis_temp) > auto_temp_interval)) {
+      // Report with the verboseness of the 'once' setting (full report)
+      echo_temperatures(report_temperatures_status & TP_REPORT_ONCE);
+      previous_millis_temp = millis();
+      // Only remember the 'auto' setting
+      report_temperatures_status &= TP_REPORT_AUTO;
+      return;
+    }
+  }
+}
+
 void get_command()
 {
   while ((MYSERIAL.available() > 0  && buflen < BUFSIZE)
@@ -1341,12 +1359,9 @@ void get_command()
                 break;
           #endif //SDSUPPORT
               SERIAL_PROTOCOLPGM(MSG_OK);
-              if (auto_temp_interval != 0) {
-                if (millis() - previous_millis_temp > auto_temp_interval) {
-                  echo_temperatures(false);
-                  previous_millis_temp = millis();
-                }
-              }
+          #if  defined(AUTO_REPORT_TEMPERATURES)
+              auto_report_temperatures();
+          #endif
               SERIAL_PROTOCOLLNPGM("");
             }
             else {
@@ -3052,70 +3067,19 @@ void process_commands()
       inactivity=false;
       if (code_seen('S')) setTargetBed(code_value());
       break;
-    case 105 : // M105
+
+    case 105: // M105
+    {
       if(setTargetedHotend(105)){
         break;
-        }
-      #if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
-        SERIAL_PROTOCOLPGM("ok T:");
-        SERIAL_PROTOCOL_F(degHotend(tmp_extruder),1);
-        SERIAL_PROTOCOLPGM(" /");
-        SERIAL_PROTOCOL_F(degTargetHotend(tmp_extruder),1);
-        #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
-          SERIAL_PROTOCOLPGM(" B:");
-          SERIAL_PROTOCOL_F(degBed(),1);
-          SERIAL_PROTOCOLPGM(" /");
-          SERIAL_PROTOCOL_F(degTargetBed(),1);
-        #endif //TEMP_BED_PIN
-        for (int8_t cur_extruder = 0; cur_extruder < HEATERS; ++cur_extruder) {
-          SERIAL_PROTOCOLPGM(" T");
-          SERIAL_PROTOCOL(cur_extruder);
-          SERIAL_PROTOCOLPGM(":");
-          SERIAL_PROTOCOL_F(degHotend(cur_extruder),1);
-          SERIAL_PROTOCOLPGM(" /");
-          SERIAL_PROTOCOL_F(degTargetHotend(cur_extruder),1);
-        }
-      #else
-        SERIAL_ERROR_START;
-        SERIAL_ERRORLNPGM(MSG_ERR_NO_THERMISTORS);
-      #endif
+      }
 
-        SERIAL_PROTOCOLPGM(" @:");
-      #ifdef EXTRUDER_WATTS
-        SERIAL_PROTOCOL((EXTRUDER_WATTS * getHeaterPower(tmp_extruder))/127);
-        SERIAL_PROTOCOLPGM("W");
-      #else
-        SERIAL_PROTOCOL(getHeaterPower(tmp_extruder));
-      #endif
+      // Remember to report temperatures after command termination
+      report_temperatures_status |= TP_REPORT_ONCE;
 
-        SERIAL_PROTOCOLPGM(" B@:");
-      #ifdef BED_WATTS
-        SERIAL_PROTOCOL((BED_WATTS * getHeaterPower(-1))/127);
-        SERIAL_PROTOCOLPGM("W");
-      #else
-        SERIAL_PROTOCOL(getHeaterPower(-1));
-      #endif
-
-        /*#ifdef SHOW_TEMP_ADC_VALUES
-          #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
-            SERIAL_PROTOCOLPGM("    ADC B:");
-            SERIAL_PROTOCOL_F(degBed(),1);
-            SERIAL_PROTOCOLPGM("C->");
-            SERIAL_PROTOCOL_F(rawBedTemp()/OVERSAMPLENR,0);
-          #endif
-          for (int8_t cur_extruder = 0; cur_extruder < EXTRUDERS; ++cur_extruder) {
-            SERIAL_PROTOCOLPGM("  T");
-            SERIAL_PROTOCOL(cur_extruder);
-            SERIAL_PROTOCOLPGM(":");
-            SERIAL_PROTOCOL_F(degHotend(cur_extruder),1);
-            SERIAL_PROTOCOLPGM("C->");
-            SERIAL_PROTOCOL_F(rawHotendTemp(cur_extruder)/OVERSAMPLENR,0);
-          }
-        #endif*/
-
-        SERIAL_PROTOCOLLN("");
-      return;
       break;
+    }
+
     case 109:
     {// M109 - Wait for extruder heater to reach target.
       if(setTargetedHotend(109)){
@@ -3585,18 +3549,21 @@ void process_commands()
     {
       if (code_seen('S')) {
         double value = code_value();
-        if (auto_temp_interval < 1) {
+        if (value < 1) {
           auto_temp_interval = 0;
-        } else if (auto_temp_interval > 60) {
+        } else if (value > 60) {
           SERIAL_ERROR_START;
           SERIAL_PROTOCOL_P(PERR_OUT_OF_BOUNDS);
-          SERIAL_PROTOCOLLN_P(PMSG_WS_S);
           auto_temp_interval = 60*1000;
         } else {
           auto_temp_interval = (long) (value * 1000);
         }
       } else {
         auto_temp_interval = AUTO_REPORT_TEMPERATURES_DEFAULT_INTERVAL;
+      }
+
+      if (auto_temp_interval > 0) {
+        report_temperatures_status |= TP_REPORT_AUTO;
       }
       break;
     }
@@ -6015,7 +5982,12 @@ void ClearToSend()
   if(fromsd[bufindr])
     return;
   #endif //SDSUPPORT
-  SERIAL_PROTOCOLLNPGM(MSG_OK);
+
+  SERIAL_PROTOCOLPGM(MSG_OK);
+#if defined(AUTO_REPORT_TEMPERATURES)
+  auto_report_temperatures();
+#endif
+  SERIAL_PROTOCOLLNPGM("");
 }
 
 void get_coordinates()
