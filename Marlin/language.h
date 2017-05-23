@@ -72,8 +72,7 @@
 #define MSG_MARLIN "Marlin"
 #define MSG_MARLIN_FABTOTUM "Marlin for FABtotum Personal Fabricator"
 
-//#define MSG_WORKING_MODE "Working Mode:"
-PSTRING( PMSG_WORKING_MODE, "Working Mode:" )
+#define MSG_WORKING_MODE "Working Mode:"
 #define MSG_WORKING_MODE_HYBRID "Hybrid"
 #define MSG_WORKING_MODE_FFF    "FFF"
 #define MSG_WORKING_MODE_LASER  "Laser"
@@ -88,7 +87,7 @@ PSTRING( PMSG_WORKING_MODE, "Working Mode:" )
 #define MSG_WS_Y " Y"
 #define MSG_WS_Z " Z"
 
-#define ERR_OUT_OF_BOUNDS "Parameter out of bounds:"
+#define ERR_OUT_OF_BOUNDS "Value out of bounds"
 
 #if LANGUAGE_CHOICE == 1
 
@@ -2700,6 +2699,9 @@ PSTRING( PMSG_WORKING_MODE, "Working Mode:" )
 
 #endif // ifndef LANGUAGE_H
 
+// The following redefinitions are optimized for minimal program space waste
+// please use the P* version of string literals with the relevant *_P output macros
+PSTRING(PMSG_WORKING_MODE, "Working Mode:")
 
 PSTRING(PMSG_WS_E,MSG_WS_E)
 PSTRING(PMSG_WS_S,MSG_WS_S)

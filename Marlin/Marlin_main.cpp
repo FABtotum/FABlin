@@ -2935,8 +2935,7 @@ void process_commands()
         pin_status = code_value_long();
         if (pin_status < 0 || pin_status > 255) {
           SERIAL_ERROR_START;
-          SERIAL_PROTOCOL_P(PERR_OUT_OF_BOUNDS);
-          SERIAL_PROTOCOLLN_P(PMSG_WS_S);
+          SERIAL_PROTOCOLLN_P(PERR_OUT_OF_BOUNDS);
           return;
         }
       }
@@ -3553,7 +3552,7 @@ void process_commands()
           auto_temp_interval = 0;
         } else if (value > 60) {
           SERIAL_ERROR_START;
-          SERIAL_PROTOCOL_P(PERR_OUT_OF_BOUNDS);
+          SERIAL_PROTOCOLLN_P(PERR_OUT_OF_BOUNDS);
           auto_temp_interval = 60*1000;
         } else {
           auto_temp_interval = (long) (value * 1000);
