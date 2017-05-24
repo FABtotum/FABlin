@@ -1277,7 +1277,7 @@ void get_command()
     }
     if(serial_char == '\n' ||
        serial_char == '\r' ||
-       (serial_char == ':' && comment_mode == false) ||
+       (serial_char == COMMENT_SEPARATOR && comment_mode == false) ||
        serial_count >= (MAX_CMD_SIZE - 1) )
     {
       if(!serial_count) { //if empty line
@@ -1378,7 +1378,7 @@ void get_command()
     }
     else
     {
-      if(serial_char == ';') comment_mode = true;
+      if(serial_char == COMMENT_SEPARATOR) comment_mode = true;
       if(!comment_mode) cmdbuffer[bufindw][serial_count++] = serial_char;
     }
   }
@@ -1400,7 +1400,7 @@ void get_command()
     if(serial_char == '\n' ||
        serial_char == '\r' ||
        (serial_char == '#' && comment_mode == false) ||
-       (serial_char == ':' && comment_mode == false) ||
+       (serial_char == COMMENT_SEPARATOR && comment_mode == false) ||
        serial_count >= (MAX_CMD_SIZE - 1)||n==-1)
     {
       if(card.eof()){
@@ -1438,7 +1438,7 @@ void get_command()
     }
     else
     {
-      if(serial_char == ';') comment_mode = true;
+      if(serial_char == COMMENT_SEPARATOR) comment_mode = true;
       if(!comment_mode) cmdbuffer[bufindw][serial_count++] = serial_char;
     }
   }

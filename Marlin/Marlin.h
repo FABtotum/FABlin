@@ -499,4 +499,7 @@ extern uint8_t working_mode;
 #define MACHINE_MODE_SCAN   4
 #define MACHINE_MODE_SLA    5
 
+#define COMMENT_SEPARATOR ';'
+#define VALUE_LIST_SEPARATOR ':'  // Separator for lists of values as parameter arguments
+
 #endif
