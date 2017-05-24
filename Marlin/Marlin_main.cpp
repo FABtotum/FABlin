@@ -1029,9 +1029,6 @@ void FabtotumIO_init()
   SERVO2_OFF();
 #endif
 
-   SERVO1_OFF();
-   SERVO2_OFF();
-
    RASPI_PWR_ON();
 
    LIGHT_SIGN_ON();
@@ -1044,9 +1041,9 @@ void FabtotumIO_init()
    BlueSoftPwm=0;
 
   servos[0].write(SERVO_SPINDLE_ZERO);       //set Zero POS for SERVO1  (MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
-  #if NUM_SERVOS > 1
+#if NUM_SERVOS > 1
   servos[1].write(950);        //set Zero POS for SERVO2  (servo probe)
-  #endif
+#endif
 
    triggered_kill=false;
    enable_door_kill=true;
