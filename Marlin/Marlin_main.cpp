@@ -518,7 +518,7 @@ bool rpi_recovery_flag=false;
 volatile bool wire_end_detection = false; // If true, wire_end error is triggered
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
-bool enable_secure_switch_zprobe=false;
+volatile bool enable_secure_switch_zprobe=false;
 #endif
 
 float rpm = 0;
@@ -1035,8 +1035,40 @@ void FabtotumIO_init()
 
   z_endstop_bug_workaround = fab_batch_number >= 3? 255 : 0;
 
-  // SmartHead is configured as Two-Wire bus by default
-  //SmartHead.wire(true);
+  // Init external probe if configured
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+  pinMode(EXTERNAL_ENDSTOP_Z_PROBING_PIN, INPUT);
+  enable_external_z_endstop(false);
+#endif
+}
+
+/*
+ * Function: init
+ *
+ * Initialize data structures
+ *
+ * Description:
+ *  This function is called at the start of `setup`. Here you can put
+ *  complex initialization code required by the firmware's logic.
+ *
+ */
+FORCE_INLINE void init ()
+{
+  // tool_extruder_mapping <- {0, 1, 2, ...}
+  for (unsigned int i = 0; i < EXTRUDERS; i++) {
+    tool_extruder_mapping[i] = i;
+  }
+
+  // tool_heater_mapping <- {0, -1, 0, -1}
+#if EXTRUDERS > 1
+  tool_heater_mapping[1] = -1;
+#endif
+#if EXTRUDERS > 3
+  tool_heater_mapping[3] = -1;
+#endif
+
+  // tool_twi_support <- {true, false, ...}
+  tool_twi_support[0] = true;
 }
 
 void setup()
@@ -1060,7 +1092,7 @@ void setup()
   #endif
   MCUSR=0;
 
-  #if MOTHERBOARD != 25
+#if MOTHERBOARD != 25
   // turn output off for totumduino
   SERIAL_ECHOPGM(MSG_MARLIN_FABTOTUM);
   SERIAL_ECHOLNPGM(STRING_BUILD_VERSION);
@@ -1078,7 +1110,7 @@ void setup()
   SERIAL_ECHO(freeMemory());
   SERIAL_ECHOPGM(MSG_PLANNER_BUFFER_BYTES);
   SERIAL_ECHOLN((int)sizeof(block_t)*BLOCK_BUFFER_SIZE);
-  #endif
+#endif
   for(int8_t i = 0; i < BUFSIZE; i++)
   {
     fromsd[i] = false;
@@ -1653,7 +1685,7 @@ static void run_z_probe() {
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
 }
 
-static void run_fast_z_probe(float feedrateProbing) {
+static bool run_fast_z_probe(float feedrateProbing) {
     plan_bed_level_matrix.set_to_identity();
     feedrate = feedrateProbing; //homing_feedrate[Z_AXIS];
 
@@ -1666,8 +1698,14 @@ static void run_fast_z_probe(float feedrateProbing) {
     // we have to let the planner know where we are right now as it is not where we said to go.
     zPosition = st_get_position_mm(Z_AXIS);
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS]);
-
     current_position[Z_AXIS] = zPosition;
+
+    // Verify if we actually stopped on an endstop
+    if (READ(Z_MIN_PIN) ^ Z_MIN_ENDSTOP_INVERTING) {
+      return true;
+    } else {
+      return false;
+    }
 }
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
@@ -1686,6 +1724,7 @@ static void run_fast_external_z_endstop() {
     zPosition = st_get_position_mm(Z_AXIS);
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS]);
 
+    current_position[Z_AXIS] = zPosition;
 }
 #endif
 
@@ -1760,8 +1799,12 @@ static void engage_z_probe() {
 #endif
     _delay_ms(500);
     SERVO2_OFF();
-    }
-    #endif
+  }
+#endif
+
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+  enable_external_z_endstop(true);
+#endif
 }
 
 static void retract_z_probe() {
@@ -2643,54 +2686,54 @@ void process_commands()
         break;
 
     case 30: // G30 Single Z Probe
-        {
-          if(!Stopped){
+    {
+      if (!Stopped)
+      {
+        float feedRateUp = homing_feedrate[Z_AXIS];
+        //float feedRateDown = homing_feedrate[Z_AXIS];
 
-            //engage_z_probe(); // Engage Z Servo endstop if available
-
-
-            float feedRateUp = homing_feedrate[Z_AXIS];
-            float feedRateDown = homing_feedrate[Z_AXIS];
-
-            if (code_seen('U')) {
-                // UP Value Feed Rate
-                feedRateUp = code_value();
-            }
-
-            if (code_seen('D')) {
-              // Down Value (Bed Retract) Feed Rate
-              feedRateDown = code_value();
-            }
-
-
-
-            st_synchronize();
-            // TODO: make sure the bed_level_rotation_matrix is identity or the planner will get set incorectly
-            setup_for_endstop_move();
-
-            feedrate = feedRateUp; //homing_feedrate[Z_AXIS];
-
-            SERIAL_PROTOCOLPGM(" Feedrate: ");
-            SERIAL_PROTOCOL(feedrate);
-            SERIAL_PROTOCOLPGM(" ");
-
-            run_fast_z_probe(feedrate);
-            SERIAL_PROTOCOLPGM(MSG_BED);
-            SERIAL_PROTOCOLPGM(" X: ");
-            SERIAL_PROTOCOL(current_position[X_AXIS]);
-            SERIAL_PROTOCOLPGM(" Y: ");
-            SERIAL_PROTOCOL(current_position[Y_AXIS]);
-            SERIAL_PROTOCOLPGM(" Z: ");
-            SERIAL_PROTOCOL(current_position[Z_AXIS]);
-            SERIAL_PROTOCOLPGM("\n");
-
-            clean_up_after_endstop_move();
-
-            feedrate = homing_feedrate[Z_AXIS];
-            //retract_z_probe(); // Retract Z Servo endstop if available
-          }
+        if (code_seen('U')) {
+            // UP Value Feed Rate
+            feedRateUp = code_value();
         }
-        break;
+
+        /*if (code_seen('D')) {
+          // Down Value (Bed Retract) Feed Rate
+          feedRateDown = code_value();
+        }*/
+
+        st_synchronize();
+        // TODO: make sure the bed_level_rotation_matrix is identity or the planner will get set incorectly
+        setup_for_endstop_move();
+
+        feedrate = feedRateUp; //homing_feedrate[Z_AXIS];
+
+        bool touched = run_fast_z_probe(feedrate);
+
+        if (!touched) {
+          SERIAL_ERROR_START;
+          SERIAL_PROTOCOLLN_P(PERR_PROBE_FAILED);
+        }
+
+        SERIAL_PROTOCOLPGM(MSG_OK);
+
+        if (touched) {
+          SERIAL_PROTOCOLPGM(" X: ");
+          SERIAL_PROTOCOL(current_position[X_AXIS]);
+          SERIAL_PROTOCOLPGM(" Y: ");
+          SERIAL_PROTOCOL(current_position[Y_AXIS]);
+          SERIAL_PROTOCOLPGM(" Z: ");
+          SERIAL_PROTOCOL(current_position[Z_AXIS]);
+        }
+
+        SERIAL_PROTOCOLPGM("\n");
+
+        clean_up_after_endstop_move();
+        feedrate = homing_feedrate[Z_AXIS];
+
+        return;
+      }
+    }
 #endif // ENABLE_AUTO_BED_LEVELING
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
     case 38: // G38 endstop based z probe
@@ -3444,6 +3487,7 @@ void process_commands()
         *(starpos-1)='\0';
       lcd_setstatus(strchr_pointer + 5);
       break;
+
     case 114: // M114
       SERIAL_PROTOCOLPGM("X:");
       SERIAL_PROTOCOL(current_position[X_AXIS]);
@@ -3490,6 +3534,12 @@ void process_commands()
       #if defined(Z_MIN_PIN) && Z_MIN_PIN > -1
         SERIAL_PROTOCOLPGM(MSG_Z_MIN);
         SERIAL_PROTOCOLLN(((READ(Z_MIN_PIN)^Z_MIN_ENDSTOP_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
+      #endif
+      #if defined(EXTERNAL_ENDSTOP_Z_PROBING_PIN) && (EXTERNAL_ENDSTOP_Z_PROBING_PIN > -1)
+        if (enable_secure_switch_zprobe) {
+          SERIAL_PROTOCOLPGM("external_z_min: ");
+          SERIAL_PROTOCOLLN(((READ(EXTERNAL_ENDSTOP_Z_PROBING_PIN) /*^EXTERNAL_ENDSTOP_Z_INVERTING*/ )?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
+        }
       #endif
       #if defined(Z_MAX_PIN) && Z_MAX_PIN > -1
         SERIAL_PROTOCOLPGM(MSG_Z_MAX);
