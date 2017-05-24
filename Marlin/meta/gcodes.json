@@ -837,7 +837,9 @@
 			}
 		}
 	},
-	
+	"M730": {
+		"desc": "Read last error code"
+	},
 	"M756": {
 		"desc" : "Error generator",
 		"params": {
