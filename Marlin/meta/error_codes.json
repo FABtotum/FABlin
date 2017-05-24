@@ -1,0 +1,8 @@
+[
+	{"MSG_ERR_KILLED": "Printer halted. kill() called!"},
+	{"MSG_ERR_STOPPED": "Printer stopped due to errors. Fix the error and use M999 to restart. (Temperature is reset. Set it after restarting)"},
+	{"MSG_ERR_NO_THERMISTORS": "No thermistors - no temperature"},
+	{"MSG_ERR_COLD_EXTRUDE_STOP": " cold extrusion prevented"},
+	{"MSG_ERR_LONG_EXTRUDE_STOP": " too long extrusion prevented"},
+	{"ERR_OUT_OF_BOUNDS": "Value out of bounds"}
+]
