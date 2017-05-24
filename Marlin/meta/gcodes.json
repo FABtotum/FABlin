@@ -151,7 +151,7 @@
 				"unit": "mm/min"
 			},
 			"D": {
-				"desc": "UP movement feedrate",
+				"desc": "UP movement feedrate (unimplemented)",
 				"type": "number",
 				"range": [0, 10000],
 				"opt": true,

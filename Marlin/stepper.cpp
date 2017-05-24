@@ -105,7 +105,7 @@ volatile signed char count_direction[NUM_AXIS] = { 1, 1, 1, 1};
 #define CHECK_ENDSTOPS  if(check_endstops)
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
-#define CHECK_EXTERNAL_Z_ENDSTOPS  if(check_external_z_endstops && enable_secure_switch_zprobe)
+#define CHECK_EXTERNAL_Z_ENDSTOPS  if(enable_secure_switch_zprobe && check_external_z_endstops)
 #endif
 
 // intRes = intIn1 * intIn2 >> 16

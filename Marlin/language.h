@@ -243,6 +243,7 @@
 	#define MSG_M115_REPORT "FIRMWARE_NAME:" MSG_MARLIN " FIRMWARE_URL:" FIRMWARE_URL " PROTOCOL_VERSION:" PROTOCOL_VERSION " MACHINE_TYPE:" MACHINE_NAME " EXTRUDER_COUNT:" STRINGIFY(EXTRUDERS) " UUID:" MACHINE_UUID "\n"
 	#define MSG_COUNT_X " Count X: "
 	#define MSG_ERR_KILLED "Printer halted. kill() called!"
+	#define MSG_ERR_PROBE_FAILED "Probe failed"
 	#define MSG_ERR_STOPPED "Printer stopped due to errors. Fix the error and use M999 to restart. (Temperature is reset. Set it after restarting)"
 	#define MSG_RESEND "Resend: "
 	#define MSG_UNKNOWN_COMMAND "Unknown command: \""
@@ -2714,3 +2715,4 @@ PSTRING(PMSG_ENDSTOP_HIT,  MSG_ENDSTOP_HIT)
 PSTRING(PMSG_ENDSTOP_OPEN, MSG_ENDSTOP_HIT)
 
 PSTRING(PERR_OUT_OF_BOUNDS, ERR_OUT_OF_BOUNDS)
+PSTRING(PERR_PROBE_FAILED, MSG_ERR_PROBE_FAILED)
