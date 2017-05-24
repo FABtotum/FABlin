@@ -476,6 +476,7 @@ static char serial_char;
 static int serial_count = 0;
 static boolean comment_mode = false;
 static char *strchr_pointer; // just a pointer to find chars in the command string like X, Y, Z, E, etc
+static bool next_value;  // Set if the parsed value is inside a list (so more values can be parsed for the same parameter)
 
 const int sensitive_pins[] = SENSITIVE_PINS; // Sensitive pin list for M42
 
@@ -1526,16 +1527,31 @@ void get_command()
 
 float code_value()
 {
-  return (strtod(&cmdbuffer[bufindr][strchr_pointer - cmdbuffer[bufindr] + 1], NULL));
+  char *str = &cmdbuffer[bufindr][strchr_pointer - cmdbuffer[bufindr] + 1];
+  char *str_end = 0;
+  float value = strtod(str, &str_end);
+  next_value = (str_end[0] == VALUE_LIST_SEPARATOR);
+  if (next_value) {
+    strchr_pointer = str_end;
+  }
+  return value;
 }
 
 long code_value_long()
 {
-  return (strtol(&cmdbuffer[bufindr][strchr_pointer - cmdbuffer[bufindr] + 1], NULL, 10));
+  char *str = &cmdbuffer[bufindr][strchr_pointer - cmdbuffer[bufindr] + 1];
+  char *str_end = 0;
+  long value = strtol(str, &str_end, 10);
+  next_value = (str_end[0] == VALUE_LIST_SEPARATOR);
+  if (next_value) {
+    strchr_pointer = str_end;
+  }
+  return value;
 }
 
 bool code_seen(char code)
 {
+  next_value = false;
   strchr_pointer = strchr(cmdbuffer[bufindr], code);
   return (strchr_pointer != NULL);  //Return True if a character was found
 }
