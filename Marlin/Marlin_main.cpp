@@ -3200,7 +3200,8 @@ void process_commands()
       {
           if( (millis() - codenum) > 1000UL )
           { //Print Temp Reading and remaining time every 1 second while heating up/cooling down
-            SERIAL_PROTOCOLPGM("T:");
+            print_heaterstates(false);
+            /*SERIAL_PROTOCOLPGM("T:");
             SERIAL_PROTOCOL_F(degHotend(tmp_extruder),1);
             SERIAL_PROTOCOLPGM(" E:");
             SERIAL_PROTOCOL((int)tmp_extruder);
@@ -3217,7 +3218,7 @@ void process_commands()
               }
             #else
               SERIAL_PROTOCOLLN("");
-            #endif
+            #endif*/
             codenum = millis();
           }
           manage_heater();
@@ -3260,14 +3261,16 @@ void process_commands()
         {
           if(( millis() - codenum) > 1000 ) //Print Temp Reading every 1 second while heating up.
           {
-            float tt=degHotend(active_extruder);
+            tmp_extruder = active_extruder;
+            print_heaterstates(false);
+            /*float tt=degHotend(active_extruder);
             SERIAL_PROTOCOLPGM("T:");
             SERIAL_PROTOCOL(tt);
             SERIAL_PROTOCOLPGM(" E:");
             SERIAL_PROTOCOL((int)active_extruder);
             SERIAL_PROTOCOLPGM(" B:");
             SERIAL_PROTOCOL_F(degBed(),1);
-            SERIAL_PROTOCOLLN("");
+            SERIAL_PROTOCOLLN("");*/
             codenum = millis();
           }
           manage_heater();
