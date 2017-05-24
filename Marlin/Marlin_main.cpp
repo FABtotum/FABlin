@@ -4857,11 +4857,10 @@ void process_commands()
 
     case 730:   // M730 - READ LAST ERROR CODE
     {
-      SERIAL_PROTOCOL("ERROR ");
-      SERIAL_PROTOCOL(": ");
+      // Just output the erro code
       SERIAL_PROTOCOLLN(ERROR_CODE);
+      break;
     }
-    break;
 
     case 731:   // M731 - Disable kill on Door Open
     {
