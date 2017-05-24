@@ -87,6 +87,12 @@
 #define MSG_WS_Y " Y"
 #define MSG_WS_Z " Z"
 
+// Strings for outputting parameter values in a correctly spaced fashion
+#define MSG_E_OUT " E: "
+#define MSG_X_OUT " X: "
+#define MSG_Y_OUT " Y: "
+#define MSG_Z_OUT " Z: "
+
 #define ERR_OUT_OF_BOUNDS "Value out of bounds"
 
 #if LANGUAGE_CHOICE == 1
@@ -242,6 +248,7 @@
 	#define MSG_BED_DONE "Bed done."
 	#define MSG_M115_REPORT "FIRMWARE_NAME:" MSG_MARLIN " FIRMWARE_URL:" FIRMWARE_URL " PROTOCOL_VERSION:" PROTOCOL_VERSION " MACHINE_TYPE:" MACHINE_NAME " EXTRUDER_COUNT:" STRINGIFY(EXTRUDERS) " UUID:" MACHINE_UUID "\n"
 	#define MSG_COUNT_X " Count X: "
+	#define MSG_COUNT_A " Count A: "
 	#define MSG_ERR_KILLED "Printer halted. kill() called!"
 	#define MSG_ERR_PROBE_FAILED "Probe failed"
 	#define MSG_ERR_STOPPED "Printer stopped due to errors. Fix the error and use M999 to restart. (Temperature is reset. Set it after restarting)"
@@ -2710,6 +2717,11 @@ PSTRING(PMSG_WS_T,MSG_WS_T)
 PSTRING(PMSG_WS_X,MSG_WS_X)
 PSTRING(PMSG_WS_Y,MSG_WS_Y)
 PSTRING(PMSG_WS_Z,MSG_WS_Z)
+
+PSTRING(PMSG_E_OUT,MSG_E_OUT)
+PSTRING(PMSG_X_OUT,MSG_X_OUT)
+PSTRING(PMSG_Y_OUT,MSG_Y_OUT)
+PSTRING(PMSG_Z_OUT,MSG_Z_OUT)
 
 PSTRING(PMSG_ENDSTOP_HIT,  MSG_ENDSTOP_HIT)
 PSTRING(PMSG_ENDSTOP_OPEN, MSG_ENDSTOP_HIT)
