@@ -498,7 +498,7 @@ const unsigned int dropsegments=5; //everything with less than this number of st
  * Auto-report temperatures with M155 S<seconds>
  */
 #define AUTO_REPORT_TEMPERATURES
-#define AUTO_REPORT_TEMPERATURES_DEFAULT_INTERVAL 5000
+#define AUTO_REPORT_TEMPERATURES_DEFAULT_INTERVAL 5 // secs
 
 #if defined(SMART_COMM)
    #define LINE_FORWARDING_ENCLOSING_CHAR   '"'

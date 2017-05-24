@@ -476,9 +476,15 @@ static unsigned long max_inactive_time = DEFAULT_DEACTIVE_TIME*1000l;
 //static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
 #define max_steppers_inactive_time  DEFAULT_STEPPERS_DEACTIVE_TIME*1000l
 
-//static bool auto_temp = false;
-static unsigned long auto_temp_interval = 0;
-static unsigned long previous_millis_temp = 0;
+#if defined (AUTO_REPORT_TEMPERATURES)
+
+enum tp_report_t:uint8_t { TP_REPORT_NONE=0, TP_REPORT_AUTO=1, TP_REPORT_FULL=2 };
+tp_report_t report_temp_status = TP_REPORT_NONE;
+
+static uint8_t auto_report_temp_interval = 0;
+static unsigned long next_temp_report_ms;
+
+#endif
 
 unsigned long starttime=0;
 unsigned long stoptime=0;
@@ -599,8 +605,6 @@ struct debug_s {
   uint8_t out_inv:1;
 } debug;
 
-enum tp_report_t:uint8_t { TP_REPORT_NONE=0, TP_REPORT_AUTO=1, TP_REPORT_ONCE=2 };
-tp_report_t report_temperatures_status = TP_REPORT_NONE;
 
 
 //===========================================================================
@@ -1234,18 +1238,22 @@ void loop()
   lcd_update();
 }
 
-inline bool echo_temperatures (bool full=true)
+inline bool print_heaterstates (bool full=true)
 {
 #if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
   SERIAL_PROTOCOLPGM(" T:");
   SERIAL_PROTOCOL_F(degHotend(tmp_extruder),1);
-  SERIAL_PROTOCOLPGM(" /");
-  SERIAL_PROTOCOL_F(degTargetHotend(tmp_extruder),1);
+  if (full) {
+    SERIAL_PROTOCOLPGM(" /");
+    SERIAL_PROTOCOL_F(degTargetHotend(tmp_extruder),1);
+  }
   #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
   SERIAL_PROTOCOLPGM(" B:");
   SERIAL_PROTOCOL_F(degBed(),1);
-  SERIAL_PROTOCOLPGM(" /");
-  SERIAL_PROTOCOL_F(degTargetBed(),1);
+  if (full) {
+    SERIAL_PROTOCOLPGM(" /");
+    SERIAL_PROTOCOL_F(degTargetBed(),1);
+  }
   #endif //TEMP_BED_PIN
   if (full)
   for (int8_t cur_extruder = 0; cur_extruder < HEATERS; ++cur_extruder) {
@@ -1279,21 +1287,19 @@ inline bool echo_temperatures (bool full=true)
     SERIAL_PROTOCOL(getHeaterPower(-1));
 #endif
   }
-
-  SERIAL_PROTOCOLLN("");
 }
 
 FORCE_INLINE void auto_report_temperatures ()
 {
-  if (report_temperatures_status != 0)
+  if (report_temp_status != 0)
   {
-    if ((report_temperatures_status & TP_REPORT_ONCE) || ((millis() - previous_millis_temp) > auto_temp_interval)) {
+    if ((report_temp_status & TP_REPORT_FULL) || (millis() > next_temp_report_ms))
+    {
+      next_temp_report_ms = millis() + 1000UL * auto_report_temp_interval;
       // Report with the verboseness of the 'once' setting (full report)
-      echo_temperatures(report_temperatures_status & TP_REPORT_ONCE);
-      previous_millis_temp = millis();
+      print_heaterstates(report_temp_status & TP_REPORT_FULL);
       // Only remember the 'auto' setting
-      report_temperatures_status &= TP_REPORT_AUTO;
-      return;
+      report_temp_status &= TP_REPORT_AUTO;
     }
   }
 }
@@ -3126,7 +3132,7 @@ void process_commands()
       }
 
       // Remember to report temperatures after command termination
-      report_temperatures_status |= TP_REPORT_ONCE;
+      report_temp_status |= TP_REPORT_FULL;
 
       break;
     }
@@ -3616,24 +3622,24 @@ void process_commands()
     case 155:
     {
       if (code_seen('S')) {
-        double value = code_value();
+        long int value = code_value_long();
         if (value < 1) {
-          auto_temp_interval = 0;
+          auto_report_temp_interval = 0;
         } else if (value > 60) {
           SERIAL_ERROR_START;
           SERIAL_PROTOCOLLN_P(PERR_OUT_OF_BOUNDS);
-          auto_temp_interval = 60*1000;
+          auto_report_temp_interval = 60;
         } else {
-          auto_temp_interval = (long) (value * 1000);
+          auto_report_temp_interval = value;
         }
       } else {
-        auto_temp_interval = AUTO_REPORT_TEMPERATURES_DEFAULT_INTERVAL;
+        auto_report_temp_interval = AUTO_REPORT_TEMPERATURES_DEFAULT_INTERVAL;
       }
 
-      if (auto_temp_interval > 0) {
-        report_temperatures_status |= TP_REPORT_AUTO;
+      if (auto_report_temp_interval > 0) {
+        report_temp_status |= TP_REPORT_AUTO;
       } else {
-        report_temperatures_status &= ~TP_REPORT_AUTO;
+        report_temp_status &= ~TP_REPORT_AUTO;
       }
       break;
     }
