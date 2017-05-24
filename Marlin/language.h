@@ -88,10 +88,12 @@
 #define MSG_WS_Z " Z"
 
 // Strings for outputting parameter values in a correctly spaced fashion
+#define MSG_B_OUT " B: "
+#define MSG_E_OUT " E: "
+#define MSG_T_OUT "T: "  // T: and X: shall always appear first in commands output
 #define MSG_X_OUT "X: "
 #define MSG_Y_OUT " Y: "
 #define MSG_Z_OUT " Z: "
-#define MSG_E_OUT " E: "
 
 #define ERR_OUT_OF_BOUNDS "Value out of bounds"
 
@@ -2718,7 +2720,9 @@ PSTRING(PMSG_WS_X,MSG_WS_X)
 PSTRING(PMSG_WS_Y,MSG_WS_Y)
 PSTRING(PMSG_WS_Z,MSG_WS_Z)
 
+PSTRING(PMSG_B_OUT,MSG_B_OUT)
 PSTRING(PMSG_E_OUT,MSG_E_OUT)
+PSTRING(PMSG_T_OUT,MSG_T_OUT)
 PSTRING(PMSG_X_OUT,MSG_X_OUT)
 PSTRING(PMSG_Y_OUT,MSG_Y_OUT)
 PSTRING(PMSG_Z_OUT,MSG_Z_OUT)
