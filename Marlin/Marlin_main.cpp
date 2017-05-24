@@ -981,9 +981,6 @@ void FabtotumIO_init()
 
    MILL_MOTOR_OFF();
 
-   SERVO1_OFF();
-   SERVO2_OFF();
-
    RASPI_PWR_ON();
 
    LIGHT_SIGN_ON();
