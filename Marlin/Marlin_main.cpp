@@ -1317,6 +1317,7 @@ FORCE_INLINE void auto_report_temperatures ()
     {
       next_temp_report_ms = millis() + 1000UL * auto_report_temp_interval;
       // Report with the verboseness of the 'once' setting (full report)
+      SERIAL_PROTOCOLPGM(" ");
       print_heaterstates(report_temp_status & TP_REPORT_FULL);
       // Only remember the 'auto' setting
       report_temp_status &= TP_REPORT_AUTO;
@@ -3221,24 +3222,6 @@ void process_commands()
           if( (millis() - codenum) > 1000UL )
           { //Print Temp Reading and remaining time every 1 second while heating up/cooling down
             print_heaterstates(TP_REPORT_AUTO);
-            /*SERIAL_PROTOCOLPGM("T:");
-            SERIAL_PROTOCOL_F(degHotend(tmp_extruder),1);
-            SERIAL_PROTOCOLPGM(" E:");
-            SERIAL_PROTOCOL((int)tmp_extruder);
-            #ifdef TEMP_RESIDENCY_TIME
-              SERIAL_PROTOCOLPGM(" W:");
-              if(residencyStart > -1)
-              {
-                 codenum = ((TEMP_RESIDENCY_TIME * 1000UL) - (millis() - residencyStart)) / 1000UL;
-                 SERIAL_PROTOCOLLN( codenum );
-              }
-              else
-              {
-                 SERIAL_PROTOCOLLN( "?" );
-              }
-            #else
-              SERIAL_PROTOCOLLN("");
-            #endif*/
             codenum = millis();
           }
           manage_heater();
@@ -3283,14 +3266,6 @@ void process_commands()
           {
             tmp_extruder = active_extruder;
             print_heaterstates(TP_REPORT_AUTO);
-            /*float tt=degHotend(active_extruder);
-            SERIAL_PROTOCOLPGM("T:");
-            SERIAL_PROTOCOL(tt);
-            SERIAL_PROTOCOLPGM(" E:");
-            SERIAL_PROTOCOL((int)active_extruder);
-            SERIAL_PROTOCOLPGM(" B:");
-            SERIAL_PROTOCOL_F(degBed(),1);
-            SERIAL_PROTOCOLLN("");*/
             codenum = millis();
           }
           manage_heater();
@@ -4119,6 +4094,7 @@ void process_commands()
     }
     break;
 	#endif
+
     case 303: // M303 PID autotune
     {
       float temp = 150.0;
@@ -4130,8 +4106,9 @@ void process_commands()
       if (code_seen('S')) temp=code_value();
       if (code_seen('C')) c=code_value();
       PID_autotune(temp, e, c);
+      return;
     }
-    break;
+
     case 400: // M400 finish all moves
     {
       st_synchronize();
