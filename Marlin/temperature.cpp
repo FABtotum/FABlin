@@ -244,11 +244,13 @@ void PID_autotune(float temp, int extruder, int ncycles)
        ||(extruder < 0)
   #endif
        ){
-          SERIAL_ECHOLN("PID Autotune failed. Bad extruder number.");
+         SERIAL_ERROR_START;
+         SERIAL_ERRORLNPGM("PID Autotune failed. Bad extruder number.");
           return;
         }
 
-  SERIAL_ECHOLN("PID Autotune start");
+  /*SERIAL_COMMENT_START;
+  SERIAL_ECHOLNPGM("PID Autotune start");*/
 
   disable_heater(); // switch off all heaters.
 
@@ -262,9 +264,6 @@ void PID_autotune(float temp, int extruder, int ncycles)
      soft_pwm[extruder] = (PID_MAX)/2;
      bias = d = (PID_MAX)/2;
   }
-
-
-
 
  for(;;) {
 
@@ -299,6 +298,7 @@ void PID_autotune(float temp, int extruder, int ncycles)
             if(bias > (extruder<0?(MAX_BED_POWER):(PID_MAX))/2) d = (extruder<0?(MAX_BED_POWER):(PID_MAX)) - 1 - bias;
             else d = bias;
 
+            SERIAL_COMMENT_START;
             SERIAL_PROTOCOLPGM(" bias: "); SERIAL_PROTOCOL(bias);
             SERIAL_PROTOCOLPGM(" d: "); SERIAL_PROTOCOL(d);
             SERIAL_PROTOCOLPGM(" min: "); SERIAL_PROTOCOL(min);
@@ -306,31 +306,16 @@ void PID_autotune(float temp, int extruder, int ncycles)
             if(cycles > 2) {
               Ku = (4.0*d)/(3.14159*(max-min)/2.0);
               Tu = ((float)(t_low + t_high)/1000.0);
+              SERIAL_COMMENT_START;
               SERIAL_PROTOCOLPGM(" Ku: "); SERIAL_PROTOCOL(Ku);
               SERIAL_PROTOCOLPGM(" Tu: "); SERIAL_PROTOCOLLN(Tu);
               Kp = 0.6*Ku;
               Ki = 2*Kp/Tu;
               Kd = Kp*Tu/8;
-              SERIAL_PROTOCOLLNPGM(" Classic PID ");
-              SERIAL_PROTOCOLPGM(" Kp: "); SERIAL_PROTOCOLLN(Kp);
-              SERIAL_PROTOCOLPGM(" Ki: "); SERIAL_PROTOCOLLN(Ki);
-              SERIAL_PROTOCOLPGM(" Kd: "); SERIAL_PROTOCOLLN(Kd);
-              /*
-              Kp = 0.33*Ku;
-              Ki = Kp/Tu;
-              Kd = Kp*Tu/3;
-              SERIAL_PROTOCOLLNPGM(" Some overshoot ");
-              SERIAL_PROTOCOLPGM(" Kp: "); SERIAL_PROTOCOLLN(Kp);
-              SERIAL_PROTOCOLPGM(" Ki: "); SERIAL_PROTOCOLLN(Ki);
-              SERIAL_PROTOCOLPGM(" Kd: "); SERIAL_PROTOCOLLN(Kd);
-              Kp = 0.2*Ku;
-              Ki = 2*Kp/Tu;
-              Kd = Kp*Tu/3;
-              SERIAL_PROTOCOLLNPGM(" No overshoot ");
-              SERIAL_PROTOCOLPGM(" Kp: "); SERIAL_PROTOCOLLN(Kp);
-              SERIAL_PROTOCOLPGM(" Ki: "); SERIAL_PROTOCOLLN(Ki);
-              SERIAL_PROTOCOLPGM(" Kd: "); SERIAL_PROTOCOLLN(Kd);
-              */
+              //SERIAL_COMMENT_START; SERIAL_PROTOCOLLNPGM(" Classic PID ");
+              SERIAL_COMMENT_START; SERIAL_PROTOCOLPGM(" Kp: "); SERIAL_PROTOCOLLN(Kp);
+              SERIAL_COMMENT_START; SERIAL_PROTOCOLPGM(" Ki: "); SERIAL_PROTOCOLLN(Ki);
+              SERIAL_COMMENT_START; SERIAL_PROTOCOLPGM(" Kd: "); SERIAL_PROTOCOLLN(Kd);
             }
           }
           if (extruder<0)
@@ -343,35 +328,34 @@ void PID_autotune(float temp, int extruder, int ncycles)
       }
     }
     if(input > (temp + 20)) {
+      SERIAL_ERROR_START;
       SERIAL_PROTOCOLLNPGM("PID Autotune failed! Temperature too high");
       return;
     }
     if(millis() - temp_millis > 2000) {
       int p;
-      if (extruder<0){
-        p=soft_pwm_bed;
-        SERIAL_PROTOCOLPGM("ok B:");
-      }else{
-        p=soft_pwm[extruder];
-        SERIAL_PROTOCOLPGM("ok T:");
-      }
-
-      SERIAL_PROTOCOL(input);
-      SERIAL_PROTOCOLPGM(" @:");
-      SERIAL_PROTOCOLLN(p);
+      print_heaterstates(TP_REPORT_AUTO);
 
       temp_millis = millis();
     }
     if(((millis() - t1) + (millis() - t2)) > (10L*60L*1000L*2L)) {
+      SERIAL_ERROR_START;
       SERIAL_PROTOCOLLNPGM("PID Autotune failed! timeout");
       return;
     }
-    if(cycles > ncycles) {
-      SERIAL_PROTOCOLLNPGM("PID Autotune finished! Put the last Kp, Ki and Kd constants from above into Configuration.h");
+    if (cycles > ncycles) {
+      //SERIAL_PROTOCOLLNPGM("PID Autotune finished! Put the last Kp, Ki and Kd constants from above into Configuration.h");
+      // Why not just print them:
+      SERIAL_PROTOCOLPGM(MSG_OK);
+      SERIAL_PROTOCOLPGM(" Kp: "); SERIAL_PROTOCOL(Kp);
+      SERIAL_PROTOCOLPGM(" Ki: "); SERIAL_PROTOCOL(Ki);
+      SERIAL_PROTOCOLPGM(" Kd: "); SERIAL_PROTOCOLLN(Kd);
       return;
     }
     lcd_update();
   }
+
+  SERIAL_PROTOCOLLNPGM(MSG_OK);
 }
 
 void updatePID()
