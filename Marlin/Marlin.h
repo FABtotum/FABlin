@@ -65,6 +65,8 @@
   #include <SmartComm.h>
 #endif
 
+enum tp_report_t:uint8_t { TP_REPORT_NONE=0, TP_REPORT_AUTO=1, TP_REPORT_FULL=2 };
+
 #define SERIAL_PROTOCOL(x) (MYSERIAL.print(x))
 #define SERIAL_PROTOCOL_F(x,y) (MYSERIAL.print(x,y))
 #define SERIAL_PROTOCOL_P(x) do { serialprintPGM(x); } while (0)
@@ -75,17 +77,24 @@
 #define SERIAL_PROTOCOLLNPGM(x) (serialprintPGM(PSTR(x)),MYSERIAL.write('\n'))
 
 
-const char errormagic[] PROGMEM = "E: ";
-const char asyncmagic[] PROGMEM = "A: ";
-const char echomagic[]  PROGMEM = "";
+const char errormagic[]   PROGMEM = "E: ";
+const char asyncmagic[]   PROGMEM = "A: ";
+const char echomagic[]    PROGMEM = "";
+const char commentmagic[] PROGMEM = "// ";
 
-#define SERIAL_ERROR_START (serialprintPGM(errormagic))
-#define SERIAL_ERROR(x) SERIAL_PROTOCOL(x)
-#define SERIAL_ERRORPGM(x) SERIAL_PROTOCOLPGM(x)
-#define SERIAL_ERRORLN(x) SERIAL_PROTOCOLLN(x)
+#define SERIAL_ERROR_START  (serialprintPGM(errormagic))
+#define SERIAL_ERROR(x)      SERIAL_PROTOCOL(x)
+#define SERIAL_ERRORPGM(x)   SERIAL_PROTOCOLPGM(x)
+#define SERIAL_ERRORLN(x)    SERIAL_PROTOCOLLN(x)
+#define SERIAL_ERRORLN_P(x)  SERIAL_PROTOCOLLN_P(x)
 #define SERIAL_ERRORLNPGM(x) SERIAL_PROTOCOLLNPGM(x)
 
-#define SERIAL_ASYNC_START (serialprintPGM(asyncmagic))
+#define SERIAL_ASYNC_START  (serialprintPGM(asyncmagic))
+#define SERIAL_ASYNCLN       SERIAL_PROTOCOLLN(x)
+#define SERIAL_ASYNCLN_P     SERIAL_PROTOCOLLN_P(x)
+#define SERIAL_ASYNCLNPGM(x) SERIAL_PROTOCOLLNPGM(x)
+
+#define SERIAL_COMMENT_START  (serialprintPGM(commentmagic))
 
 #define SERIAL_ECHO_START //(serialprintPGM(echomagic))
 #define SERIAL_ECHO(x) SERIAL_PROTOCOL(x)
@@ -251,6 +260,8 @@ void servo_detach (uint8_t);
 #ifdef FAST_PWM_FAN
 void setPwmFrequency(uint8_t pin, int val);
 #endif
+
+bool print_heaterstates (tp_report_t format=TP_REPORT_FULL);
 
 #ifndef CRITICAL_SECTION_START
   #define CRITICAL_SECTION_START  unsigned char _sreg = SREG; cli();

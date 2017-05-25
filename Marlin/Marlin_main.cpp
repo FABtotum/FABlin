@@ -478,7 +478,6 @@ static unsigned long max_inactive_time = DEFAULT_DEACTIVE_TIME*1000l;
 
 #if defined (AUTO_REPORT_TEMPERATURES)
 
-enum tp_report_t:uint8_t { TP_REPORT_NONE=0, TP_REPORT_AUTO=1, TP_REPORT_FULL=2 };
 tp_report_t report_temp_status = TP_REPORT_NONE;
 
 static uint8_t auto_report_temp_interval = 0;
@@ -1238,24 +1237,43 @@ void loop()
   lcd_update();
 }
 
-inline bool print_heaterstates (bool full=true)
+/*
+ * Function: Print heater states
+ *
+ * Prints a report of heater(s) state and temperature(s) level
+ *
+ * Parameters:
+ *
+ *  format - Select the output format: TP_REPORT_FULL prints the full format,
+ *    used e.g. in M105 command. TP_REPORT_AUTO or TP_REPORT_NONE prints
+ *    the short format where only the active heater and bed temperatures are printed
+ */
+bool print_heaterstates (tp_report_t format)
 {
 #if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
-  SERIAL_PROTOCOL_P(PMSG_T_OUT);
+  // Aestethic hack: full format is normally used fro M105 and can have a leading whitespace
+  if (format == TP_REPORT_FULL) {
+    SERIAL_PROTOCOL_P(PMSG_T_OUT);
+  } else {
+    SERIAL_PROTOCOLPGM("T: ");
+  }
   SERIAL_PROTOCOL_F(degHotend(tmp_extruder),1);
-  if (full) {
+
+  if (format == TP_REPORT_FULL) {
     SERIAL_PROTOCOLPGM("/");
     SERIAL_PROTOCOL_F(degTargetHotend(tmp_extruder),1);
   }
+
   #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
   SERIAL_PROTOCOL_P(PMSG_B_OUT);
   SERIAL_PROTOCOL_F(degBed(),1);
-  if (full) {
+  if (format == TP_REPORT_FULL) {
     SERIAL_PROTOCOLPGM("/");
     SERIAL_PROTOCOL_F(degTargetBed(),1);
   }
   #endif //TEMP_BED_PIN
-  if (full)
+
+  if (format == TP_REPORT_FULL)
   for (int8_t cur_extruder = 0; cur_extruder < HEATERS; ++cur_extruder) {
     SERIAL_PROTOCOLPGM(" T");
     SERIAL_PROTOCOL(cur_extruder);
@@ -1269,7 +1287,7 @@ inline bool print_heaterstates (bool full=true)
   SERIAL_ERRORLNPGM(MSG_ERR_NO_THERMISTORS);
 #endif
 
-  if (full)
+  if (format == TP_REPORT_FULL)
   {
     SERIAL_PROTOCOLPGM(" @: ");
 #ifdef EXTRUDER_WATTS
@@ -1287,6 +1305,8 @@ inline bool print_heaterstates (bool full=true)
     SERIAL_PROTOCOL(getHeaterPower(-1));
 #endif
   }
+
+  SERIAL_PROTOCOLLNPGM("");
 }
 
 FORCE_INLINE void auto_report_temperatures ()
@@ -3200,7 +3220,7 @@ void process_commands()
       {
           if( (millis() - codenum) > 1000UL )
           { //Print Temp Reading and remaining time every 1 second while heating up/cooling down
-            print_heaterstates(false);
+            print_heaterstates(TP_REPORT_AUTO);
             /*SERIAL_PROTOCOLPGM("T:");
             SERIAL_PROTOCOL_F(degHotend(tmp_extruder),1);
             SERIAL_PROTOCOLPGM(" E:");
@@ -3262,7 +3282,7 @@ void process_commands()
           if(( millis() - codenum) > 1000 ) //Print Temp Reading every 1 second while heating up.
           {
             tmp_extruder = active_extruder;
-            print_heaterstates(false);
+            print_heaterstates(TP_REPORT_AUTO);
             /*float tt=degHotend(active_extruder);
             SERIAL_PROTOCOLPGM("T:");
             SERIAL_PROTOCOL(tt);
