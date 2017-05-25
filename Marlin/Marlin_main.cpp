@@ -2210,6 +2210,22 @@ inline bool check_sensitive_pins (unsigned int pin_number)
   return false;
 }
 
+inline bool assert_home ()
+{
+  // Prevent user from running a G29 without first homing in X and Y
+  if (! (axis_known_position[X_AXIS] && axis_known_position[Y_AXIS]) )
+  {
+    LCD_MESSAGEPGM(MSG_ORIGIN_UNKNOWN);
+    SERIAL_ERROR_START;
+    SERIAL_ECHOLNPGM(MSG_ORIGIN_UNKNOWN);
+    return false; // abort G29, since we don't know where we are
+  }
+  else
+  {
+    return true;
+  }
+}
+
 void process_commands()
 {
   unsigned long codenum; //throw away variable
@@ -2591,15 +2607,8 @@ void process_commands()
             store_last_amb_color();
             set_amb_color(0,255,0);
 
-
             // Prevent user from running a G29 without first homing in X and Y
-            if (! (axis_known_position[X_AXIS] && axis_known_position[Y_AXIS]) )
-            {
-                LCD_MESSAGEPGM(MSG_POSITION_UNKNOWN);
-                SERIAL_ECHO_START;
-                SERIAL_ECHOLNPGM(MSG_POSITION_UNKNOWN);
-                break; // abort G29, since we don't know where we are
-            }
+            if (!assert_home()) break;
 
             st_synchronize();
             // make sure the bed_level_rotation_matrix is identity or the planner will get it incorectly
@@ -2779,6 +2788,9 @@ void process_commands()
           // Down Value (Bed Retract) Feed Rate
           feedRateDown = code_value();
         }*/
+
+        // Prevent user from running a G29 without first homing in X and Y
+        if (!assert_home()) break;
 
         st_synchronize();
         // TODO: make sure the bed_level_rotation_matrix is identity or the planner will get set incorectly
@@ -3629,11 +3641,11 @@ void process_commands()
         SERIAL_PROTOCOLLN(((READ(X_MAX_PIN)^X_MAX_ENDSTOP_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
       #endif
       #if defined(Y_MIN_PIN) && Y_MIN_PIN > -1
-        SERIAL_PROTOCOLPGM(MSG_Y_MIN);
+        SERIAL_PROTOCOLPGM(MSG_Y_MAX);  // WORKAROUND
         SERIAL_PROTOCOLLN(((READ(Y_MIN_PIN)^Y_MIN_ENDSTOP_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
       #endif
       #if defined(Y_MAX_PIN) && Y_MAX_PIN > -1
-        SERIAL_PROTOCOLPGM(MSG_Y_MAX);
+         SERIAL_PROTOCOLPGM(MSG_Y_MIN);  // WORKAROUND
         SERIAL_PROTOCOLLN(((READ(Y_MAX_PIN)^Y_MAX_ENDSTOP_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
       #endif
       #if defined(Z_MIN_PIN) && Z_MIN_PIN > -1
@@ -3641,9 +3653,11 @@ void process_commands()
         SERIAL_PROTOCOLLN(((READ(Z_MIN_PIN)^Z_MIN_ENDSTOP_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
       #endif
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING_PIN) && (EXTERNAL_ENDSTOP_Z_PROBING_PIN > -1)
+        SERIAL_PROTOCOLPGM("external_z_min: ");
         if (enable_secure_switch_zprobe) {
-          SERIAL_PROTOCOLPGM("external_z_min: ");
           SERIAL_PROTOCOLLN(((READ(EXTERNAL_ENDSTOP_Z_PROBING_PIN)^EXTERNAL_ENDSTOP_Z_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
+        } else {
+          SERIAL_PROTOCOLLNPGM(MSG_ENDSTOP_OPEN);
         }
       #endif
       #if defined(Z_MAX_PIN) && Z_MAX_PIN > -1
@@ -4200,8 +4214,9 @@ void process_commands()
           temp=70;
       if (code_seen('S')) temp=code_value();
       if (code_seen('C')) c=code_value();
-      PID_autotune(temp, e, c);
-      return;
+
+      if (!PID_autotune(temp, e, c)) break;
+      else return;
     }
 
     case 400: // M400 finish all moves
@@ -5825,10 +5840,10 @@ void process_commands()
       if (code_seen('S')) {
         uint8_t id = code_value_long();
         if (id < FAB_HEADS_thirdparty_ID)
-        if (id > HEADS) {
+        if (id >= HEADS) {
           SERIAL_ERROR_START;
           SERIAL_ERRORLNPGM("Unsupported head ID");
-          return;
+          break;
         }
         tool_change(id);
       }
