@@ -88,10 +88,10 @@
 #define MSG_WS_Z " Z"
 
 // Strings for outputting parameter values in a correctly spaced fashion
-#define MSG_E_OUT " E: "
-#define MSG_X_OUT " X: "
+#define MSG_X_OUT "X: "
 #define MSG_Y_OUT " Y: "
 #define MSG_Z_OUT " Z: "
+#define MSG_E_OUT " E: "
 
 #define ERR_OUT_OF_BOUNDS "Value out of bounds"
 

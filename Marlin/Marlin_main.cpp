@@ -2713,11 +2713,7 @@ void process_commands()
         if (!touched) {
           SERIAL_ERROR_START;
           SERIAL_PROTOCOLLN_P(PERR_PROBE_FAILED);
-        }
-
-        SERIAL_PROTOCOLPGM(MSG_OK);
-
-        if (touched) {
+        } else {
           SERIAL_PROTOCOL_P(PMSG_X_OUT);
           SERIAL_PROTOCOL(current_position[X_AXIS]);
           SERIAL_PROTOCOL_P(PMSG_Y_OUT);
@@ -2731,7 +2727,7 @@ void process_commands()
         clean_up_after_endstop_move();
         feedrate = homing_feedrate[Z_AXIS];
 
-        return;
+        break;
       }
     }
 #endif // ENABLE_AUTO_BED_LEVELING
