@@ -238,6 +238,6 @@ FORCE_INLINE void autotempShutdown(){
  #endif
 }
 
-void PID_autotune(float temp, int extruder, int ncycles);
+bool PID_autotune(float temp, int extruder, int ncycles);
 
 #endif

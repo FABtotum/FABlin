@@ -220,7 +220,7 @@ unsigned long watchmillis[HEATERS] = ARRAY_BY_EXTRUDERS(0,0,0);
 //=============================   functions      ============================
 //===========================================================================
 
-void PID_autotune(float temp, int extruder, int ncycles)
+bool PID_autotune(float temp, int extruder, int ncycles)
 {
   float input = 0.0;
   int cycles=0;
@@ -244,7 +244,7 @@ void PID_autotune(float temp, int extruder, int ncycles)
        ){
          SERIAL_ERROR_START;
          SERIAL_ERRORLNPGM("PID Autotune failed. Bad extruder number.");
-          return;
+          return false;
         }
 
   /*SERIAL_COMMENT_START;
@@ -328,7 +328,7 @@ void PID_autotune(float temp, int extruder, int ncycles)
     if(input > (temp + 20)) {
       SERIAL_ERROR_START;
       SERIAL_PROTOCOLLNPGM("PID Autotune failed! Temperature too high");
-      return;
+      return false;
     }
     if(millis() - temp_millis > 2000) {
       int p;
@@ -339,7 +339,7 @@ void PID_autotune(float temp, int extruder, int ncycles)
     if(((millis() - t1) + (millis() - t2)) > (10L*60L*1000L*2L)) {
       SERIAL_ERROR_START;
       SERIAL_PROTOCOLLNPGM("PID Autotune failed! timeout");
-      return;
+      return false;
     }
     if (cycles > ncycles) {
       //SERIAL_PROTOCOLLNPGM("PID Autotune finished! Put the last Kp, Ki and Kd constants from above into Configuration.h");
@@ -348,12 +348,12 @@ void PID_autotune(float temp, int extruder, int ncycles)
       SERIAL_PROTOCOLPGM(" Kp: "); SERIAL_PROTOCOL(Kp);
       SERIAL_PROTOCOLPGM(" Ki: "); SERIAL_PROTOCOL(Ki);
       SERIAL_PROTOCOLPGM(" Kd: "); SERIAL_PROTOCOLLN(Kd);
-      return;
+      return true;
     }
     lcd_update();
   }
 
-  SERIAL_PROTOCOLLNPGM(MSG_OK);
+  return false;
 }
 
 void updatePID()
