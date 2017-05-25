@@ -1045,7 +1045,7 @@ void disable_heater()
 void max_temp_error(uint8_t e) {
   disable_heater();
   if(IsStopped() == false) {
-    SERIAL_ERROR_START;
+    SERIAL_ASYNC_START;
     SERIAL_ERRORLN((int)e);
     SERIAL_ERRORLNPGM(": Extruder switched off. MAXTEMP triggered !");
     LCD_ALERTMESSAGEPGM("Err: MAXTEMP");
@@ -1064,7 +1064,7 @@ void min_temp_error(uint8_t e) {
       head_placed = false;
         disable_heater();
         if(IsStopped() == false) {
-          SERIAL_ERROR_START;
+          SERIAL_ASYNC_START;
           SERIAL_ERRORLN((int)e);
           SERIAL_ERRORLNPGM(": Extruder switched off. MINTEMP triggered !");
           LCD_ALERTMESSAGEPGM("Err: MINTEMP");
@@ -1083,7 +1083,7 @@ void bed_max_temp_error(void) {
   WRITE(HEATER_BED_PIN, 0);
 #endif
   if(IsStopped() == false) {
-    SERIAL_ERROR_START;
+    SERIAL_ASYNC_START;
     SERIAL_ERRORLNPGM("Temperature heated bed switched off. MAXTEMP triggered !!");
     LCD_ALERTMESSAGEPGM("Err: MAXTEMP BED");
   }
