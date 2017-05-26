@@ -1046,6 +1046,16 @@
 			}
 		}
 	},
+	"M805": {
+		"desc": "changes/reads the current wire_end detection configuration",
+		"params": {
+			"S": {
+				"desc": "enables/disables this wire_end detection (default is enabled)",
+				"type": "bool",
+				"range": [0,1]
+			}
+		}
+	},
 	"M852": {
 		"desc": "Set laser's M60 inactivity shutdown timeout",
 		"params": {
