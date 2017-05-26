@@ -193,6 +193,7 @@
 // Implemented RepRap-like codes
 // -----------------------------
 // M563 [Pn [D<0-2>] [S<0,1>]] - Edit tool definition or query defined tools
+// M564 [X<max_x>] [Y<max_y>] [Z<max_z>] S<0,1> - Restrict axes movements to the set limits.
 // M575 [P<port number>] R<rx address> T<tx address> [B<baud rate>] [S<option mask>] - Set communication port parameters
 
 //FABtotum custom M codes
@@ -4279,6 +4280,26 @@ void process_commands()
     }
     break;
 
+  /*
+   * Command: M564
+   *
+   * Restrict axes movements to the set limits
+   *
+   * Descirption:
+   *  This command let you set max coordinates for axes
+   * (the minimum is always 0) and optionally restrict movements inside
+   *  those limits.
+   *
+   * Paramaters:
+   *  X<max_x> - Set X max coordinate
+   *  Y<max_y> - Set Y max coordinate
+   *  Z<max_z> - Set Z max coordinate
+   *  S<restrict> - Set whether to restrict movements between 0 and the axis' maximum:
+   *    <restrict> = 0 disable limits; <restrict> = 1 enable limits.
+   *
+   * See also:
+   *  <M734>
+   */
     case 564:
     {
       for (unsigned int a = 0; a < 3; a++)
@@ -4981,6 +5002,22 @@ void process_commands()
     }
     break;
 
+  /*
+   * Command: M734
+   *
+   * Monitor warning settings
+   *
+   * Description:
+   *  This command let you enable or disable warning when hardware endstops
+   *  are hit. *Use with care!!!*
+   *
+   * Parameters:
+   *  S<enable> - <enable> = 1 for enabling warning, 0 for disabling.
+   *
+   * See Also:
+   *  <M564>
+   *
+   */
     case 734: // monitor warning settings (endstops)
     {
       //1 enable

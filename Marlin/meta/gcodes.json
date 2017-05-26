@@ -724,6 +724,31 @@
 		"desc": "Abort print on endstop hit",
 		"unused": true
 	},
+	"M564": {
+		"desc": "Restrict axes movements to the set limits",
+		"params": {
+			"X": {
+				"desc": "Set X max coordinate",
+				"type": "float",
+				"unit": "mm"
+			},
+			"Y": {
+				"desc": "Set Y max coordinate",
+				"type": "float",
+				"unit": "mm"
+			},
+			"Z": {
+				"desc": "Set Z max coordinate",
+				"type": "float",
+				"unit": "mm"
+			},
+			"S": {
+				"desc": "Restrict movement to axes limits",
+				"type": "bool",
+				"range": [0,1]
+			}
+		}
+	},
 	"M600": {
 		"desc": "Pause for filament change",
 		"unused": true,
