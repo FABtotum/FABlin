@@ -34,7 +34,8 @@ now included in the repository. To compile the firmware simply run:
   platformio run
 
 inside this repository's root folder. To upload the firmware on the board
-or flash it directly into it refer to [platformio documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
+or flash it directly into it refer to
+[platformio documentation](http://docs.platformio.org/en/stable/userguide/cmd_run.html).
 `platformio.ini` has a default definition for using an AVRISP-mk2 usb
 programmer. To directly flash the firmware onto TOTUMduino using that
 defintion, run:
@@ -45,18 +46,21 @@ defintion, run:
 Latest Changes
 --------------
 
-### Version 1.0.0098
+### Version 1.1.0
 
-- Improved homing procedure for partial homing
-- Better laser timeout management: M60 has a longer, configurable, timeout; M61 retains a short immutable timeout
-- Laser is turned down when carriage hits X or Y endstops
-- Added support for head-embedded feeders
-- Improved support for custom heads
-- Support for setting min temp with M801's R parameter
-- Improved G30 positioning
-- M150 command can set rgb led glowing speed
-- Modified M300 command to play sequences of beeps
-- Firmware startup messages suppressed
-- Various small fixes and improvements
+This is a breaking release geared toward use in the new
+[FAB-UI/Colibri](https://github.com/FABtotum/fabui-colibri) system.
+
+- Corrected and normalized command output format:
+  - 'echo:' prefixes removed
+  - All errors are prefixed with 'E:' or 'A:'
+  - Changed command output format of: G30,G38,M105,M109,M190,M303
+  - Various fixes to commands output
+- Added auto temp reporting function, managed through M155
+- Added support for wire end check. M805 enable/disable check
+- Added M564 command: set axes limits and restrict movements
+- Fixed laser head initialization
+- Small changes in documentation
+
 
 For the complete changelog, see [ChangeLog](ChangeLog.txt).

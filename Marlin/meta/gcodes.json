@@ -783,9 +783,9 @@
 				"range": [0, 5000],
 				"unit": "mm"
 			}
-		}		
+		}
 	},
-	
+
 	"M700": {
 		"desc": "Scanning laser power control",
 		"params": {
@@ -876,7 +876,7 @@
 			}
 		}
 	},
-	
+
 	"M734": {
 		"desc": "Enable/Disable endstop warnings",
 		"ref": "M804"
@@ -961,8 +961,8 @@
 	"M767": {
 		"desc": "Read Firmware Update Author"
 	},
-	
-	
+
+
 	"M782": {
 		"desc": "Read head product ID"
 	},
@@ -982,7 +982,7 @@
 	"M786": {
 		"desc": "External power OFF"
 	},
-		
+
 	"M800": {
 		"desc": "Read/Write the thermistor type index of extruder0",
 		"params": {
