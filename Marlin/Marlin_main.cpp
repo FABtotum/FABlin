@@ -80,7 +80,7 @@
 // look here for descriptions of G-codes: http://linuxcnc.org/handbook/gcode/g-code.html
 // http://objects.reprap.org/wiki/Mendel_User_Manual:_RepRapGCodes
 
-//Implemented Codes
+// Implemented Codes (Marlin 1.0.x)
 //-------------------
 // G0  -> G1
 // G1  - Coordinated Movement X Y Z E
@@ -186,17 +186,17 @@
 // M928 - Start SD logging (M928 filename.g) - ended by M29
 // M999 - Restart after being stopped by error
 
-// Implemented Marlin 1.1.x codes
+// Implemented codes (Marlin 1.1.x)
 // ------------------------------
 // M155 - Auto-report temperatures with interval of S<seconds>. (Requires AUTO_REPORT_TEMPERATURES)
 
-// Implemented RepRap-like codes
+// Implemented code (RepRap compatible)
 // -----------------------------
 // M563 [Pn [D<0-2>] [S<0,1>]] - Edit tool definition or query defined tools
 // M564 [X<max_x>] [Y<max_y>] [Z<max_z>] S<0,1> - Restrict axes movements to the set limits.
 // M575 [P<port number>] R<rx address> T<tx address> [B<baud rate>] [S<option mask>] - Set communication port parameters
 
-//FABtotum custom M codes
+// FABtotum custom M codes
 //-----------------------
 // M3 S[RPM] SPINDLE ON - Clockwise
 // M4 S[RPM] SPINDLE ON - CounterClockwise
@@ -1239,7 +1239,7 @@ void loop()
 }
 
 /*
- * Function: Print heater states
+ * Function: print_heaterstates (tp_report_t format)
  *
  * Prints a report of heater(s) state and temperature(s) level
  *
@@ -3622,15 +3622,10 @@ void process_commands()
      * temperature readings are automatically appendend to the response of
      * movement commands at regular intervals of time.
      *
-     * Params:
+     * Parameters:
      *
      *  S<interval> - The interval in seconds between sends. If <interval> < 1
      *    disable sends. Max accepted value for <interval> is 60.
-     *
-     * Returns:
-     *
-     * 'ok' upon successful execution.
-     *
      */
     case 155:
     {

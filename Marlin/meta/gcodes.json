@@ -413,12 +413,12 @@
 		}
 	},
 	"M155": {
-		"desc": "Automatically send temperatures",
+		"desc": "Automatically report temperatures",
 		"params": {
 			"S": {
-				"desc": "Number of seconds to wait between sends. Values <1.0 disable them",
-				"type": "float",
-				"range": [0.0,60.0]
+				"desc": "Number of seconds to wait between reports. 0 disable them",
+				"type": "number",
+				"range": [0,60]
 			}
 		}
 	},
