@@ -475,7 +475,7 @@ static unsigned long previous_millis_cmd = 0;
 static unsigned long max_inactive_time = DEFAULT_DEACTIVE_TIME*1000l;
 // Statically #define this as long as it remains non configurable:
 //static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
-#define max_steppers_inactive_time  DEFAULT_STEPPERS_DEACTIVE_TIME*1000l
+#define max_steppers_inactive_time  DEFAULT_STEPPERS_DEACTIVE_TIME*1000L
 
 #if defined (AUTO_REPORT_TEMPERATURES)
 
@@ -3166,9 +3166,11 @@ void process_commands()
       }
 
       // Remember to report temperatures after command termination
-      report_temp_status |= TP_REPORT_FULL;
-
-      break;
+      //report_temp_status |= TP_REPORT_FULL;
+      SERIAL_PROTOCOLPGM(MSG_OK);
+      SERIAL_PROTOCOLPGM(" ");
+      print_heaterstates(TP_REPORT_FULL);
+      return;
     }
 
     case 109:
@@ -6392,7 +6394,7 @@ void manage_inactivity()
 {
   if (max_steppers_inactive_time)
   {
-    unsigned int elapsed = millis() - previous_millis_cmd;
+    unsigned long int elapsed = millis() - previous_millis_cmd;
     if (elapsed >  max_steppers_inactive_time)
     {
         if (blocks_queued() == false) {
