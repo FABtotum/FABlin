@@ -1,6 +1,19 @@
 Revision history
 ================
 
+Min: 1.1.0 (2017-05-29)
+-------------------------
+- Corrected and normalized command output format:
+  - 'echo:' prefixes removed
+  - All errors are prefixed with 'E:' or 'A:'
+  - Changed command output format of: G30,G38,M105,M109,M190,M303
+  - Various fixes to commands output
+- Added auto temp reporting function, managed through M155
+- Added support for wire end check. M805 enable/disable check
+- Added M564 command: set axes limits and restrict movements
+- Fixed laser head initialization
+- Small changes in documentation
+
 Rev: 1.0.0098 (2017-04-12)
 --------------------------
 - Improved homing procedure for partial homing

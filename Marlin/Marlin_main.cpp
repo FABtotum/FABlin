@@ -88,7 +88,7 @@
 // look here for descriptions of G-codes: http://linuxcnc.org/handbook/gcode/g-code.html
 // http://objects.reprap.org/wiki/Mendel_User_Manual:_RepRapGCodes
 
-//Implemented Codes
+// Implemented Codes (Marlin 1.0.x)
 //-------------------
 // G0  -> G1
 // G1  - Coordinated Movement X Y Z E
@@ -194,16 +194,17 @@
 // M928 - Start SD logging (M928 filename.g) - ended by M29
 // M999 - Restart after being stopped by error
 
-// Implemented Marlin 1.1.x codes
+// Implemented codes (Marlin 1.1.x)
 // ------------------------------
 // M155 - Auto-report temperatures with interval of S<seconds>. (Requires AUTO_REPORT_TEMPERATURES)
 
-// Implemented RepRap-like codes
+// Implemented code (RepRap compatible)
 // -----------------------------
 // M563 [Pn [D<0-2>] [S<0,1>]] - Edit tool definition or query defined tools
+// M564 [X<max_x>] [Y<max_y>] [Z<max_z>] S<0,1> - Restrict axes movements to the set limits.
 // M575 [P<port number>] R<rx address> T<tx address> [B<baud rate>] [S<option mask>] - Set communication port parameters
 
-//FABtotum custom M codes
+// FABtotum custom M codes
 //-----------------------
 // M3 S[RPM] SPINDLE ON - Clockwise
 // M4 S[RPM] SPINDLE ON - CounterClockwise
@@ -488,7 +489,7 @@ static unsigned long previous_millis_cmd = 0;
 static unsigned long max_inactive_time = DEFAULT_DEACTIVE_TIME*1000l;
 // Statically #define this as long as it remains non configurable:
 //static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
-#define max_steppers_inactive_time  DEFAULT_STEPPERS_DEACTIVE_TIME*1000l
+#define max_steppers_inactive_time  DEFAULT_STEPPERS_DEACTIVE_TIME*1000L
 
 #if defined (AUTO_REPORT_TEMPERATURES)
 
@@ -1065,16 +1066,10 @@ void FabtotumIO_init()
 
   z_endstop_bug_workaround = fab_batch_number >= 3? 255 : 0;
 
-  // Init IRSD unit if installed
-#ifdef IRSD
-  irsd_init();
-#endif
-
   // Init external probe if configured
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
   pinMode(EXTERNAL_ENDSTOP_Z_PROBING_PIN, INPUT);
   enable_external_z_endstop(false);
-  //ENABLE_SECURE_SWITCH_ZPROBE();
 #endif
 }
 
@@ -1282,7 +1277,7 @@ void loop()
 }
 
 /*
- * Function: Print heater states
+ * Function: print_heaterstates (tp_report_t format)
  *
  * Prints a report of heater(s) state and temperature(s) level
  *
@@ -3257,9 +3252,11 @@ void process_commands()
       }
 
       // Remember to report temperatures after command termination
-      report_temp_status |= TP_REPORT_FULL;
-
-      break;
+      //report_temp_status |= TP_REPORT_FULL;
+      SERIAL_PROTOCOLPGM(MSG_OK);
+      SERIAL_PROTOCOLPGM(" ");
+      print_heaterstates(TP_REPORT_FULL);
+      return;
     }
 
     case 109:
@@ -3716,15 +3713,10 @@ void process_commands()
      * temperature readings are automatically appendend to the response of
      * movement commands at regular intervals of time.
      *
-     * Params:
+     * Parameters:
      *
      *  S<interval> - The interval in seconds between sends. If <interval> < 1
      *    disable sends. Max accepted value for <interval> is 60.
-     *
-     * Returns:
-     *
-     * 'ok' upon successful execution.
-     *
      */
     case 155:
     {
@@ -4390,6 +4382,26 @@ void process_commands()
     }
     break;
 
+  /*
+   * Command: M564
+   *
+   * Restrict axes movements to the set limits
+   *
+   * Descirption:
+   *  This command let you set max coordinates for axes
+   * (the minimum is always 0) and optionally restrict movements inside
+   *  those limits.
+   *
+   * Paramaters:
+   *  X<max_x> - Set X max coordinate
+   *  Y<max_y> - Set Y max coordinate
+   *  Z<max_z> - Set Z max coordinate
+   *  S<restrict> - Set whether to restrict movements between 0 and the axis' maximum:
+   *    <restrict> = 0 disable limits; <restrict> = 1 enable limits.
+   *
+   * See also:
+   *  <M734>
+   */
     case 564:
     {
       for (unsigned int a = 0; a < 3; a++)
@@ -5094,6 +5106,22 @@ void process_commands()
     }
     break;
 
+  /*
+   * Command: M734
+   *
+   * Monitor warning settings
+   *
+   * Description:
+   *  This command let you enable or disable warning when hardware endstops
+   *  are hit. *Use with care!!!*
+   *
+   * Parameters:
+   *  S<enable> - <enable> = 1 for enabling warning, 0 for disabling.
+   *
+   * See Also:
+   *  <M564>
+   *
+   */
     case 734: // monitor warning settings (endstops)
     {
       //1 enable
@@ -6482,7 +6510,7 @@ void manage_inactivity()
 {
   if (max_steppers_inactive_time)
   {
-    unsigned int elapsed = millis() - previous_millis_cmd;
+    unsigned long int elapsed = millis() - previous_millis_cmd;
     if (elapsed >  max_steppers_inactive_time)
     {
         if (blocks_queued() == false) {
@@ -7002,7 +7030,7 @@ void kill()
   pinMode(PS_ON_PIN,INPUT);
 #endif
 
-  SERIAL_ERROR_START;
+  SERIAL_ASYNC_START;
   SERIAL_ERRORLNPGM(MSG_ERR_KILLED);
   LCD_ALERTMESSAGEPGM(MSG_KILLED);
   suicide();

@@ -413,12 +413,12 @@
 		}
 	},
 	"M155": {
-		"desc": "Automatically send temperatures",
+		"desc": "Automatically report temperatures",
 		"params": {
 			"S": {
-				"desc": "Number of seconds to wait between sends. Values <1.0 disable them",
-				"type": "float",
-				"range": [0.0,60.0]
+				"desc": "Number of seconds to wait between reports. 0 disable them",
+				"type": "number",
+				"range": [0,60]
 			}
 		}
 	},
@@ -724,6 +724,31 @@
 		"desc": "Abort print on endstop hit",
 		"unused": true
 	},
+	"M564": {
+		"desc": "Restrict axes movements to the set limits",
+		"params": {
+			"X": {
+				"desc": "Set X max coordinate",
+				"type": "float",
+				"unit": "mm"
+			},
+			"Y": {
+				"desc": "Set Y max coordinate",
+				"type": "float",
+				"unit": "mm"
+			},
+			"Z": {
+				"desc": "Set Z max coordinate",
+				"type": "float",
+				"unit": "mm"
+			},
+			"S": {
+				"desc": "Restrict movement to axes limits",
+				"type": "bool",
+				"range": [0,1]
+			}
+		}
+	},
 	"M600": {
 		"desc": "Pause for filament change",
 		"unused": true,
@@ -758,9 +783,9 @@
 				"range": [0, 5000],
 				"unit": "mm"
 			}
-		}		
+		}
 	},
-	
+
 	"M700": {
 		"desc": "Scanning laser power control",
 		"params": {
@@ -851,7 +876,7 @@
 			}
 		}
 	},
-	
+
 	"M734": {
 		"desc": "Enable/Disable endstop warnings",
 		"ref": "M804"
@@ -936,8 +961,8 @@
 	"M767": {
 		"desc": "Read Firmware Update Author"
 	},
-	
-	
+
+
 	"M782": {
 		"desc": "Read head product ID"
 	},
@@ -957,7 +982,7 @@
 	"M786": {
 		"desc": "External power OFF"
 	},
-		
+
 	"M800": {
 		"desc": "Read/Write the thermistor type index of extruder0",
 		"params": {
@@ -1018,6 +1043,16 @@
 				"type": "number",
 				"range": [0, 1],
 				"opt": true
+			}
+		}
+	},
+	"M805": {
+		"desc": "changes/reads the current wire_end detection configuration",
+		"params": {
+			"S": {
+				"desc": "enables/disables this wire_end detection (default is enabled)",
+				"type": "bool",
+				"range": [0,1]
 			}
 		}
 	},
