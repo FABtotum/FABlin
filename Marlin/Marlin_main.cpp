@@ -619,7 +619,8 @@ struct debug_s {
   uint8_t out_inv:1;
 } debug;
 
-
+// Flag to skip homing assertion in certain commands
+bool assert_home_true = false;
 
 //===========================================================================
 //=============================Routines======================================
@@ -2207,6 +2208,8 @@ inline bool check_sensitive_pins (unsigned int pin_number)
 
 inline bool assert_home ()
 {
+  if (assert_home_true) return true;
+
   // Prevent user from running a G29 without first homing in X and Y
   if (! (axis_known_position[X_AXIS] && axis_known_position[Y_AXIS]) )
   {
@@ -2784,7 +2787,7 @@ void process_commands()
           feedRateDown = code_value();
         }*/
 
-        // Prevent user from running a G29 without first homing in X and Y
+        // Prevent user from running a G30 without first homing in X and Y
         if (!assert_home()) break;
 
         st_synchronize();
@@ -2822,6 +2825,9 @@ void process_commands()
 	     // It does nothing unless the probe is enabled first with M746 S1
         {
           if(!Stopped && enable_secure_switch_zprobe){
+
+            // Prevent user from running a G38 without first homing in X and Y
+            if (!assert_home()) break;
 
             st_synchronize();
 
@@ -3521,12 +3527,6 @@ void process_commands()
      *
      * Set laser security timeout
      *
-     * Syntax:
-     * > M86 [S<timeout>]
-     *
-     * Parameters:
-     *  S<timeout> - timeout in seconds; 0 disables timeout
-     *
      * Description:
      * This command sets or resets laser security timeout. When using
      * M60 commands, after no movement is done for more then the defined
@@ -3537,6 +3537,9 @@ void process_commands()
      * If the *S* parameter is not specified the command outputs the
      * currently set value.
      *
+     * Parameters:
+     *  S<timeout> - timeout in seconds; 0 disables timeout
+     *
      * See also:
      *  <M60>
      *  <M62>
@@ -3546,19 +3549,15 @@ void process_commands()
       if (code_seen('S'))
       {
         unsigned long timeout = code_value_long() * 1000;
-        //if (timeout) {
-          Laser::max_inactive_time = timeout;
-        /*} else {
-          Laser::max_inactive_time = DEFAULT_DEACTIVE_TIME * 1000l;
-        }*/
+        Laser::max_inactive_time = timeout;
       }
       else
       {
         SERIAL_PROTOCOLLN(Laser::max_inactive_time / 1000);
         SERIAL_ECHOLNPGM(MSG_OK);
       }
+      break;
     }
-    break;
 #endif
 
     case 92: // M92
@@ -5105,6 +5104,31 @@ void process_commands()
       Stopped = false;
     }
     break;
+
+  /*
+   * Command: M733
+   *
+   * Disable homing check
+   *
+   * Description: This configutration command let you set the homing
+   *  check status. Homing check is used in particular commands,
+   *  such as G29 or G30: When homing check is on an all-axes homing
+   *  must have been done before issuing the command and while motors
+   *  remain on. By default, the homing check is enabled.
+   *
+   * Parameters:
+   *
+   *  S<enable> - If <enable> != 0 homing check is enable, othervwise
+   *    it is disabled.
+   */
+    case 733:
+    {
+      if (code_seen('S')) {
+        assert_home_true = code_value_long() == 0;
+      }
+      SERIAL_PROTOCOLLN((unsigned long)(!assert_home_true));
+      break;
+    }
 
   /*
    * Command: M734
