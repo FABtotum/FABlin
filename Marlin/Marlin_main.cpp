@@ -3438,12 +3438,6 @@ void process_commands()
      *
      * Set laser security timeout
      *
-     * Syntax:
-     * > M86 [S<timeout>]
-     *
-     * Parameters:
-     *  S<timeout> - timeout in seconds; 0 disables timeout
-     *
      * Description:
      * This command sets or resets laser security timeout. When using
      * M60 commands, after no movement is done for more then the defined
@@ -3454,6 +3448,9 @@ void process_commands()
      * If the *S* parameter is not specified the command outputs the
      * currently set value.
      *
+     * Parameters:
+     *  S<timeout> - timeout in seconds; 0 disables timeout
+     *
      * See also:
      *  <M60>
      *  <M62>
@@ -3463,19 +3460,15 @@ void process_commands()
       if (code_seen('S'))
       {
         unsigned long timeout = code_value_long() * 1000;
-        //if (timeout) {
-          Laser::max_inactive_time = timeout;
-        /*} else {
-          Laser::max_inactive_time = DEFAULT_DEACTIVE_TIME * 1000l;
-        }*/
+        Laser::max_inactive_time = timeout;
       }
       else
       {
         SERIAL_PROTOCOLLN(Laser::max_inactive_time / 1000);
         SERIAL_ECHOLNPGM(MSG_OK);
       }
+      break;
     }
-    break;
 #endif
 
     case 92: // M92
