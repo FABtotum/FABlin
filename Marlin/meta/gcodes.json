@@ -865,6 +865,16 @@
 	"M730": {
 		"desc": "Read last error code"
 	},
+	"M733": {
+		"desc": "Set home checking",
+		"params": {
+			"S": {
+				"desc": "If != 0 homing check is enabled, othervwise it is disabled.",
+				"type": "bool",
+				"range": [0,1]
+			}
+		}
+	},
 	"M756": {
 		"desc" : "Error generator",
 		"params": {
