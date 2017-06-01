@@ -614,7 +614,7 @@
 				"range": [0,85]
 			},
 			"S": {
-				"desc": "Pin state. <strong>High</strong> -> 1, <strong>Low</strong> -> 0, <strong>Invert</strong> -> -1",
+				"desc": "Pin state. <ul><li>1 - <strong>High</strong></li><li>0 - <strong>Low</strong></li><li>-1 - <strong>Invert</strong></li></ul>",
 				"type": "bool",
 				"range": [-1, 1]
 			}
@@ -708,6 +708,25 @@
 	"M402": {
 		"desc": "Raise z-probe"
 	},
+	"M450": {
+		"desc": "Read/Write working mode",
+		"params": {
+			"S" : {
+				"desc": "Working mode: <ul><li>0 - <strong>Hybrid</strong></li><li>1 - <strong>FFF</strong></li><li>2 - <strong>Lase</strong></li><li>3 - <strong>CNC</strong></li><li>4 - <strong>Scan</strong></li><li>5 - <strong>SLA</strong></li></ul>",
+				"type": "number",
+				"range": [0,5]
+			}
+		}
+	},
+	"M451" : {
+		"desc": "Set working mode to FFF"
+	},
+	"M452" : {
+		"desc": "Set working mode to Laser"
+	},
+	"M453" : {
+		"desc": "Set working mode to CNC"
+	},
 	"M500": {
 		"desc": "Store parameters to EEPROM"
 	},
@@ -723,6 +742,31 @@
 	"M540": {
 		"desc": "Abort print on endstop hit",
 		"unused": true
+	},
+	"M563": {
+		"desc": "Define or remove a tool",
+		"params": {
+			"P" : {
+				"desc": "Tool logical id",
+				"type": "number",
+				"range": [0,5]
+			},
+			"D" : {
+				"desc": "Associate drive",
+				"type": "number",
+				"range": [0,2]
+			},
+			"H" : {
+				"desc": "Associate heater",
+				"type": "number",
+				"range": [0,0]
+			},
+			"S" : {
+				"desc": "Tool serial communcation",
+				"type": "bool",
+				"range": [0,1]
+			}
+		}
 	},
 	"M564": {
 		"desc": "Restrict axes movements to the set limits",
