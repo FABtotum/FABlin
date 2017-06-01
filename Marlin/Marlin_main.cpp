@@ -1069,7 +1069,7 @@ void FabtotumIO_init()
 
   // Init external probe if configured
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
-  pinMode(EXTERNAL_ENDSTOP_Z_PROBING_PIN, INPUT);
+  SET_INPUT(EXTERNAL_ENDSTOP_Z_PROBING_PIN);
   enable_external_z_endstop(false);
 #endif
 }
