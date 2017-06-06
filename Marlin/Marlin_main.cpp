@@ -1350,9 +1350,11 @@ void get_command()
       if(!comment_mode){
         comment_mode = false; //for new command
         fromsd[bufindw] = false;
-        if(strchr(cmdbuffer[bufindw], 'N') != NULL)
+        strchr_pointer = strchr(cmdbuffer[bufindw], 'N');
+        //if(strchr(cmdbuffer[bufindw], 'N') != NULL)
+        if (strchr_pointer == cmdbuffer[bufindw])
         {
-          strchr_pointer = strchr(cmdbuffer[bufindw], 'N');
+          //strchr_pointer = strchr(cmdbuffer[bufindw], 'N');
           gcode_N = (strtol(&cmdbuffer[bufindw][strchr_pointer - cmdbuffer[bufindw] + 1], NULL, 10));
           if(gcode_N != gcode_LastN+1 && (strstr_P(cmdbuffer[bufindw], PSTR("M110")) == NULL) ) {
             SERIAL_ERROR_START;
