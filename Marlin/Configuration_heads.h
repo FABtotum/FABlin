@@ -15,6 +15,7 @@
 #define FAB_HEADS_default_SMART  0
 
 #define FAB_HEADS_hybrid_ID     1
+#define FAB_HEADS_hybrid_SMART  1
 
 #define FAB_HEADS_print_v2_ID   2
 

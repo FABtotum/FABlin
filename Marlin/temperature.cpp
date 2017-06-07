@@ -1185,29 +1185,32 @@ void max_temp_error(uint8_t e) {
 }
 
 void min_temp_error(uint8_t e) {
-  if(head_placed && installed_head_id!=3)
-    {
-      head_placed = false;
-        disable_heater();
-        if(IsStopped() == false) {
-          SERIAL_ASYNC_START;
-          SERIAL_ERRORLN((int)e);
-          SERIAL_ERRORLNPGM(": Extruder switched off. MINTEMP triggered !");
-          LCD_ALERTMESSAGEPGM("Err: MINTEMP");
-        }
-        #ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
-        Stop();
-        #endif
+  if (head_placed) {
+    head_placed = false;
+  }
 
-        RPI_ERROR_ACK_ON();
-        ERROR_CODE=ERROR_MIN_TEMP;
-    }
+  // TODO: only disable if TP_HEATER_e enabled
+  disable_heater();
+  if(IsStopped() == false) {
+    SERIAL_ASYNC_START;
+    SERIAL_ERRORLN((int)e);
+    SERIAL_ERRORLNPGM(": Extruder switched off. MINTEMP triggered !");
+    LCD_ALERTMESSAGEPGM("Err: MINTEMP");
+  }
+  #ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
+  Stop();
+  #endif
+
+  RPI_ERROR_ACK_ON();
+  ERROR_CODE=ERROR_MIN_TEMP;
 }
 
 void bed_max_temp_error(void) {
 #if HEATER_BED_PIN > -1
   WRITE(HEATER_BED_PIN, 0);
 #endif
+
+  // TODO: only disable if TP_HEATER_BED enabled
   if(IsStopped() == false) {
     SERIAL_ASYNC_START;
     SERIAL_ERRORLNPGM("Temperature heated bed switched off. MAXTEMP triggered !!");

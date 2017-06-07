@@ -859,27 +859,16 @@ void set_mods (const char* modstring)
   modl = strlen(modstring);
 }
 
-void tool_change (uint8_t id)
+void setup_addon (uint8_t id)
 {
-  head_placed = false;
-
   // Shutdown head
   StopTool();
 
-  if (id <= HEADS)
-  {
-    // Reset default tool configurations
-    tools.define(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-    tools.define(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-    tools.define(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-
+  if (id <= HEADS) {
     //installed_head = &(tools.factory[id]);
     tools.load(active_tool, id);
 
-    // Reselect active tool to make any tool configuration modification effective
-    tools.change(active_tool);
-
-     // Forcefully reset mode...
+    // Forcefully reset mode...
     working_mode_change(installed_head->mode, true);
 
    // Update heaters max temp
@@ -897,25 +886,28 @@ void tool_change (uint8_t id)
      }
 #endif
 
+    // Reselect active tool to make any tool configuration modification effective
+    tools.change(active_tool);
+
     // Set hardcoded head modification codes to be run
     if (installed_head->mods) {
       set_mods(installed_head->mods);
     }
-
   }
+
   installed_head_id = id;
 
-  // Set head placement status to the expected value (to be checked by subsequent procedures)
-  /*if (installed_head_id > 1)
-  if (installed_head_id != 3)
-    head_placed = true;*/
-
-  // And try to read head info if available
-  Read_Head_Info();
+  if (installed_head_id != 0) {
+    head_placed = true;
+  }
 }
 
 void FabtotumHeads_init ()
 {
+  tools.define(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_hybrid_SMART);
+  tools.define(1, FAB_HEADS_5th_axis_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+  tools.define(2, FAB_HEADS_direct_DRIVE,   FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
+
   tools.factory[0].mode = 0;
   tools.factory[0].serial = 0;
   tools.factory[0].extruders = 0;
@@ -952,7 +944,7 @@ void FabtotumHeads_init ()
    tools.factory[FAB_HEADS_direct_ID].extruders = 1 << 2;
    tools.factory[FAB_HEADS_direct_ID].mods = "M563 P2 D0\nM720\n";
 
-   tool_change(installed_head_id);
+   //tool_change(installed_head_id);
 }
 
 /*
@@ -960,6 +952,8 @@ void FabtotumHeads_init ()
  */
 void StopTool ()
 {
+  head_placed = false;
+
    #if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
       // Shut down +24V line if FABtotum DirectDrive head is present
       //if (installed_head_id==FAB_HEADS_direct_ID) {
@@ -1067,6 +1061,11 @@ void FabtotumIO_init()
   DISABLE_SECURE_SWITCH_ZPROBE();
 #endif
 
+  // This legacy function has been written when only the hybrid head was around
+  // and should only be called in such case
+  if (installed_head_id == 1) {
+    Read_Head_Info();
+  }
 }
 
 /*
@@ -1148,15 +1147,16 @@ void setup()
   // loads data from EEPROM if available else uses defaults (and resets step acceleration rate)
   Config_RetrieveSettings();
 
-  //test
-  //Config_StoreSettings();
+  if (installed_head_id >= 1 && installed_head_id <= 3) {
+    tp_init();    // Initialize temperature loop
+    servo_init();
+  }
 
-  tp_init();    // Initialize temperature loop
   plan_init();  // Initialize planner;
   watchdog_init();
   st_init();    // Initialize stepper, this enables interrupts!
+
   setup_photpin();
-  servo_init();
 
   FabtotumIO_init();
   FabtotumHeads_init();
@@ -6060,19 +6060,35 @@ void process_commands()
 
     case 793: // M793 - Set/read installed head soft ID
     {
-      if (code_seen('S')) {
+      if (code_seen('S'))
+      {
         uint8_t id = code_value_long();
+
+        // Check input validity
         if (id < FAB_HEADS_thirdparty_ID)
         if (id >= HEADS) {
           SERIAL_ERROR_START;
           SERIAL_ERRORLNPGM("Unsupported head ID");
           break;
         }
-        tool_change(id);
+
+        // Check up what to do:
+        // Actually change the tool if:
+        // - new ID == 0
+        // - new ID == stored ID (we are presumably in the startup)
+        // - stored ID == 0 (no head was set, we may be in startup or not)
+        if (id == installed_head_id
+        || installed_head_id == 0
+        || id == 0) {
+          setup_addon(id);
+        } else {
+          installed_head_id = id;
+        }
       }
+
       SERIAL_PROTOCOLLN(installed_head_id);
+      break;
     }
-    break;
 
     case 794:
     {
