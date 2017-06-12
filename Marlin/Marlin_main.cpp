@@ -6075,11 +6075,10 @@ void process_commands()
         // Check up what to do:
         // Actually change the tool if:
         // - new ID == 0
-        // - new ID == stored ID (we are presumably in the startup)
-        // - stored ID == 0 (no head was set, we may be in startup or not)
-        if (id == installed_head_id
-        || installed_head_id == 0
-        || id == 0) {
+        // - new ID != 0 and:
+        //   - new ID == stored ID (we are presumably in the startup)
+        //   - stored ID == 0 (no head was set, we may be in startup or not)
+        if (id == 0 || (id == installed_head_id || installed_head_id == 0)) {
           setup_addon(id);
         } else {
           installed_head_id = id;

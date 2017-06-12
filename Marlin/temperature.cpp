@@ -1184,12 +1184,15 @@ void max_temp_error(uint8_t e) {
   ERROR_CODE=ERROR_MAX_TEMP;
 }
 
-void min_temp_error(uint8_t e) {
+void min_temp_error (uint8_t e)
+{
+  // Only disable heater if the relevant TP_HEATER_e was enabled
+  if (!(enabled_features & 1<<e)) return;
+
   if (head_placed) {
     head_placed = false;
   }
 
-  // TODO: only disable if TP_HEATER_e enabled
   disable_heater();
   if(IsStopped() == false) {
     SERIAL_ASYNC_START;
@@ -1205,12 +1208,15 @@ void min_temp_error(uint8_t e) {
   ERROR_CODE=ERROR_MIN_TEMP;
 }
 
-void bed_max_temp_error(void) {
+void bed_max_temp_error (void)
+{
+  // Oly disable heater if TP_HEATER_BED was enabled
+  if (!(enabled_features & TP_HEATER_BED)) return;
+
 #if HEATER_BED_PIN > -1
   WRITE(HEATER_BED_PIN, 0);
 #endif
 
-  // TODO: only disable if TP_HEATER_BED enabled
   if(IsStopped() == false) {
     SERIAL_ASYNC_START;
     SERIAL_ERRORLNPGM("Temperature heated bed switched off. MAXTEMP triggered !!");
