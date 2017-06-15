@@ -209,6 +209,8 @@ void manage_inactivity();
   #define disable_e2() /* nothing */
 #endif
 
+#define disable_e_steppers() do { disable_e0(); disable_e1(); disable_e2(); } while (0)
+
 #define INVALID_EXTRUDER 252
 #define INVALID_EXTRUDER_1 (INVALID_EXTRUDER | 1)
 #define INVALID_EXTRUDER_2 (INVALID_EXTRUDER | 2)

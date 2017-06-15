@@ -3407,9 +3407,7 @@ void process_commands()
         if(all_axis)
         {
           st_synchronize();
-          disable_e0();
-          disable_e1();
-          disable_e2();
+          disable_e_steppers();
           finishAndDisableSteppers();
         }
         else
@@ -3420,9 +3418,7 @@ void process_commands()
           if(code_seen('Z')) disable_z();
           #if ((E0_ENABLE_PIN != X_ENABLE_PIN) && (E1_ENABLE_PIN != Y_ENABLE_PIN)) // Only enable on boards that have seperate ENABLE_PINS
             if(code_seen('E')) {
-              disable_e0();
-              disable_e1();
-              disable_e2();
+              disable_e_steppers();
             }
           #endif
         }
