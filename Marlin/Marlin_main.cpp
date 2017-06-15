@@ -3423,8 +3423,9 @@ void process_commands()
       }
       break;
     case 85: // M85
-      code_seen('S');
-      max_inactive_time = code_value() * 1000;
+      if (code_seen('S')) {
+        max_inactive_time = code_value() * 1000;
+      }
       break;
 
 
