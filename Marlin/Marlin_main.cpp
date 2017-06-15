@@ -473,9 +473,7 @@ const int sensitive_pins[] = SENSITIVE_PINS; // Sensitive pin list for M42
 //Inactivity shutdown variables
 static unsigned long previous_millis_cmd = 0;
 static unsigned long max_inactive_time = DEFAULT_DEACTIVE_TIME*1000l;
-// Statically #define this as long as it remains non configurable:
-//static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
-#define max_steppers_inactive_time  DEFAULT_STEPPERS_DEACTIVE_TIME*1000L
+static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
 
 #if defined (AUTO_REPORT_TEMPERATURES)
 
@@ -3399,7 +3397,7 @@ void process_commands()
     case 18: //compatibility
     case 84: // M84
       if(code_seen('S')){
-        max_inactive_time = code_value() * 1000;
+        max_steppers_inactive_time = code_value() * 1000;
       }
       else
       {
@@ -6414,9 +6412,10 @@ void handle_status_leds(void) {
 
 void manage_inactivity()
 {
+  unsigned long int elapsed = millis() - previous_millis_cmd;
+
   if (max_steppers_inactive_time)
   {
-    unsigned long int elapsed = millis() - previous_millis_cmd;
     if (elapsed >  max_steppers_inactive_time)
     {
         if (blocks_queued() == false) {
@@ -6424,21 +6423,22 @@ void manage_inactivity()
             disable_x();
             disable_y();
             disable_z();
-            disable_e0();
-            disable_e1();
-            disable_e2();
-
-#ifdef ENABLE_LASER_MODE
-            // Zero laser power whether it's active or not
-            if (Laser::synchronized) {
-              Laser::power = 0;
-            } else if (Laser::max_inactive_time && elapsed > Laser::max_inactive_time) {
-              Laser::power = 0;
-            }
-#endif
+            disable_e_steppers();
         }
     }
   }
+
+#ifdef ENABLE_LASER_MODE
+  if (Laser::max_inactive_time)
+  {
+    // Zero laser power whether it's active or not
+    if (Laser::synchronized) {
+      Laser::power = 0;
+    } else if (Laser::max_inactive_time && elapsed > Laser::max_inactive_time) {
+      Laser::power = 0;
+    }
+  }
+#endif
 
   if(max_inactive_time)  {
     if( (millis() - previous_millis_cmd) >  max_inactive_time )
