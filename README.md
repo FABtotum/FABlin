@@ -46,21 +46,11 @@ defintion, run:
 Latest Changes
 --------------
 
-### Version 1.1.0
+### Version 1.1.1
 
-This is a breaking release geared toward use in the new
-[FAB-UI/Colibri](https://github.com/FABtotum/fabui-colibri) system.
-
-- Corrected and normalized command output format:
-  - 'echo:' prefixes removed
-  - All errors are prefixed with 'E:' or 'A:'
-  - Changed command output format of: G30,G38,M105,M109,M190,M303
-  - Various fixes to commands output
-- Added auto temp reporting function, managed through M155
-- Added support for wire end check. M805 enable/disable check
-- Added M564 command: set axes limits and restrict movements
-- Fixed laser head initialization
-- Small changes in documentation
+- Make stepper motor's idle hold timout configurable with `M84`
+- Fix parsing of line number words (N's can now be used inside `M790`...)
+- Fix parameter parsing inside `M85`
 
 
 For the complete changelog, see [ChangeLog](ChangeLog.txt).
