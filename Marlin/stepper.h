@@ -119,11 +119,6 @@ void endstops_hit_on_purpose(); //avoid creation of the message, i.e. after homi
 
 void enable_endstops(bool check); // Enable/disable endstop checking
 
-#ifdef EXTERNAL_ENDSTOP_Z_PROBING
-void enable_external_z_endstop(bool check);
-#endif
-
-
 void checkStepperErrors(); //Print errors detected by the stepper
 
 void finishAndDisableSteppers();

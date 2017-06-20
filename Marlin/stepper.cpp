@@ -38,6 +38,9 @@
   #include "Laser.h"
 #endif
 
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+  #include "ExternalProbe.h"
+#endif
 
 //===========================================================================
 //=============================public variables  ============================
@@ -91,10 +94,6 @@ static bool old_external_z_endstop=false;
 
 static bool check_endstops = true;
 
-#ifdef EXTERNAL_ENDSTOP_Z_PROBING
-static bool check_external_z_endstops = true;
-#endif
-
 volatile long count_position[NUM_AXIS] = { 0, 0, 0, 0};
 volatile signed char count_direction[NUM_AXIS] = { 1, 1, 1, 1};
 
@@ -103,10 +102,6 @@ volatile signed char count_direction[NUM_AXIS] = { 1, 1, 1, 1};
 //===========================================================================
 
 #define CHECK_ENDSTOPS  if(check_endstops)
-
-#ifdef EXTERNAL_ENDSTOP_Z_PROBING
-#define CHECK_EXTERNAL_Z_ENDSTOPS  if(enable_secure_switch_zprobe && check_external_z_endstops)
-#endif
 
 // intRes = intIn1 * intIn2 >> 16
 // uses:
@@ -330,14 +325,6 @@ void enable_endstops(bool check)
 {
   check_endstops = check;
 }
-
-#ifdef EXTERNAL_ENDSTOP_Z_PROBING
-void enable_external_z_endstop(bool check)
-{
-  check_external_z_endstops = check;
-}
-#endif
-
 
 //         __________________________
 //        /|                        |\     _________________         ^
@@ -628,9 +615,9 @@ ISR(TIMER1_COMPA_vect)
       }
 
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
-      CHECK_EXTERNAL_Z_ENDSTOPS
+      if( ExternalProbe::isEnabled() )
       {
-          bool external_endstop=(READ(EXTERNAL_ENDSTOP_Z_PROBING_PIN) != EXTERNAL_ENDSTOP_Z_INVERTING);
+          bool external_endstop = ExternalProbe::readState();
           if(external_endstop && old_external_z_endstop && (current_block->steps_z > 0)) {
             endstops_trigsteps[Z_AXIS] = count_position[Z_AXIS];
             endstop_z_hit=true;

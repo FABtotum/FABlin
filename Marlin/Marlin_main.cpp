@@ -81,9 +81,12 @@
 #endif
 
 #ifdef IRSD
-#include "irsd.h"
+  #include "irsd.h"
 #endif
 
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+  #include "ExternalProbe.h"
+#endif
 
 // look here for descriptions of G-codes: http://linuxcnc.org/handbook/gcode/g-code.html
 // http://objects.reprap.org/wiki/Mendel_User_Manual:_RepRapGCodes
@@ -973,10 +976,10 @@ void StopTool ()
 
 void FabtotumIO_init()
 {
-  digitalWrite(I2C_SDA,0);
-  digitalWrite(I2C_SCL,0);
-  pinMode(I2C_SDA,INPUT);
-  pinMode(I2C_SCL,INPUT);
+   digitalWrite(I2C_SDA,0);
+   digitalWrite(I2C_SCL,0);
+   pinMode(I2C_SDA,INPUT);
+   pinMode(I2C_SCL,INPUT);
 
    BEEP_ON()
 
@@ -999,10 +1002,10 @@ void FabtotumIO_init()
 
    pinMode(NOT_REEL_LENS_OPEN_PIN,OUTPUT);
 
-  //POWER MABNAHGEMENT
-  pinMode(PWR_OUT_PIN, OUTPUT);  //set external PSU shutdown pin (Optional on I2C)
-  pinMode(PWR_IN_PIN,INPUT);  //set external PSU shutdown pin (Optional on I2C)
-  digitalWrite(PWR_OUT_PIN, HIGH);
+   //POWER MABNAHGEMENT
+   pinMode(PWR_OUT_PIN, OUTPUT);  //set external PSU shutdown pin (Optional on I2C)
+   pinMode(PWR_IN_PIN,INPUT);  //set external PSU shutdown pin (Optional on I2C)
+   digitalWrite(PWR_OUT_PIN, HIGH);
 
    //fastio init
    // SET_INPUT(IO)  ; SET_OUTPUT(IO);
@@ -1064,12 +1067,6 @@ void FabtotumIO_init()
    BEEP_OFF()
 
   z_endstop_bug_workaround = fab_batch_number >= 3? 255 : 0;
-
-  // Init external probe if configured
-#ifdef EXTERNAL_ENDSTOP_Z_PROBING
-  SET_INPUT(EXTERNAL_ENDSTOP_Z_PROBING_PIN);
-  enable_external_z_endstop(false);
-#endif
 }
 
 /*
@@ -1834,7 +1831,7 @@ static void setup_for_external_z_endstop_move() {
 
     // enabling endstops acts as a safety in case the a z probe was incorrectly engaged or z_min is actually reached
     enable_endstops(true);
-    enable_external_z_endstop(true);
+    //enable_external_z_endstop(true);
 }
 #endif
 
@@ -1843,9 +1840,9 @@ static void clean_up_after_endstop_move() {
     enable_endstops(false);
 #endif
 
-#ifdef EXTERNAL_ENDSTOP_Z_PROBING
-    enable_external_z_endstop(false);
-#endif
+//~ #ifdef EXTERNAL_ENDSTOP_Z_PROBING
+    //~ enable_external_z_endstop(false);
+//~ #endif
 
     feedrate = saved_feedrate;
     feedmultiply = saved_feedmultiply;
@@ -1872,16 +1869,16 @@ static void engage_z_probe()
   }
 #endif
 
-#ifdef EXTERNAL_ENDSTOP_Z_PROBING
-  enable_external_z_endstop(true);
-#endif
+//~ #ifdef EXTERNAL_ENDSTOP_Z_PROBING
+  //~ enable_external_z_endstop(true);
+//~ #endif
 }
 
 static void retract_z_probe()
 {
-#ifdef EXTERNAL_ENDSTOP_Z_PROBING
-  enable_external_z_endstop (false);
-#endif
+//~ #ifdef EXTERNAL_ENDSTOP_Z_PROBING
+  //~ enable_external_z_endstop (false);
+//~ #endif
 
   // Retract Z Servo endstop if enabled
 #ifdef SERVO_ENDSTOPS
@@ -3679,7 +3676,8 @@ void process_commands()
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING_PIN) && (EXTERNAL_ENDSTOP_Z_PROBING_PIN > -1)
         SERIAL_PROTOCOLPGM("external_z_min: ");
         if (enable_secure_switch_zprobe) {
-          SERIAL_PROTOCOLLN(((READ(EXTERNAL_ENDSTOP_Z_PROBING_PIN)^EXTERNAL_ENDSTOP_Z_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
+          //SERIAL_PROTOCOLLN(((READ(EXTERNAL_ENDSTOP_Z_PROBING_PIN)^EXTERNAL_ENDSTOP_Z_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
+          SERIAL_PROTOCOLLN( ExternalProbe::readState()?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN );
         } else {
           SERIAL_PROTOCOLLNPGM(MSG_ENDSTOP_OPEN);
         }
@@ -5440,32 +5438,44 @@ void process_commands()
       break;
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
-    case 746:   // M746 - setting of an endstop sensor, to be used as an external endstop zprobe.
-		//
-		// The actual pin is provided by EXTERNAL_ENDSTOP_Z_PROBING_PIN macro, which defaults to pin 71
-		// (in totumduino's silk screen "Secure_sw", see also M743).
-		//
-		// M746 S1 to enable this functionality.
-		// M746 S0 to disable this functionality.
-		// M746 to see the status of this functionality.
-		//
-		// If enabled you need to keep an external zprobe connected to this totumduino connector that makes the endstop read "open" in normal state or
-		// you will have undesirable behaviour (only during the time a Z probe is done, so during homing, G30 and G38).
-		//
-		// A possible probe is an electrical continuity probe between a copper cad (for making PCBs) and the mill (that in the hybrid head is to GND), like this:
-		//
-		// |  | (secure_sw)
-		// |  \------------------------------+----- attach this to copper clad (via a metal washer to which the wire is soldered?)
-		// \-----------------------/\/\/\/---|
-		//                         1 kOhm
+    /**
+     * M746 [S<0-2>] - Set/get external probe source
+     * 
+     * 0 - disabled
+     * 1 - secure_sw pin
+     * 2 - i2c_scl   pin (head connector)
+     * 
+     * The actual pin is provided by NOT_SECURE_SW_PIN macro, which is pin 71
+     * (in totumduino's silk screen "Secure_sw", see also M743).
+     * 
+     * If enabled you need to keep an external zprobe connected to this totumduino connector that makes the endstop read "open" in normal state or
+     * you will have undesirable behaviour (only during the time a Z probe is done, so during homing, G30 and G38).
+     * 
+     * A possible probe is an electrical continuity probe between a copper cad (for making PCBs) and the mill (that in the hybrid head is to GND), like this:
+     * 
+     * |  | (secure_sw)
+     * |  \------------------------------+----- attach this to copper clad (via a metal washer to which the wire is soldered?)
+     * \-----------------------/\/\/\/---|
+     *                         1 kOhm
+     */ 
+    case 746:
     {
       int value;
       if (code_seen('S'))
       {
         value = code_value();
-        if(value>=1)
+        if(value > 0)
         {
-          ENABLE_SECURE_SWITCH_ZPROBE();
+          
+          if( ExternalProbe::setSource(value) )
+          {
+            ENABLE_SECURE_SWITCH_ZPROBE();
+          }
+          else
+          {
+            SERIAL_PROTOCOLLN(MSG_INVALID_PARAMETER);
+            DISABLE_SECURE_SWITCH_ZPROBE();
+          }
         }
         else
         {
@@ -5474,15 +5484,8 @@ void process_commands()
       }
       else
       {
-          SERIAL_PROTOCOL("SECURE_SW Z PROBE ENABLED: ");
-          if(enable_secure_switch_zprobe)
-          {
-            SERIAL_PROTOCOLLN("TRUE");
-          }
-          else
-          {
-            SERIAL_PROTOCOLLN("FALSE");
-          }
+        uint8_t id = ExternalProbe::getSource();
+        SERIAL_PROTOCOLLN_F(id,DEC);
       }
     }
     break;
@@ -5510,20 +5513,20 @@ void process_commands()
           X_MIN_ENDSTOP_INVERTING=true;
           X_MAX_ENDSTOP_INVERTING=true;
         }
-	else if(value==2)
-	{
+        else if(value==2)
+        {
           X_MIN_ENDSTOP_INVERTING=true;
           X_MAX_ENDSTOP_INVERTING=false;
-	}
-	else if(value==3)
-	{
+        }
+        else if(value==3)
+        {
           X_MIN_ENDSTOP_INVERTING=false;
           X_MAX_ENDSTOP_INVERTING=true;
-	}
+        }
         else
         {
           X_MIN_ENDSTOP_INVERTING=false;
-	  X_MAX_ENDSTOP_INVERTING=false;
+          X_MAX_ENDSTOP_INVERTING=false;
         }
       }
 
@@ -5535,19 +5538,19 @@ void process_commands()
           Y_MIN_ENDSTOP_INVERTING=true;
           Y_MAX_ENDSTOP_INVERTING=true;
         }
-	else if(value==2)
-	{
+        else if(value==2)
+        {
           Y_MIN_ENDSTOP_INVERTING=true;
           Y_MAX_ENDSTOP_INVERTING=false;
-	}
-	else if(value==3)
-	{
+        }
+        else if(value==3)
+        {
           Y_MIN_ENDSTOP_INVERTING=false;
           Y_MAX_ENDSTOP_INVERTING=true;
-	}
+        }
         else
         {
-	  Y_MIN_ENDSTOP_INVERTING=false;
+          Y_MIN_ENDSTOP_INVERTING=false;
           Y_MAX_ENDSTOP_INVERTING=false;
         }
       }
@@ -5557,22 +5560,22 @@ void process_commands()
         value = code_value();
         if(value==1)
         {
-	  Z_MIN_ENDSTOP_INVERTING=true;
+          Z_MIN_ENDSTOP_INVERTING=true;
           Z_MAX_ENDSTOP_INVERTING=true;
         }
-	else if(value==2)
-	{
+        else if(value==2)
+        {
           Z_MIN_ENDSTOP_INVERTING=true;
           Z_MAX_ENDSTOP_INVERTING=false;
-	}
-	else if(value==3)
-	{
+        }
+        else if(value==3)
+        {
           Z_MIN_ENDSTOP_INVERTING=false;
           Z_MAX_ENDSTOP_INVERTING=true;
-	}
+        }
         else
         {
-	  Z_MIN_ENDSTOP_INVERTING=false;
+          Z_MIN_ENDSTOP_INVERTING=false;
           Z_MAX_ENDSTOP_INVERTING=false;
         }
       }
@@ -5956,7 +5959,7 @@ void process_commands()
       }
       else
       {
-	SERIAL_PROTOCOLLN_F(extruder_0_thermistor_index,DEC);
+        SERIAL_PROTOCOLLN_F(extruder_0_thermistor_index,DEC);
       }
     }
     break;
