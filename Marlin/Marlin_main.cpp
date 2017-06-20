@@ -1775,22 +1775,69 @@ static bool run_fast_z_probe(float feedrateProbing) {
 }
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
-static void run_fast_external_z_endstop() {
+static void run_fast_external_z_endstop(float x, float y, float z) {
     plan_bed_level_matrix.set_to_identity();
 
     // This function expects the feedrate to have been set externally.
     //feedrate = homing_feedrate[Z_AXIS];
-
-    // move down until you find the bed
-    float zPosition = -10;
-    plan_buffer_line(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS], feedrate/60, active_extruder);
+    
+    #ifdef COREXY
+    long start_xcount = st_get_position(X_AXIS);
+    long start_ycount = st_get_position(Y_AXIS);
+    float current_x = current_position[X_AXIS];
+    float current_y = current_position[Y_AXIS];
+    #endif
+    
+    plan_buffer_line(x, y, z, current_position[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
 
     // we have to let the planner know where we are right now as it is not where we said to go.
-    zPosition = st_get_position_mm(Z_AXIS);
-    plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS]);
+    #ifndef COREXY
+    current_position[X_AXIS] = st_get_position_mm(X_AXIS);
+    current_position[Y_AXIS] = st_get_position_mm(Y_AXIS);
+    #else
+    // TODO
+    long current_xcount = st_get_position(X_AXIS);
+    long current_ycount = st_get_position(Y_AXIS);
+    //long target_x = lround(x*axis_steps_per_unit[X_AXIS]);
+    //long target_y = lround(y*axis_steps_per_unit[Y_AXIS]);
+    // x / axis_steps_per_unit[axis]
+    //long steps_x = position_x - target_x;
+    //long steps_y = position_y - target_y;
+    //steps_y = labs((target[X_AXIS]-position[X_AXIS]) + (target[Y_AXIS]-position[Y_AXIS]));
+    //steps_x = labs((target[X_AXIS]-position[X_AXIS]) - (target[Y_AXIS]-position[Y_AXIS]));
+    
+    //long tmp = (x + y) * 0.5;
+    
+    //x = (target_x - tmp) / axis_steps_per_unit[X_AXIS];
+    //y = (target_y + tmp) / axis_steps_per_unit[Y_AXIS];
+    long dx = current_xcount - start_xcount;
+    long dy = current_ycount - start_ycount;
+    
+    x = dx / axis_steps_per_unit[X_AXIS];
+    y = dy / axis_steps_per_unit[Y_AXIS];
+    
+    SERIAL_ECHO("dgb: ");
+    //SERIAL_PROTOCOL(position_x);
+    //SERIAL_ECHO(" ");
+    SERIAL_PROTOCOL(dx);
+    SERIAL_ECHO(" X: ");
+    SERIAL_PROTOCOL(float(x));
+    SERIAL_ECHO("; ");
+    SERIAL_PROTOCOL(dy);
+    //SERIAL_ECHO(" ");
+    //SERIAL_PROTOCOL(target_y);
+    SERIAL_ECHO("mm Y: ");
+    SERIAL_PROTOCOL(float(y));
+    SERIAL_ECHOLN(" mm");
+    
+    #endif
+    z = st_get_position_mm(Z_AXIS);
+    plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], z, current_position[E_AXIS]);
 
-    current_position[Z_AXIS] = zPosition;
+    //current_position[X_AXIS] = x;
+    //current_position[Y_AXIS] = y;
+    current_position[Z_AXIS] = z;
 }
 #endif
 
@@ -2846,41 +2893,78 @@ void process_commands()
 #endif // ENABLE_AUTO_BED_LEVELING
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
     case 38: // G38 endstop based z probe
-	     // Same behaviour as G30 but with an endstop external z probe connected as described in M746
-	     // It does nothing unless the probe is enabled first with M746 S1
-        {
-          if(!Stopped && enable_secure_switch_zprobe){
+      // Same behaviour as G30 but with an endstop external z probe connected as described in M746
+      // It does nothing unless the probe is enabled first with M746 S1
+      {
+        if(!Stopped && enable_secure_switch_zprobe){
 
-            // Prevent user from running a G38 without first homing in X and Y
-            if (!assert_home()) break;
 
-            st_synchronize();
+          bool default_axis_move = !code_seen(axis_codes[X_AXIS]) && !code_seen(axis_codes[Y_AXIS]) && !code_seen(axis_codes[Z_AXIS]);
+          bool move_x_axis = code_seen(axis_codes[X_AXIS]);
+          bool move_y_axis = code_seen(axis_codes[Y_AXIS]);
+          bool move_z_axis = code_seen(axis_codes[Z_AXIS]);
 
-            setup_for_external_z_endstop_move();
+          // Prevent user from running a G38 without first homing in X and Y
+          if (!assert_home()) break;
 
-	    if (code_seen('S')) {
-	      feedrate = code_value();
+          st_synchronize();
 
-	      if(feedrate > 200 ) // ignore the user, greater than 200 for probing is considered to be dangerous (the tool will crash badly)
-		feedrate = 200;
-	    }
-	    else
-	      feedrate = homing_feedrate[Z_AXIS];
+          setup_for_external_z_endstop_move();
 
-            run_fast_external_z_endstop();
-            SERIAL_PROTOCOLPGM(MSG_BED);
-            SERIAL_PROTOCOL_P(PMSG_X_OUT);
-            SERIAL_PROTOCOL(current_position[X_AXIS]);
-            SERIAL_PROTOCOL_P(PMSG_Y_OUT);
-            SERIAL_PROTOCOL(current_position[Y_AXIS]);
-            SERIAL_PROTOCOL_P(PMSG_Z_OUT);
-            SERIAL_PROTOCOL(current_position[Z_AXIS]);
-            SERIAL_PROTOCOLPGM("\n");
-
-            clean_up_after_endstop_move();
+          destination[X_AXIS] = current_position[X_AXIS];
+          destination[Y_AXIS] = current_position[Y_AXIS];
+          destination[Z_AXIS] = current_position[Z_AXIS];
+          //destination[Z_AXIS] = -10;
+          
+          if (code_seen('X') && move_x_axis) {
+            destination[X_AXIS] = code_value();
+            ExternalProbe::enable(X_AXIS);
           }
+          
+          if (code_seen('Y') && move_y_axis) {
+            destination[Y_AXIS] = code_value();
+            ExternalProbe::enable(Y_AXIS);
+          }
+          if (code_seen('Z') && move_z_axis) {
+            destination[Z_AXIS] = code_value();
+            ExternalProbe::enable(Z_AXIS);
+          }
+          
+          if(default_axis_move)
+          {
+            destination[Z_AXIS] = -10;
+            ExternalProbe::enable(Z_AXIS);
+          }
+
+          if (code_seen('S')) {
+            feedrate = code_value();
+
+            if( (feedrate > 200) &&  move_z_axis) // ignore the user, greater than 200 for probing is considered to be dangerous (the tool will crash badly)
+              feedrate = 200;
+          }
+          else
+          {
+            feedrate = homing_feedrate[Z_AXIS];
+          }
+
+          run_fast_external_z_endstop(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS]);
+          SERIAL_PROTOCOLPGM(MSG_BED);
+          SERIAL_PROTOCOL_P(PMSG_X_OUT);
+          SERIAL_PROTOCOL(current_position[X_AXIS]);
+          SERIAL_PROTOCOL_P(PMSG_Y_OUT);
+          SERIAL_PROTOCOL(current_position[Y_AXIS]);
+          SERIAL_PROTOCOL_P(PMSG_Z_OUT);
+          SERIAL_PROTOCOL(current_position[Z_AXIS]);
+          SERIAL_PROTOCOLPGM("\n");
+
+          ExternalProbe::disable(X_AXIS);
+          ExternalProbe::disable(Y_AXIS);
+          ExternalProbe::disable(Z_AXIS);
+          
+          clean_up_after_endstop_move();
         }
-        break;
+      }
+      break;
 #endif //ENDSTOP_Z_PROBING
     case 90: // G90
       relative_mode = false;
@@ -3641,6 +3725,12 @@ void process_commands()
       SERIAL_PROTOCOLPGM(" Z:");
       SERIAL_PROTOCOL(float(st_get_position(Z_AXIS))/axis_steps_per_unit[Z_AXIS]);
 */
+      SERIAL_PROTOCOLPGM(" X:");
+      SERIAL_PROTOCOL(float(st_get_position(X_AXIS))/axis_steps_per_unit[X_AXIS]);
+      SERIAL_PROTOCOLPGM(" Y:");
+      SERIAL_PROTOCOL(float(st_get_position(Y_AXIS))/axis_steps_per_unit[Y_AXIS]);
+      SERIAL_PROTOCOLPGM(" Z:");
+      SERIAL_PROTOCOL(float(st_get_position(Z_AXIS))/axis_steps_per_unit[Z_AXIS]);
 
       SERIAL_PROTOCOLLN("");
       break;
@@ -5466,7 +5556,6 @@ void process_commands()
         value = code_value();
         if(value > 0)
         {
-          
           if( ExternalProbe::setSource(value) )
           {
             ENABLE_SECURE_SWITCH_ZPROBE();
@@ -5479,6 +5568,7 @@ void process_commands()
         }
         else
         {
+          ExternalProbe::setSource(value);
           DISABLE_SECURE_SWITCH_ZPROBE();
         }
       }

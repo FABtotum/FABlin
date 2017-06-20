@@ -537,6 +537,20 @@ ISR(TIMER1_COMPA_vect)
           #endif
         }
       }
+      
+      #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
+      if( ExternalProbe::isEnabled(X_AXIS) )
+      {
+          bool external_endstop = ExternalProbe::readState();
+          if(external_endstop && old_external_z_endstop && (current_block->steps_y > 0)) {
+            endstops_trigsteps[X_AXIS] = count_position[X_AXIS];
+            endstop_z_hit=true;
+            step_events_completed = current_block->step_event_count;
+          }
+          old_external_z_endstop = external_endstop;
+      }
+      #endif // defined(EXTERNAL_ENDSTOP_Z_PROBING)
+      
     }
     else { // +direction
       CHECK_ENDSTOPS
@@ -558,6 +572,19 @@ ISR(TIMER1_COMPA_vect)
           #endif
         }
       }
+      
+      #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
+      if( ExternalProbe::isEnabled(X_AXIS) )
+      {
+          bool external_endstop = ExternalProbe::readState();
+          if(external_endstop && old_external_z_endstop && (current_block->steps_y > 0)) {
+            endstops_trigsteps[X_AXIS] = count_position[X_AXIS];
+            endstop_z_hit=true;
+            step_events_completed = current_block->step_event_count;
+          }
+          old_external_z_endstop = external_endstop;
+      }
+      #endif // defined(EXTERNAL_ENDSTOP_Z_PROBING)
     }
 
     #ifndef COREXY
@@ -577,6 +604,20 @@ ISR(TIMER1_COMPA_vect)
           old_y_min_endstop = y_min_endstop;
         #endif
       }
+      
+      #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
+      if( ExternalProbe::isEnabled(Y_AXIS) )
+      {
+          bool external_endstop = ExternalProbe::readState();
+          if(external_endstop && old_external_z_endstop && (current_block->steps_y > 0)) {
+            endstops_trigsteps[Y_AXIS] = count_position[Y_AXIS];
+            endstop_z_hit=true;
+            step_events_completed = current_block->step_event_count;
+          }
+          old_external_z_endstop = external_endstop;
+      }
+      #endif // defined(EXTERNAL_ENDSTOP_Z_PROBING)
+      
     }
     else { // +direction
       CHECK_ENDSTOPS
@@ -591,6 +632,19 @@ ISR(TIMER1_COMPA_vect)
           old_y_max_endstop = y_max_endstop;
         #endif
       }
+      
+      #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
+      if( ExternalProbe::isEnabled(Y_AXIS) )
+      {
+          bool external_endstop = ExternalProbe::readState();
+          if(external_endstop && old_external_z_endstop && (current_block->steps_y > 0)) {
+            endstops_trigsteps[Y_AXIS] = count_position[Y_AXIS];
+            endstop_z_hit=true;
+            step_events_completed = current_block->step_event_count;
+          }
+          old_external_z_endstop = external_endstop;
+      }
+      #endif // defined(EXTERNAL_ENDSTOP_Z_PROBING)
     }
 
     if ((out_bits & (1<<Z_AXIS)) != 0) {   // -direction
@@ -615,7 +669,7 @@ ISR(TIMER1_COMPA_vect)
       }
 
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
-      if( ExternalProbe::isEnabled() )
+      if( ExternalProbe::isEnabled(Z_AXIS) )
       {
           bool external_endstop = ExternalProbe::readState();
           if(external_endstop && old_external_z_endstop && (current_block->steps_z > 0)) {
@@ -624,8 +678,8 @@ ISR(TIMER1_COMPA_vect)
             step_events_completed = current_block->step_event_count;
           }
           old_external_z_endstop = external_endstop;
-     }
-     #endif
+      }
+    #endif
     }
     else { // +direction
       WRITE(Z_DIR_PIN,!INVERT_Z_DIR);
