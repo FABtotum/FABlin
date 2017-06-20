@@ -218,6 +218,11 @@
 #define Z_HOME_RETRACT_MM 2
 //#define QUICK_HOME  //if this is defined, if both x and y are to be homed, a diagonal move will be performed initially.
 
+// move away from endstop position to park position that does not trigger the endstop
+#define X_HOME_PARK_OFFSET 2
+#define Y_HOME_PARK_OFFSET 2
+#define Z_HOME_PARK_OFFSET 0
+
 #define AXIS_RELATIVE_MODES {false, false, false, false}
 
 #define MAX_STEP_FREQUENCY 40000 // Max step frequency for Ultimaker (5000 pps / half step)
