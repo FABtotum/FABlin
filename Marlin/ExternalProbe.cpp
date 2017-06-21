@@ -11,9 +11,12 @@ static volatile uint8_t external_zprobe_id = 0;
 // be disable when not needed.
 static volatile uint8_t trigger_flags = 0;
 
+static volatile bool external_zprobe_inverting = true;
+
 #define TRIGGER_ON_X_MOVE	0x01
 #define TRIGGER_ON_Y_MOVE	0x02
 #define TRIGGER_ON_Z_MOVE	0x04
+#define TRIGGER_ON_ANY_MOVE	(TRIGGER_ON_X_MOVE | TRIGGER_ON_Y_MOVE | TRIGGER_ON_Z_MOVE)
 
 bool readState(void)
 {
@@ -28,23 +31,26 @@ bool readState(void)
 	}
 }
 
-void enable(uint8_t axis)
+void enable()
 {
-	trigger_flags |= 1 << axis;
+	trigger_flags = TRIGGER_ON_ANY_MOVE;
 }
 
-void disable(uint8_t axis)
+void disable()
 {
-	trigger_flags &= ~(1 << axis);
+	trigger_flags = 0;
 }
 
-bool isEnabled(uint8_t axis)
+bool isEnabled()
 {
-	if(external_zprobe_id)
-	{
-		return trigger_flags & (1 << axis);
-	}
+	if( isActive() )
+		return trigger_flags & TRIGGER_ON_ANY_MOVE;
 	return false;
+}
+
+bool isActive()
+{
+	return external_zprobe_id;
 }
 
 /**
@@ -55,17 +61,6 @@ bool isEnabled(uint8_t axis)
  */
 bool setSource(uint8_t id)
 {
-	// restore pin status if needed
-	/*switch(external_zprobe_id)
-	{
-		case 1:
-			//NOT_SECURE_SW_PIN;
-			break;
-		case 2:
-			//I2C_SCL;
-			break;
-		default:;
-	}*/
 	trigger_flags = 0;
 	
 	external_zprobe_id = id;
@@ -75,9 +70,11 @@ bool setSource(uint8_t id)
 			break;
 		case 1:
 			pinMode(NOT_SECURE_SW_PIN,INPUT);
+			external_zprobe_inverting = true;
 			break;
 		case 2:
 			pinMode(I2C_SCL,INPUT);
+			external_zprobe_inverting = true;
 			break;
 		default:
 			return false;
@@ -89,6 +86,16 @@ bool setSource(uint8_t id)
 uint8_t getSource(void)
 {
 	return external_zprobe_id;
+}
+
+void setInverted(bool inverted)
+{
+	external_zprobe_inverting = inverted;
+}
+
+bool getInverted()
+{
+	return external_zprobe_inverting;
 }
 
 } /* namespace ExternalProbe */

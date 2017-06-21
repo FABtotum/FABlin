@@ -1796,47 +1796,24 @@ static void run_fast_external_z_endstop(float x, float y, float z) {
     current_position[X_AXIS] = st_get_position_mm(X_AXIS);
     current_position[Y_AXIS] = st_get_position_mm(Y_AXIS);
     #else
-    // TODO
-    long current_xcount = st_get_position(X_AXIS);
-    long current_ycount = st_get_position(Y_AXIS);
-    //long target_x = lround(x*axis_steps_per_unit[X_AXIS]);
-    //long target_y = lround(y*axis_steps_per_unit[Y_AXIS]);
-    // x / axis_steps_per_unit[axis]
-    //long steps_x = position_x - target_x;
-    //long steps_y = position_y - target_y;
-    //steps_y = labs((target[X_AXIS]-position[X_AXIS]) + (target[Y_AXIS]-position[Y_AXIS]));
-    //steps_x = labs((target[X_AXIS]-position[X_AXIS]) - (target[Y_AXIS]-position[Y_AXIS]));
     
-    //long tmp = (x + y) * 0.5;
+    // corexy inverser formula
+    long dx = st_get_position(X_AXIS) - start_xcount;
+    long dy = st_get_position(Y_AXIS) - start_ycount;
+    long tmp_x = (dx + dy) / 2;
+    long tmp_y = (dy - dx) / 2;
     
-    //x = (target_x - tmp) / axis_steps_per_unit[X_AXIS];
-    //y = (target_y + tmp) / axis_steps_per_unit[Y_AXIS];
-    long dx = current_xcount - start_xcount;
-    long dy = current_ycount - start_ycount;
+    // convert steps to mm
+    x = tmp_x / axis_steps_per_unit[X_AXIS];
+    y = tmp_y / axis_steps_per_unit[Y_AXIS];
     
-    x = dx / axis_steps_per_unit[X_AXIS];
-    y = dy / axis_steps_per_unit[Y_AXIS];
-    
-    SERIAL_ECHO("dgb: ");
-    //SERIAL_PROTOCOL(position_x);
-    //SERIAL_ECHO(" ");
-    SERIAL_PROTOCOL(dx);
-    SERIAL_ECHO(" X: ");
-    SERIAL_PROTOCOL(float(x));
-    SERIAL_ECHO("; ");
-    SERIAL_PROTOCOL(dy);
-    //SERIAL_ECHO(" ");
-    //SERIAL_PROTOCOL(target_y);
-    SERIAL_ECHO("mm Y: ");
-    SERIAL_PROTOCOL(float(y));
-    SERIAL_ECHOLN(" mm");
-    
+    current_position[X_AXIS] = current_x + x;
+    current_position[Y_AXIS] = current_y + y;
     #endif
+    
     z = st_get_position_mm(Z_AXIS);
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], z, current_position[E_AXIS]);
 
-    //current_position[X_AXIS] = x;
-    //current_position[Y_AXIS] = y;
     current_position[Z_AXIS] = z;
 }
 #endif
@@ -2371,15 +2348,6 @@ void process_commands()
         monitor_secure_endstop = false;
         enable_endstops(true);
 
-        /*if((READ(Z_MAX_PIN)^Z_MAX_ENDSTOP_INVERTING)&&(!home_Z_reverse)){
-         //Z movement move to 50 if g27 just happened.
-         destination[Z_AXIS] = 20;    // move up
-         feedrate = max_feedrate[Z_AXIS];
-         plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
-         st_synchronize();
-         }
-         */
-
         for(int8_t i=0; i < NUM_AXIS; i++) {
           destination[i] = current_position[i];
         }
@@ -2748,17 +2716,15 @@ void process_commands()
                   z_before = current_position[Z_AXIS] + Z_RAISE_BETWEEN_PROBINGS;
                 }
 
-                if(Stopped)
-                    {
-                      break;
-                    }
+                if(Stopped) break;
+                
                 float measured_z=0;
 
                 for(int avg_measured_z=0; avg_measured_z<AVG_MEASURED_Z_MAX;avg_measured_z++)
-                    {
-                    measured_z = probe_pt_no_engz(xProbe, yProbe, z_before,engage_z_flag)+measured_z;
-                    engage_z_flag=false;
-                    }
+                {
+                  measured_z = probe_pt_no_engz(xProbe, yProbe, z_before,engage_z_flag)+measured_z;
+                  engage_z_flag=false;
+                }
 
 
                 eqnBVector[probePointCounter] = measured_z/AVG_MEASURED_Z_MAX;
@@ -2837,9 +2803,9 @@ void process_commands()
 
         restore_last_amb_color();
         if(Stopped)
-                    {
-                      plan_bed_level_matrix.set_to_identity();  //Reset the plane ("erase" all leveling data)
-                    }
+        {
+          plan_bed_level_matrix.set_to_identity();  //Reset the plane ("erase" all leveling data)
+        }
         break;
 
     case 30: // G30 Single Z Probe
@@ -2914,32 +2880,33 @@ void process_commands()
           destination[X_AXIS] = current_position[X_AXIS];
           destination[Y_AXIS] = current_position[Y_AXIS];
           destination[Z_AXIS] = current_position[Z_AXIS];
-          //destination[Z_AXIS] = -10;
           
           if (code_seen('X') && move_x_axis) {
-            destination[X_AXIS] = code_value();
-            ExternalProbe::enable(X_AXIS);
+            destination[X_AXIS] = code_value() + relative_mode*current_position[X_AXIS];
           }
           
           if (code_seen('Y') && move_y_axis) {
-            destination[Y_AXIS] = code_value();
-            ExternalProbe::enable(Y_AXIS);
+            destination[Y_AXIS] = code_value() + relative_mode*current_position[Y_AXIS];
           }
+          
           if (code_seen('Z') && move_z_axis) {
-            destination[Z_AXIS] = code_value();
-            ExternalProbe::enable(Z_AXIS);
+            destination[Z_AXIS] = code_value() + relative_mode*current_position[Z_AXIS];
           }
           
           if(default_axis_move)
           {
-            destination[Z_AXIS] = -10;
-            ExternalProbe::enable(Z_AXIS);
+            // move upwards
+            destination[Z_AXIS] = Z_MIN_POS -5; // 5mm to compensate for really short tools
           }
 
-          if (code_seen('S')) {
+          // allow external endstop to stop movements
+          ExternalProbe::enable();
+
+          if (code_seen('S') || code_seen('F')) {
             feedrate = code_value();
 
-            if( (feedrate > 200) &&  move_z_axis) // ignore the user, greater than 200 for probing is considered to be dangerous (the tool will crash badly)
+            // ignore the user, greater than 200 for probing is considered to be dangerous for Z moves (the tool will crash badly)
+            if( (feedrate > 200) && (move_z_axis || default_axis_move) )
               feedrate = 200;
           }
           else
@@ -2948,7 +2915,6 @@ void process_commands()
           }
 
           run_fast_external_z_endstop(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS]);
-          SERIAL_PROTOCOLPGM(MSG_BED);
           SERIAL_PROTOCOL_P(PMSG_X_OUT);
           SERIAL_PROTOCOL(current_position[X_AXIS]);
           SERIAL_PROTOCOL_P(PMSG_Y_OUT);
@@ -2957,9 +2923,9 @@ void process_commands()
           SERIAL_PROTOCOL(current_position[Z_AXIS]);
           SERIAL_PROTOCOLPGM("\n");
 
-          ExternalProbe::disable(X_AXIS);
-          ExternalProbe::disable(Y_AXIS);
-          ExternalProbe::disable(Z_AXIS);
+          // disable external endstop from stopping movements so that 
+          // G27/G28 does not get interrupted because of probe vibrations
+          ExternalProbe::disable();
           
           clean_up_after_endstop_move();
         }

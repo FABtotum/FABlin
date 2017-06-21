@@ -539,7 +539,7 @@ ISR(TIMER1_COMPA_vect)
       }
       
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
-      if( ExternalProbe::isEnabled(X_AXIS) )
+      if( ExternalProbe::isEnabled() )
       {
           bool external_endstop = ExternalProbe::readState();
           if(external_endstop && old_external_z_endstop && (current_block->steps_y > 0)) {
@@ -574,7 +574,7 @@ ISR(TIMER1_COMPA_vect)
       }
       
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
-      if( ExternalProbe::isEnabled(X_AXIS) )
+      if( ExternalProbe::isEnabled() )
       {
           bool external_endstop = ExternalProbe::readState();
           if(external_endstop && old_external_z_endstop && (current_block->steps_y > 0)) {
@@ -606,7 +606,7 @@ ISR(TIMER1_COMPA_vect)
       }
       
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
-      if( ExternalProbe::isEnabled(Y_AXIS) )
+      if( ExternalProbe::isEnabled() )
       {
           bool external_endstop = ExternalProbe::readState();
           if(external_endstop && old_external_z_endstop && (current_block->steps_y > 0)) {
@@ -634,7 +634,7 @@ ISR(TIMER1_COMPA_vect)
       }
       
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
-      if( ExternalProbe::isEnabled(Y_AXIS) )
+      if( ExternalProbe::isEnabled() )
       {
           bool external_endstop = ExternalProbe::readState();
           if(external_endstop && old_external_z_endstop && (current_block->steps_y > 0)) {
@@ -669,7 +669,7 @@ ISR(TIMER1_COMPA_vect)
       }
 
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
-      if( ExternalProbe::isEnabled(Z_AXIS) )
+      if( ExternalProbe::isEnabled() )
       {
           bool external_endstop = ExternalProbe::readState();
           if(external_endstop && old_external_z_endstop && (current_block->steps_z > 0)) {
