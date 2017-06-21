@@ -307,7 +307,7 @@ void servo_detach (uint8_t);
 void setPwmFrequency(uint8_t pin, int val);
 #endif
 
-bool print_heaterstates (tp_report_t format=TP_REPORT_FULL);
+void print_heaterstates (tp_report_t format=TP_REPORT_FULL);
 
 #ifndef CRITICAL_SECTION_START
   #define CRITICAL_SECTION_START  unsigned char _sreg = SREG; cli();

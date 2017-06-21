@@ -1110,15 +1110,15 @@ void setup()
 
   // Check startup - does nothing if bootloader sets MCUSR to 0
 
+#if MOTHERBOARD != 25
   byte mcu = MCUSR;
-  #if MOTHERBOARD != 25
   // turn output off for totumduino
   if(mcu & 1) SERIAL_ECHOLNPGM(MSG_POWERUP);
   if(mcu & 2) SERIAL_ECHOLNPGM(MSG_EXTERNAL_RESET);
   if(mcu & 4) SERIAL_ECHOLNPGM(MSG_BROWNOUT_RESET);
   if(mcu & 8) SERIAL_ECHOLNPGM(MSG_WATCHDOG_RESET);
   if(mcu & 32) SERIAL_ECHOLNPGM(MSG_SOFTWARE_RESET);
-  #endif
+#endif
   MCUSR=0;
 
 #if MOTHERBOARD != 25
@@ -1305,7 +1305,7 @@ void loop()
  *    used e.g. in M105 command. TP_REPORT_AUTO or TP_REPORT_NONE prints
  *    the short format where only the active heater and bed temperatures are printed
  */
-bool print_heaterstates (tp_report_t format)
+void print_heaterstates (tp_report_t format)
 {
 #if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
   // Aestethic hack: full format is normally used fro M105 and can have a leading whitespace
@@ -1946,6 +1946,7 @@ static void retract_z_probe()
 #endif
 }
 
+#ifndef AUTO_BED_LEVELING_GRID
 /// Probe bed height at position (x,y), returns the measured z value
 static float probe_pt(float x, float y, float z_before, bool engage_z_flag) {
   // move to right place
@@ -1971,6 +1972,7 @@ static float probe_pt(float x, float y, float z_before, bool engage_z_flag) {
   SERIAL_PROTOCOLPGM("\n");
   return measured_z;
 }
+#endif
 
 /// Probe bed height at position (x,y), returns the measured z value
 static float probe_pt_no_engz(float x, float y, float z_before, bool engage_z_flag) {
@@ -2246,7 +2248,7 @@ FORCE_INLINE void process_laser_power ()
 }
 #endif
 
-inline bool check_sensitive_pins (unsigned int pin_number)
+inline bool check_sensitive_pins (int pin_number)
 {
   for (unsigned int i = 0; i < (unsigned int)(sizeof(sensitive_pins)/sizeof(int)); i++)
   if (sensitive_pins[i] == pin_number) {
