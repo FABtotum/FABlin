@@ -11,8 +11,12 @@
  * IRSD_MODE_DIGITAL     1  Whether to activate digital mode
  */
 
+#if defined(IRSD)
+
 void irsd_init (void);
 void irsd_enable (void);
 void irsd_disable (void);
+
+#endif
 
 #endif

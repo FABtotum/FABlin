@@ -1,6 +1,8 @@
 #include "irsd.h"
 #include "Configuration.h"
 
+#if defined(IRSD)
+
 void irsd_init (void)
 {
 	pinMode(IRSD_PIN, INPUT);
@@ -24,3 +26,5 @@ void irsd_disable ()
 {
 	digitalWrite(IRSD_ENABLE_PIN, IRSD_ENABLE_INVERTING);
 }
+
+#endif

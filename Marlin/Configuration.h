@@ -436,13 +436,13 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 
 //#define IRSD
 // Configuration for IRSD probe mounted in place of physical probe
-//#ifdef IRSD
+#ifdef IRSD
   #define IRSD_PIN              6
   #define IRSD_PIN_INVERTING    0
   #define IRSD_ENABLE_PIN      25
   #define IRSD_ENABLE_INVERTING 1
   #define IRSD_MODE_DIGITAL     1
-//#endif
+#endif
 
 //= Z PROBING via endstop (e.g. electrical continuity between mill and PCB)==
 

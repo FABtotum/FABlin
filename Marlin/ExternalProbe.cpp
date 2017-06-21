@@ -23,9 +23,9 @@ bool readState(void)
 	switch(external_zprobe_id)
 	{
 		case 1:
-			return !READ(NOT_SECURE_SW_PIN);
+			return READ(NOT_SECURE_SW_PIN) ^ external_zprobe_inverting;
 		case 2:
-			return READ(I2C_SCL);
+			return READ(I2C_SCL) ^ external_zprobe_inverting;
 		default:
 			return false;
 	}
@@ -69,12 +69,12 @@ bool setSource(uint8_t id)
 		case 0:
 			break;
 		case 1:
-			pinMode(NOT_SECURE_SW_PIN,INPUT);
+			SET_INPUT(NOT_SECURE_SW_PIN);
 			external_zprobe_inverting = true;
 			break;
 		case 2:
-			pinMode(I2C_SCL,INPUT);
-			external_zprobe_inverting = true;
+			SET_INPUT(I2C_SCL);
+			external_zprobe_inverting = false;
 			break;
 		default:
 			return false;
