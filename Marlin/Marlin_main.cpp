@@ -387,10 +387,10 @@ float extruder_offset[NUM_EXTRUDER_OFFSETS][EXTRUDERS] = {
 uint8_t active_tool = 0;     // Active logical tool
 uint8_t active_extruder = 0; // Active actual extruder
 bool head_is_dummy = false;  // Head reaquires TWI silencing
-uint8_t tool_extruder_mapping[EXTRUDERS]/* = { 0, 1, 2, ... }*/;  // Tool to drive mapping
-uint8_t extruder_heater_mapping[EXTRUDERS];     // Extruder to heater mapping
-int8_t tool_heater_mapping[EXTRUDERS]/*   = { 0, -1, 0, ... }*/;  // Tool to heater mapping
-bool    tool_twi_support[EXTRUDERS]/*      = { true, false, false, ... }*/;  // Tool TWI support
+int8_t tool_extruder_mapping[TOOLS_MAGAZINE_SIZE]/* = { 0, 1, 2, ... }*/;  // Tool to drive mapping
+int8_t extruder_heater_mapping[EXTRUDERS];     // Extruder to heater mapping
+int8_t tool_heater_mapping[TOOLS_MAGAZINE_SIZE]/*   = { 0, -1, 0, ... }*/;  // Tool to heater mapping
+bool    tool_twi_support[TOOLS_MAGAZINE_SIZE]/*      = { true, false, false, ... }*/;  // Tool TWI support
 int fanSpeed=0;
 
 #ifdef SERVO_ENDSTOPS
@@ -864,7 +864,7 @@ void setup_addon (uint8_t id)
   // Shutdown head
   StopTool();
 
-  if (id <= HEADS) {
+  if (id <= TOOLS_FACTORY_SIZE) {
     //installed_head = &(tools.factory[id]);
     tools.load(active_tool, id);
 
@@ -916,13 +916,13 @@ void FabtotumHeads_init ()
 
    // Factory heads definitions
    tools.factory[FAB_HEADS_hybrid_ID].extruders= 1;
-   tools.factory[FAB_HEADS_hybrid_ID].heaters  = 1;
+   tools.factory[FAB_HEADS_hybrid_ID].heaters  = TP_HEATER_0 | TP_HEATER_BED;
    tools.factory[FAB_HEADS_hybrid_ID].maxtemp = 235;
    tools.factory[FAB_HEADS_hybrid_ID].serial  = TOOL_SERIAL_TWI;
 
    tools.factory[FAB_HEADS_print_v2_ID].mode = WORKING_MODE_FFF;
    tools.factory[FAB_HEADS_print_v2_ID].extruders= 1;
-   tools.factory[FAB_HEADS_print_v2_ID].heaters  = 1;
+   tools.factory[FAB_HEADS_print_v2_ID].heaters  = TP_HEATER_0 | TP_HEATER_BED;
 
    tools.factory[FAB_HEADS_mill_v2_ID].mode = WORKING_MODE_CNC;
    tools.factory[FAB_HEADS_mill_v2_ID].extruders= 0;
@@ -931,20 +931,19 @@ void FabtotumHeads_init ()
 
    tools.factory[FAB_HEADS_laser_ID].mode = WORKING_MODE_LASER;
    tools.factory[FAB_HEADS_laser_ID].extruders= 1;
-   tools.factory[FAB_HEADS_laser_ID].heaters  = 1;
+   tools.factory[FAB_HEADS_laser_ID].heaters  = TP_HEATER_0;
    tools.factory[FAB_HEADS_laser_ID].thtable = 3;
    tools.factory[FAB_HEADS_laser_ID].maxtemp = 80;
-  //tools.factory[FAB_HEADS_5th_axis_ID].mods = "M563 P0 D0 S0\n";
+   tools.factory[FAB_HEADS_laser_ID].mintemp = -1;
 
   tools.factory[FAB_HEADS_5th_axis_ID].extruders = 1 << 1;
-  tools.factory[FAB_HEADS_5th_axis_ID].mintemp  = 0;
-  //tools.factory[FAB_HEADS_5th_axis_ID].mods = "M563 P1 D0 S0\n";
+  tools.factory[FAB_HEADS_5th_axis_ID].mintemp  = -1;
 
    tools.factory[FAB_HEADS_direct_ID].mode = WORKING_MODE_FFF;
    tools.factory[FAB_HEADS_direct_ID].extruders = 1 << 2;
+   tools.factory[FAB_HEADS_direct_ID].heaters = TP_HEATER_0 | TP_HEATER_BED;
    tools.factory[FAB_HEADS_direct_ID].mods = "M563 P2 D0\nM720\n";
 
-   //tool_change(installed_head_id);
 }
 
 /*
@@ -1081,7 +1080,7 @@ void FabtotumIO_init()
 FORCE_INLINE void init ()
 {
   // tool_extruder_mapping <- {0, 1, 2, ...}
-  for (unsigned int i = 0; i < EXTRUDERS; i++) {
+  for (unsigned int i = 0; i < TOOLS_MAGAZINE_SIZE; i++) {
     tool_extruder_mapping[i] = i;
   }
 
@@ -4481,7 +4480,7 @@ void process_commands()
         target_tool = active_tool;
 
         // Output tool definitions
-        for (target_tool = 0; target_tool < EXTRUDERS; target_tool++)
+        for (target_tool = 0; target_tool < TOOLS_MAGAZINE_SIZE; target_tool++)
         {
           SERIAL_ECHOPAIR("T", (unsigned long)target_tool);
           int8_t extruder = tool_extruder_mapping[target_tool];
@@ -6066,7 +6065,7 @@ void process_commands()
 
         // Check input validity
         if (id < FAB_HEADS_thirdparty_ID)
-        if (id >= HEADS) {
+        if (id >= TOOLS_FACTORY_SIZE) {
           SERIAL_ERROR_START;
           SERIAL_ERRORLNPGM("Unsupported head ID");
           break;

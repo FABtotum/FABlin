@@ -857,6 +857,12 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 #define BED_DRIVE_INDEX  3
 
 //
+// Tool changer module
+//
+#define TOOLS_FACTORY_SIZE  9
+#define TOOLS_MAGAZINE_SIZE 3
+
+//
 // SmartComm module
 //
 #define SMART_COMM

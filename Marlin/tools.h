@@ -2,10 +2,15 @@
 #define _TOOLS_H_
 
 #include <stdint.h>
+#include "Configuration.h"
 
 #define TOOL_SERIAL_NONE 0
 #define TOOL_SERIAL_SER  1
 #define TOOL_SERIAL_TWI  2
+
+#ifndef TOOLS_MAGAZINE_SIZE
+   #define TOOLS_MAGAZINE_SIZE EXTRUDERS
+#endif
 
 typedef struct tool_s {
    uint8_t mode = 0;
@@ -20,16 +25,16 @@ typedef struct tool_s {
 
 extern struct tools_s
 {
-   void    define (uint8_t, int8_t=0, int8_t=0, uint8_t=0);
+   void    define (uint8_t, int8_t=0, int8_t=0, uint8_t=0, bool=false);
    uint8_t change (uint8_t);
    void    load   (uint8_t, uint8_t);
 
    // Factory defined tools
    // TODO: make local and/or const
-   tool_t factory[HEADS];
+   tool_t factory[TOOLS_FACTORY_SIZE];
 
    // Magazine of user definable tools
-   tool_t magazine[3];
+   tool_t magazine[TOOLS_MAGAZINE_SIZE];
 
 } tools;
 

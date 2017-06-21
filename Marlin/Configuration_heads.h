@@ -6,7 +6,7 @@
  */
 
 // 0 (for default) + the effective number of heads
-#define HEADS 9
+//#define TOOLS_FACTORY_SIZE 9
 
 // 0 .. 99 are reserved
 #define FAB_HEADS_default_ID     0
