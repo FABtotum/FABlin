@@ -517,5 +517,8 @@ const unsigned int dropsegments=5; //everything with less than this number of st
    #define SMART_HEAD_TX_PIN TXD4
 #endif
 
+#define ST_ISR_PROFILE_PIN 50
+#define TP_ISR_PROFILE_PIN 51
+#define IDLE_PROFILE_PIN   52
 
 #endif //__CONFIGURATION_ADV_H

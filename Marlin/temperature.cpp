@@ -1304,6 +1304,10 @@ ISR(TIMER0_COMPB_vect)
   static unsigned char soft_pwm_b;
   #endif
 
+#if defined(DEBUG) && defined(TP_ISR_PROFILE_PIN)
+  WRITE(TP_ISR_PROFILE_PIN,1);
+#endif
+
   // FABtotum laser head uses heater line for supplementary +24v dc power source
   if (enabled_features & TP_HEATERS)
   {
@@ -1673,6 +1677,10 @@ ISR(TIMER0_COMPB_vect)
     }
   }
 #endif //BABYSTEPPING
+
+#if defined(DEBUG) && defined(TP_ISR_PROFILE_PIN)
+  WRITE(TP_ISR_PROFILE_PIN,0);
+#endif
 }
 
 #ifdef PIDTEMP

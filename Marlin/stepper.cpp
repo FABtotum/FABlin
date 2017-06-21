@@ -452,6 +452,9 @@ ISR(TIMER1_COMPA_vect)
         OCR1A=2000; // 1kHz.
     }
   }
+#if defined(DEBUG) && defined(ST_ISR_PROFILE_PIN)
+  WRITE(ST_ISR_PROFILE_PIN,1);
+#endif
 
   if (current_block != NULL) {
     // Set directions TO DO This should be done once during init of trapezoid. Endstops -> interrupt
@@ -716,6 +719,9 @@ ISR(TIMER1_COMPA_vect)
 
 
 
+//#if defined(DEBUG) && defined(ST_ISR_PROFILE_PIN)
+//  WRITE(ST_ISR_PROFILE_PIN,1);
+//#endif
     for(int8_t i=0; i < step_loops; i++) { // Take multiple steps per interrupt (For high speed moves)
       #ifndef AT90USB
       MSerial.checkRx(); // Check for serial chars.
@@ -814,6 +820,10 @@ ISR(TIMER1_COMPA_vect)
       step_events_completed += 1;
       if(step_events_completed >= current_block->step_event_count) break;
     }
+#if defined(DEBUG) && defined(ST_ISR_PROFILE_PIN)
+  WRITE(ST_ISR_PROFILE_PIN,0);
+#endif
+
     // Calculare new timer value
     unsigned short timer;
     unsigned short step_rate;
@@ -942,6 +952,12 @@ ISR(TIMER1_COMPA_vect)
 
 void st_init()
 {
+  // We provide a dedicated debug pins for profiling and debugging the stepper
+#if defined(DEBUG) && defined(ST_ISR_PROFILE_PIN)
+  SET_OUTPUT(ST_ISR_PROFILE_PIN);
+  WRITE(ST_ISR_PROFILE_PIN,0);
+#endif
+
   digipot_init(); //Initialize Digipot Motor Current
   microstep_init(); //Initialize Microstepping Pins
 

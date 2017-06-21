@@ -1196,6 +1196,9 @@ void setup()
     max_y_endstop_triggered=true;
   }
 
+#if defined(DEBUG) && defined(IDLE_PROFILE_PIN)
+  SET_OUTPUT(IDLE_PROFILE_PIN);
+#endif
 }
 
 inline void manage_head ()
@@ -1276,12 +1279,18 @@ void loop()
     buflen = (buflen-1);
     bufindr = (bufindr + 1)%BUFSIZE;
   }
+#if defined(DEBUG) && defined(IDLE_PROFILE_PIN)
+  WRITE(IDLE_PROFILE_PIN,1);
+#endif
   //check heater every n milliseconds
   manage_heater();
   manage_inactivity();
   checkHitEndstops();
   manage_head();
   manage_debug_io();
+#if defined(DEBUG) && defined(IDLE_PROFILE_PIN)
+  WRITE(IDLE_PROFILE_PIN,0);
+#endif
   lcd_update();
 }
 
