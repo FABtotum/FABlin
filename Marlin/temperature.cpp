@@ -866,11 +866,12 @@ void tp_init()
     DIDR2 = 0;
   #endif
   #if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)
-    #if TEMP_0_PIN < 8
+    SET_ANALOG(TEMP_0_PIN);
+    /*#if TEMP_0_PIN < 8
        DIDR0 |= 1 << TEMP_0_PIN;
     #else
        DIDR2 |= 1<<(TEMP_0_PIN - 8);
-    #endif
+    #endif*/
   #endif
   #if defined(TEMP_1_PIN) && (TEMP_1_PIN > -1)
     #if TEMP_1_PIN < 8

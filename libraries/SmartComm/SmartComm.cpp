@@ -7,7 +7,8 @@ static uint32_t speeds[] = { 0, 300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 
 SmartComm::SmartComm (SoftwareSerial& serial):
    Serial (serial),
    _twi_address (0),
-   _twi_target  (0)
+   _twi_target  (0),
+   _bus(0)
 {}
 
 void SmartComm::begin()
@@ -127,7 +128,7 @@ size_t SmartComm::write(const char* string)
    }
 }
 
-int SmartComm::available()
+/*int SmartComm::available()
 {
    switch (_bus)
    {
@@ -137,9 +138,9 @@ int SmartComm::available()
          return Wire.available();
       default: return 0;
    }
-}
+}*/
 
-int SmartComm::read()
+/*int SmartComm::read()
 {
    switch (_bus)
    {
@@ -149,7 +150,7 @@ int SmartComm::read()
 
       default: return -1;
    }
-}
+}*/
 
 int SmartComm::peek()
 {

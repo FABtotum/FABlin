@@ -948,8 +948,9 @@
 #define SERVO1_PIN         6
 
 // Default pins for additional serial ports (may be reconfigured at run-time)
-#define RX4 67
-#define TX4 11
+// (unsued pins to not interfere during startup)
+#define RXD4 43
+#define TXD4 42
 
 #endif //MOTHERBOARD == 25
 

@@ -575,10 +575,10 @@ bool auto_fan_on_temp_change = true;
 #endif
 
 // Additional (software) serial interfaces
-#if defined(RX4) && defined(TX4)
+#if defined(RXD4) && defined(TXD4)
 
   // Smart Heads
-  SoftwareSerial Serial4(RX4, TX4);
+  SoftwareSerial Serial4(RXD4, TXD4);
   SmartComm SmartHead(Serial4);
 
 #endif
@@ -4336,7 +4336,7 @@ void process_commands()
 
       uint8_t sRX = 255, sTX = 255;
       switch (port_n) {
-        case 4: sRX = RX4; sTX = TX4; break;
+        case 4: sRX = RXD4; sTX = TXD4; break;
       }
       if (code_seen('R')) {
          sRX = code_value_long() & 0xFF;
