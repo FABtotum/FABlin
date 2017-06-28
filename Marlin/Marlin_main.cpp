@@ -2073,6 +2073,7 @@ inline void forward_command (uint8_t interface, const char* line)
    if (code_seen(LINE_FORWARDING_TERMINATION_CHAR)) {
       forward_commands_to = -1;
       feedback_responses  = false;
+      SERIAL_PROTOCOLLN(MSG_OK);
       return;
    }
 
@@ -2080,6 +2081,7 @@ inline void forward_command (uint8_t interface, const char* line)
    switch (interface)
    {
       case 0:
+        SERIAL_ERROR_START;
          SERIAL_ERRORPGM("Cannot forward commands to interface #0");
          return;
 
@@ -2092,12 +2094,14 @@ inline void forward_command (uint8_t interface, const char* line)
          return;
 
       default:
+        SERIAL_ERROR_START;
          SERIAL_ERRORPGM("Invalid interface #");
          SERIAL_ECHO(interface);
          return;
    }
 
    if (error) {
+      SERIAL_ERROR_START;
       SERIAL_ERRORPGM("Comm interface ");
       SERIAL_ECHO(interface);
       SERIAL_ERRORLNPGM(" is not active");
@@ -5742,12 +5746,12 @@ void process_commands()
    /**
     * M790 - Send command(s) to smart head.
     */
-   case 790: {
-
+   case 790:
+   {
        if (head_is_dummy) {
          SERIAL_ERROR_START;
           SERIAL_ERRORLNPGM("Smart head communication disabled by active tool definition");
-          return;
+          break;
        }
 
       int8_t port = forward_commands_to;
@@ -5758,7 +5762,7 @@ void process_commands()
       if (port < 0) {
          SERIAL_ERROR_START;
          SERIAL_ERRORLNPGM("Communication interface not specified");
-         return;
+         break;
       }
 
       if (code_seen(LINE_FORWARDING_ENCLOSING_CHAR))
@@ -5767,15 +5771,16 @@ void process_commands()
         if (s)
           *s = 0;
         forward_command(port, strchr_pointer+1);
+        break;
       }
       else
       {
          // Forward lines until empty line is found
          forward_commands_to = port;
          feedback_responses  = true;
+         return;
       }
-
-   } break;
+  }
 
     case 793: // M793 - Set/read installed head soft ID
     {
