@@ -46,11 +46,12 @@ defintion, run:
 Latest Changes
 --------------
 
-### Version 1.1.1
+### Version 1.1.0.2
 
+- Fix temperature readings
 - Make stepper motor's idle hold timout configurable with `M84`
-- Fix parsing of line number words (N's can now be used inside `M790`...)
 - Fix parameter parsing inside `M85`
+- Fix parsing of line number words (N's can now be used inside `M790`...)
 
 
 For the complete changelog, see [ChangeLog](ChangeLog.txt).

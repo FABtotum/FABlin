@@ -1,6 +1,13 @@
 Revision history
 ================
 
+Fix: 1.1.0.2 (2017-06-29)
+-------------------------
+- Fix temperature readings
+- Make stepper motor's idle hold timout configurable with `M84`
+- Fix parameter parsing inside `M85`
+- Fix parsing of line number words (N's can now be used inside `M790`...)
+
 Min: 1.1.0 (2017-05-29)
 -------------------------
 - Corrected and normalized command output format:
