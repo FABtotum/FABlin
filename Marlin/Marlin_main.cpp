@@ -1174,12 +1174,25 @@ void setup()
 
 inline void manage_head ()
 {
+  static bool newline = true;
    if (feedback_responses)
    {
       if (forward_commands_to >= 0)
       {
-         while (Serial4.available()) {
-            MYSERIAL.write(Serial4.read());
+         while (SmartHead.available())
+         {
+           char in = SmartHead.read();
+           if (in)
+           {
+             if (newline && in != '\r') {
+               SERIAL_ASYNC_START;
+               newline = false;
+              }
+              MYSERIAL.write(in);
+              if (in == '\n' || in == '\r') {
+                newline = true;
+              }
+           }
          }
       }
    }
@@ -5778,7 +5791,7 @@ void process_commands()
          // Forward lines until empty line is found
          forward_commands_to = port;
          feedback_responses  = true;
-         return;
+         break;
       }
   }
 
