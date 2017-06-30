@@ -6532,17 +6532,21 @@ void manage_inactivity()
             disable_y();
             disable_z();
             disable_e_steppers();
+
+#ifdef ENABLE_LASER_MODE
+            // Shut-down laser when motors do if laser is syncronized
+            if (Laser::synchronized) {
+              Laser::power = 0;
+            }
+#endif
         }
     }
   }
 
 #ifdef ENABLE_LASER_MODE
-  if (Laser::max_inactive_time)
+  if (!Laser::synchronized && Laser::max_inactive_time)
   {
-    // Zero laser power whether it's active or not
-    if (Laser::synchronized) {
-      Laser::power = 0;
-    } else if (Laser::max_inactive_time && elapsed > Laser::max_inactive_time) {
+    if (Laser::max_inactive_time && elapsed > Laser::max_inactive_time) {
       Laser::power = 0;
     }
   }
