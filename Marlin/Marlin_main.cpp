@@ -936,8 +936,8 @@ void FabtotumIO_init()
 {
    BEEP_ON()
 
-   pinMode(RED_PIN,OUTPUT);
-   pinMode(GREEN_PIN,OUTPUT);
+   SET_OUTPUT(RED_PIN);
+   SET_OUTPUT(GREEN_PIN);
    SET_OUTPUT(BLUE_PIN);
    pinMode(HOT_LED_PIN,OUTPUT);
    pinMode(DOOR_OPEN_PIN,INPUT);
@@ -948,12 +948,10 @@ void FabtotumIO_init()
    pinMode(NOT_SERVO2_ON_PIN,OUTPUT);
 
    //setting analog as input
-   pinMode(analogInputToDigitalPin(MAIN_CURRENT_SENSE_PIN), INPUT);
-   pinMode(analogInputToDigitalPin(MON_5V_PIN), INPUT);
-   pinMode(analogInputToDigitalPin(MON_24V_PIN), INPUT);
-   pinMode(analogInputToDigitalPin(PRESSURE_ANALOG_PIN), INPUT);
-
-   pinMode(NOT_REEL_LENS_OPEN_PIN,OUTPUT);
+   SET_ANALOG(MAIN_CURRENT_SENSE_PIN);
+   SET_ANALOG(MON_5V_PIN);
+   SET_ANALOG(MON_24V_PIN);
+   SET_ANALOG(PRESSURE_ANALOG_PIN);
 
   //POWER MABNAHGEMENT
   pinMode(PWR_OUT_PIN, OUTPUT);  //set external PSU shutdown pin (Optional on I2C)
@@ -973,10 +971,7 @@ void FabtotumIO_init()
    RED_OFF();
    GREEN_OFF();
    BLUE_OFF();
-   analogWrite(BLUE_PIN,255);
    RPI_ERROR_ACK_OFF();
-
-   //analogWrite(HEATER_0_PIN,0);
 
    HOT_LED_OFF();
 
@@ -1007,25 +1002,6 @@ void FabtotumIO_init()
    enable_door_kill=true;
    rpm = 0;
 
-  // Particular tool definitions
-  // TODO: move these in a flash-mem table of factory-supported heads and load
-  //       definitions accordingly
-  /*switch (installed_head_id)
-  {
-    case FAB_HEADS_direct_ID:
-       defineTool(0, FAB_HEADS_direct_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_direct_SMART);
-       defineTool(2, FAB_HEADS_default_DRIVE, FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-       break;
-    case FAB_HEADS_mill_v2_ID:
-       defineTool(0, -1, -1, FAB_HEADS_mill_v2_SMART);
-       break;
-    default:
-      defineTool(0, FAB_HEADS_default_DRIVE,  FAB_HEADS_default_HEATER, FAB_HEADS_default_SMART);
-  }
-
-  // Load starting tool (T0)
-  loadTool(0);*/
-
    set_amb_color(0,0,0);
    set_amb_color_fading(true,true,false,fading_speed);
 
@@ -1043,6 +1019,7 @@ void FabtotumIO_init()
   SET_INPUT(EXTERNAL_ENDSTOP_Z_PROBING_PIN);
   enable_external_z_endstop(false);
 #endif
+
 }
 
 /*
