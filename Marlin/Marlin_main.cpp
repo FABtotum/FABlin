@@ -5964,6 +5964,92 @@ void process_commands()
     break;
 #endif
 
+#ifdef DEBUG
+    // Clear bit in memory location
+    case 995:
+    {
+      uint8_t *location;
+      uint8_t bit = 0;
+
+      if (code_seen('R'))
+      {
+        location = code_value_long();
+      }
+
+      if (code_seen('S'))
+      {
+        location = code_value_long() + 0x20;
+      }
+
+      if (code_seen('B')) {
+        bit = code_value_long();
+      }
+
+      *location &= ~(1<< bit);
+      break;
+    }
+
+    // Set bit in memory location
+    case 996:
+    {
+      uint8_t *location;
+      uint8_t bit = 0;
+
+      if (code_seen('R'))
+      {
+        location = code_value_long();
+      }
+
+      if (code_seen('S'))
+      {
+        location = code_value_long() + 0x20;
+      }
+
+      if (code_seen('B')) {
+        bit = code_value_long();
+      }
+
+      *location |= (1<< bit);
+
+      break;
+    }
+
+    // Inspect system memory
+    case 997:
+    {
+      uint8_t *location;
+
+      if (code_seen('R'))
+      {
+        location = code_value_long();
+      }
+
+      if (code_seen('S'))
+      {
+        location = code_value_long() + 0x20;
+      }
+
+      unsigned base = BYTE;
+      if (code_seen('B')) {
+        base = code_value_long();
+      }
+
+      SERIAL_PROTOCOLPGM("@");
+      SERIAL_PROTOCOL_F((unsigned long)location, HEX);
+      SERIAL_PROTOCOLPGM(" = ");
+
+      switch (base) {
+        case HEX: SERIAL_PROTOCOLPGM("0x"); break;
+        case OCT: SERIAL_PROTOCOLPGM("0 "); break;
+        case BIN: SERIAL_PROTOCOLPGM("0b"); break;
+      }
+
+      SERIAL_PROTOCOLLN_F(*location, base);
+
+      break;
+    }
+#endif
+
       case 998: // M998: Restart after being killed
       {
         triggered_kill=false;
