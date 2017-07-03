@@ -52,6 +52,7 @@ Latest Changes
 - Make stepper motor's idle hold timout configurable with `M84`
 - Fix parameter parsing inside `M85`
 - Fix parsing of line number words (N's can now be used inside `M790`...)
+- Improvements in homing procedure
 
 
 For the complete changelog, see [ChangeLog](ChangeLog.txt).

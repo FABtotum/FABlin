@@ -2469,15 +2469,17 @@ void process_commands()
               && (current_position[Y_AXIS]-Y_PROBE_OFFSET_FROM_EXTRUDER >= Y_MIN_POS) \
               && (current_position[Y_AXIS]-Y_PROBE_OFFSET_FROM_EXTRUDER <= Y_MAX_POS)) {
 
-              /*current_position[Z_AXIS] = 0;
-              plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
-              destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
-              feedrate = max_feedrate[Z_AXIS];
-              plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
-              st_synchronize();
+              if (!z_is_safe) {
+                current_position[Z_AXIS] = 0;
+                plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
+                destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
+                feedrate = max_feedrate[Z_AXIS];
+                plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
+              }
 
-              HOMEAXIS(Z);*/
-            } else if (!((axis_known_position[X_AXIS]) && (axis_known_position[Y_AXIS]))) {
+              st_synchronize();
+              HOMEAXIS(Z);
+            } else if (!axis_known_position[X_AXIS] || !axis_known_position[Y_AXIS]) {
                 LCD_MESSAGEPGM(MSG_POSITION_UNKNOWN);
                 SERIAL_ECHO_START;
                 SERIAL_ECHOLNPGM(MSG_POSITION_UNKNOWN);
