@@ -2313,7 +2313,10 @@ void process_commands()
           //st_synchronize();
         }
 
-        if(Stopped){break;}
+        if (Stopped) {
+          feedrate = saved_feedrate;
+          break;
+        }
 
         #ifdef QUICK_HOME
         if( home_all_axis || ( home_x_axis && home_y_axis) )  //first diagonal move
@@ -2358,7 +2361,10 @@ void process_commands()
         }
         #endif
 
-        if(Stopped){break;}
+        if (Stopped){
+          feedrate = saved_feedrate;
+          break;
+        }
 
         if(home_all_axis || home_x_axis)
         {
@@ -2380,7 +2386,10 @@ void process_commands()
         #endif
         }
 
-        if(Stopped){break;}
+        if (Stopped) {
+          feedrate = saved_feedrate;
+          break;
+        }
 
         if(home_all_axis || home_y_axis) {
           zeroed_far_from_home_y=false;
@@ -2404,7 +2413,10 @@ void process_commands()
           axis_known_position[Y_AXIS] = true;
         }
 
-        if(Stopped){break;}
+        if (Stopped) {
+          feedrate = saved_feedrate;
+          break;
+        }
 
         if(!home_Z_reverse){
         #if Z_HOME_DIR < 0          // If homing towards BED do Z last
@@ -2568,6 +2580,7 @@ void process_commands()
         monitor_secure_endstop = saved_monitor_secure_endstop;
       }
 
+      feedrate = saved_feedrate;
       break;
 
 
