@@ -27,7 +27,7 @@ namespace ExternalProbe
 	/**
 	 * Returns probe state inversion configuration
 	 */
-	bool	getInverted();
+	bool    getInverted();
 	
 	/**
 	 * Returns configured probe endstop source
@@ -42,17 +42,17 @@ namespace ExternalProbe
 	/**
 	 * Returns true if source is not 0
 	 */
-	bool	isActive();
+	bool    isActive();
 	
 	/**
 	 * Enable probe usage 
 	 */
-	void	enable();
+	void    enable();
 	
 	/**
 	 * Disable probe usage but keep the source configured
 	 */
-	void	disable();
+	void   disable();
 }
 
 #endif /* _EXTERNAL_PROBE_H_ */

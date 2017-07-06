@@ -5561,7 +5561,7 @@ void process_commands()
     case 747:
     {
       int value;
-      if (code_seen('X'))
+      if( code_seen('X') )
       {
         value = code_value();
         if(value==1)
@@ -5586,7 +5586,7 @@ void process_commands()
         }
       }
 
-      if (code_seen('Y'))
+      if( code_seen('Y') )
       {
         value = code_value();
         if(value==1)
@@ -5611,7 +5611,7 @@ void process_commands()
         }
       }
 
-      if (code_seen('Z'))
+      if( code_seen('Z') )
       {
         value = code_value();
         if(value==1)
@@ -5634,6 +5634,51 @@ void process_commands()
           Z_MIN_ENDSTOP_INVERTING=false;
           Z_MAX_ENDSTOP_INVERTING=false;
         }
+      }
+      
+      if( code_seen('E') )
+      {
+        value = code_value();
+        if(value==1)
+        {
+          ExternalProbe::setInverted(true);
+        }
+        else
+        {
+          ExternalProbe::setInverted(false);
+        }
+      }
+      
+      if( !code_seen('X') && !code_seen('Y') && !code_seen('Z') && !code_seen('E') )
+      {
+        #if defined(X_MIN_PIN) && X_MIN_PIN > -1
+          SERIAL_PROTOCOLPGM(MSG_X_MIN);
+          SERIAL_PROTOCOLLN( X_MIN_ENDSTOP_INVERTING );
+        #endif
+        #if defined(X_MAX_PIN) && X_MAX_PIN > -1
+          SERIAL_PROTOCOLPGM(MSG_X_MAX);
+          SERIAL_PROTOCOLLN( X_MAX_ENDSTOP_INVERTING );
+        #endif
+        #if defined(Y_MIN_PIN) && Y_MIN_PIN > -1
+          SERIAL_PROTOCOLPGM(MSG_Y_MAX);  // WORKAROUND
+          SERIAL_PROTOCOLLN( Y_MIN_ENDSTOP_INVERTING );
+        #endif
+        #if defined(Y_MAX_PIN) && Y_MAX_PIN > -1
+           SERIAL_PROTOCOLPGM(MSG_Y_MIN);  // WORKAROUND
+          SERIAL_PROTOCOLLN( Y_MAX_ENDSTOP_INVERTING );
+        #endif
+        #if defined(Z_MIN_PIN) && Z_MIN_PIN > -1
+          SERIAL_PROTOCOLPGM(MSG_Z_MIN);
+          SERIAL_PROTOCOLLN( Z_MIN_ENDSTOP_INVERTING );
+        #endif
+        #if defined(EXTERNAL_ENDSTOP_Z_PROBING_PIN) && (EXTERNAL_ENDSTOP_Z_PROBING_PIN > -1)
+          SERIAL_PROTOCOLPGM("external_z_min: ");
+          SERIAL_PROTOCOLLN( ExternalProbe::getInverted() );
+        #endif
+        #if defined(Z_MAX_PIN) && Z_MAX_PIN > -1
+          SERIAL_PROTOCOLPGM(MSG_Z_MAX);
+          SERIAL_PROTOCOLLN( Z_MAX_ENDSTOP_INVERTING );
+        #endif
       }
 
     }
