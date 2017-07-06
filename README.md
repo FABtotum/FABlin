@@ -48,11 +48,11 @@ Latest Changes
 
 ### Version 1.1.0.2
 
-- Fix temperature readings
+- Improvements in homing procedure
 - Make stepper motor's idle hold timout configurable with `M84`
+- Fix temperature readings
 - Fix parameter parsing inside `M85`
 - Fix parsing of line number words (N's can now be used inside `M790`...)
-- Improvements in homing procedure
 
 
 For the complete changelog, see [ChangeLog](ChangeLog.txt).
