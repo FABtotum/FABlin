@@ -860,6 +860,29 @@ void tp_init()
     #endif
   #endif
 
+  #ifdef HEATER_0_USES_MAX6675
+    #ifndef SDSUPPORT
+      SET_OUTPUT(MAX_SCK_PIN);
+      WRITE(MAX_SCK_PIN,0);
+
+      SET_OUTPUT(MAX_MOSI_PIN);
+      WRITE(MAX_MOSI_PIN,1);
+
+      SET_INPUT(MAX_MISO_PIN);
+      WRITE(MAX_MISO_PIN,1);
+    #endif
+
+    SET_OUTPUT(MAX6675_SS);
+    WRITE(MAX6675_SS,1);
+  #endif
+
+  // Set analog inputs
+  ADCSRA = 1<<ADEN | 1<<ADSC | 1<<ADIF | 0x07;
+  DIDR0 = 0;
+  #ifdef DIDR2
+    DIDR2 = 0;
+  #endif
+
   tp_enable_sensor(enabled_features & TP_SENSORS);
 
   if (enabled_features) {
@@ -1076,41 +1099,25 @@ void tp_enable_sensor (uint8_t sensors)
 
   if (sensors & TP_SENSOR_0) {
 #if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)
-  #if TEMP_0_PIN < 8
-    DIDR0 |= 1 << TEMP_0_PIN;
-  #else
-    DIDR2 |= 1<<(TEMP_0_PIN - 8);
-  #endif
+  SET_ANALOG(TEMP_0_PIN);
 #endif
   }
 
   if (sensors & TP_SENSOR_1) {
 #if defined(TEMP_1_PIN) && (TEMP_1_PIN > -1)
-  #if TEMP_1_PIN < 8
-    DIDR0 |= 1<<TEMP_1_PIN;
-  #else
-    DIDR2 |= 1<<(TEMP_1_PIN - 8);
-  #endif
+  SET_ANALOG(TEMP_1_PIN);
 #endif
   }
 
   if (sensors & TP_SENSOR_2) {
 #if defined(TEMP_2_PIN) && (TEMP_2_PIN > -1)
-  #if TEMP_2_PIN < 8
-    DIDR0 |= 1 << TEMP_2_PIN;
-  #else
-    DIDR2 |= 1<<(TEMP_2_PIN - 8);
-  #endif
+  SET_ANALOG(TEMP_2_PIN);
 #endif
   }
 
   if (sensors & TP_SENSOR_BED) {
 #if defined(TEMP_BED_PIN) && (TEMP_BED_PIN > -1)
-  #if TEMP_BED_PIN < 8
-    DIDR0 |= 1<<TEMP_BED_PIN;
-  #else
-    DIDR2 |= 1<<(TEMP_BED_PIN - 8);
-  #endif
+  SET_ANALOG(TEMP_BED_PIN);
 #endif
   }
 }

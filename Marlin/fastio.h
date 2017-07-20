@@ -75,6 +75,12 @@
 /// set pin as output wrapper
 #define SET_OUTPUT(IO)  _SET_OUTPUT(IO)
 
+#define SET_ANALOG(IO) do { \
+  digitalWrite(analogInputToDigitalPin(IO),0); \
+  if (IO < 8) { DIDR0 |= 1 << IO; } \
+  else { DIDR2 |= 1<<(IO - 8); } \
+} while (0)
+
 /// check if pin is an input wrapper
 #define GET_INPUT(IO)  _GET_INPUT(IO)
 /// check if pin is an output wrapper

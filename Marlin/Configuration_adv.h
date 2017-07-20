@@ -513,8 +513,8 @@ const unsigned int dropsegments=5; //everything with less than this number of st
    #define LINE_FORWARDING_ENCLOSING_CHAR   '"'
    #define LINE_FORWARDING_TERMINATION_CHAR '.'  // This character alone on an input line is used to escape from input echoing to the head
 
-   #define SMART_HEAD_RX_PIN 11
-   #define SMART_HEAD_TX_PIN 57
+   #define SMART_HEAD_RX_PIN RXD4
+   #define SMART_HEAD_TX_PIN TXD4
 #endif
 
 

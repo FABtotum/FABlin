@@ -50,17 +50,25 @@ class SmartComm : public Stream
       size_t write (uint8_t);
       size_t write (const char*);
 
-      inline int available (void);
-      inline int read (void);
-      inline int peek (void);
-      inline void flush (void);
+      inline int available (void) { switch (_bus) {
+            case SMARTCOMM_BUS_SERIAL: return Serial.available();
+            case SMARTCOMM_BUS_TWI: return Wire.available();
+            default: return 0;
+      }}
+      inline int read (void) { switch (_bus) {
+            case SMARTCOMM_BUS_SERIAL: return Serial.read();
+            case SMARTCOMM_BUS_TWI: return Wire.read();
+            default: return -1;
+      }}
+      int peek (void);
+      void flush (void);
 
    private:
 
       uint8_t _active:1;
-      uint8_t _bus:1;      // Communication bus (serial / twi)
+      uint8_t _bus:2;      // Communication bus (serial / twi)
 
-      uint8_t _serial_rx, _serial_tx;  // Serial pins used
+      uint8_t _serial_rx = 0, _serial_tx = 0;  // Serial pins used
       uint16_t _serial_baud;    // Serial baud rate
 
       uint8_t _twi_address;

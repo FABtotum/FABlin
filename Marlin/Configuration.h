@@ -447,7 +447,6 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 //= Z PROBING via endstop (e.g. electrical continuity between mill and PCB)==
 
 #define EXTERNAL_ENDSTOP_Z_PROBING
-//#undef EXTERNAL_ENDSTOP_Z_PROBING
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
   #ifdef IRSD

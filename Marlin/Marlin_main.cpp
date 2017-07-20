@@ -488,9 +488,7 @@ const int sensitive_pins[] = SENSITIVE_PINS; // Sensitive pin list for M42
 //Inactivity shutdown variables
 static unsigned long previous_millis_cmd = 0;
 static unsigned long max_inactive_time = DEFAULT_DEACTIVE_TIME*1000l;
-// Statically #define this as long as it remains non configurable:
-//static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
-#define max_steppers_inactive_time  DEFAULT_STEPPERS_DEACTIVE_TIME*1000L
+static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME*1000l;
 
 #if defined (AUTO_REPORT_TEMPERATURES)
 
@@ -592,10 +590,10 @@ bool auto_fan_on_temp_change = true;
 #endif
 
 // Additional (software) serial interfaces
-#if defined(RX4) && defined(TX4)
+#if defined(RXD4) && defined(TXD4)
 
   // Smart Heads
-  SoftwareSerial Serial4(RX4, TX4);
+  SoftwareSerial Serial4(RXD4, TXD4);
   SmartComm SmartHead(Serial4);
 
 #endif
@@ -983,8 +981,8 @@ void FabtotumIO_init()
 
    BEEP_ON()
 
-   pinMode(RED_PIN,OUTPUT);
-   pinMode(GREEN_PIN,OUTPUT);
+   SET_OUTPUT(RED_PIN);
+   SET_OUTPUT(GREEN_PIN);
    SET_OUTPUT(BLUE_PIN);
    pinMode(HOT_LED_PIN,OUTPUT);
    pinMode(DOOR_OPEN_PIN,INPUT);
@@ -995,12 +993,10 @@ void FabtotumIO_init()
    pinMode(NOT_SERVO2_ON_PIN,OUTPUT);
 
    //setting analog as input
-   pinMode(analogInputToDigitalPin(MAIN_CURRENT_SENSE_PIN), INPUT);
-   pinMode(analogInputToDigitalPin(MON_5V_PIN), INPUT);
-   pinMode(analogInputToDigitalPin(MON_24V_PIN), INPUT);
-   pinMode(analogInputToDigitalPin(PRESSURE_ANALOG_PIN), INPUT);
-
-   pinMode(NOT_REEL_LENS_OPEN_PIN,OUTPUT);
+   SET_ANALOG(MAIN_CURRENT_SENSE_PIN);
+   SET_ANALOG(MON_5V_PIN);
+   SET_ANALOG(MON_24V_PIN);
+   SET_ANALOG(PRESSURE_ANALOG_PIN);
 
    //POWER MABNAHGEMENT
    pinMode(PWR_OUT_PIN, OUTPUT);  //set external PSU shutdown pin (Optional on I2C)
@@ -1020,10 +1016,7 @@ void FabtotumIO_init()
    RED_OFF();
    GREEN_OFF();
    BLUE_OFF();
-   analogWrite(BLUE_PIN,255);
    RPI_ERROR_ACK_OFF();
-
-   //analogWrite(HEATER_0_PIN,0);
 
    HOT_LED_OFF();
 
@@ -1067,6 +1060,13 @@ void FabtotumIO_init()
    BEEP_OFF()
 
   z_endstop_bug_workaround = fab_batch_number >= 3? 255 : 0;
+
+  // Init external probe if configured
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+  //SET_INPUT(EXTERNAL_ENDSTOP_Z_PROBING_PIN);
+  DISABLE_SECURE_SWITCH_ZPROBE();
+#endif
+
 }
 
 /*
@@ -1200,12 +1200,25 @@ void setup()
 
 inline void manage_head ()
 {
+  static bool newline = true;
    if (feedback_responses)
    {
       if (forward_commands_to >= 0)
       {
-         while (Serial4.available()) {
-            MYSERIAL.write(Serial4.read());
+         while (SmartHead.available())
+         {
+           char in = SmartHead.read();
+           if (in)
+           {
+             if (newline && in != '\r') {
+               SERIAL_ASYNC_START;
+               newline = false;
+              }
+              MYSERIAL.write(in);
+              if (in == '\n' || in == '\r') {
+                newline = true;
+              }
+           }
          }
       }
    }
@@ -1661,7 +1674,7 @@ static void axis_is_at_home(int axis) {
   if ((axis==Z_AXIS && home_Z_reverse)  || (axis==X_AXIS && x_axis_endstop_sel)) {
     current_position[axis] = max_pos[axis];
   }
-  
+
   axis_known_position[axis] = true;
 }
 
@@ -1780,14 +1793,14 @@ static void run_fast_external_z_endstop(float x, float y, float z) {
 
     // This function expects the feedrate to have been set externally.
     //feedrate = homing_feedrate[Z_AXIS];
-    
+
     #ifdef COREXY
     long start_xcount = st_get_position(X_AXIS);
     long start_ycount = st_get_position(Y_AXIS);
     float current_x = current_position[X_AXIS];
     float current_y = current_position[Y_AXIS];
     #endif
-    
+
     plan_buffer_line(x, y, z, current_position[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
 
@@ -1796,21 +1809,21 @@ static void run_fast_external_z_endstop(float x, float y, float z) {
     current_position[X_AXIS] = st_get_position_mm(X_AXIS);
     current_position[Y_AXIS] = st_get_position_mm(Y_AXIS);
     #else
-    
+
     // corexy inverser formula
     long dx = st_get_position(X_AXIS) - start_xcount;
     long dy = st_get_position(Y_AXIS) - start_ycount;
     long tmp_x = (dx + dy) / 2;
     long tmp_y = (dy - dx) / 2;
-    
+
     // convert steps to mm
     x = tmp_x / axis_steps_per_unit[X_AXIS];
     y = tmp_y / axis_steps_per_unit[Y_AXIS];
-    
+
     current_position[X_AXIS] = current_x + x;
     current_position[Y_AXIS] = current_y + y;
     #endif
-    
+
     z = st_get_position_mm(Z_AXIS);
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], z, current_position[E_AXIS]);
 
@@ -2141,6 +2154,7 @@ inline void forward_command (uint8_t interface, const char* line)
    if (code_seen(LINE_FORWARDING_TERMINATION_CHAR)) {
       forward_commands_to = -1;
       feedback_responses  = false;
+      SERIAL_PROTOCOLLN(MSG_OK);
       return;
    }
 
@@ -2148,6 +2162,7 @@ inline void forward_command (uint8_t interface, const char* line)
    switch (interface)
    {
       case 0:
+        SERIAL_ERROR_START;
          SERIAL_ERRORPGM("Cannot forward commands to interface #0");
          return;
 
@@ -2160,12 +2175,14 @@ inline void forward_command (uint8_t interface, const char* line)
          return;
 
       default:
+        SERIAL_ERROR_START;
          SERIAL_ERRORPGM("Invalid interface #");
          SERIAL_ECHO(interface);
          return;
    }
 
    if (error) {
+      SERIAL_ERROR_START;
       SERIAL_ERRORPGM("Comm interface ");
       SERIAL_ECHO(interface);
       SERIAL_ERRORLNPGM(" is not active");
@@ -2328,7 +2345,7 @@ void process_commands()
       bool home_x_or_y_only = false;
       bool home_z_axis = false;
       bool z_is_safe = false;
-      
+
       if (Stopped) break;
 
         retract_z_probe(); //Safety first.
@@ -2378,7 +2395,10 @@ void process_commands()
           //st_synchronize();
         }
 
-        if(Stopped){break;}
+        if (Stopped) {
+          feedrate = saved_feedrate;
+          break;
+        }
 
         #ifdef QUICK_HOME
         if( home_all_axis || ( home_x_axis && home_y_axis) )  //first diagonal move
@@ -2423,7 +2443,10 @@ void process_commands()
         }
         #endif
 
-        if(Stopped){break;}
+        if (Stopped){
+          feedrate = saved_feedrate;
+          break;
+        }
 
         if(home_all_axis || home_x_axis)
         {
@@ -2445,7 +2468,10 @@ void process_commands()
         #endif
         }
 
-        if(Stopped){break;}
+        if (Stopped) {
+          feedrate = saved_feedrate;
+          break;
+        }
 
         if(home_all_axis || home_y_axis) {
           zeroed_far_from_home_y=false;
@@ -2469,7 +2495,10 @@ void process_commands()
           axis_known_position[Y_AXIS] = true;
         }
 
-        if(Stopped){break;}
+        if (Stopped) {
+          feedrate = saved_feedrate;
+          break;
+        }
 
         if(!home_Z_reverse){
         #if Z_HOME_DIR < 0          // If homing towards BED do Z last
@@ -2525,7 +2554,7 @@ void process_commands()
               HOMEAXIS(Z);
             }
           }
-          
+
           // Let's see if X and Y are homed and probe is inside bed area.
           if(code_seen(axis_codes[Z_AXIS])) {
             if ( (axis_known_position[X_AXIS]) && (axis_known_position[Y_AXIS]) \
@@ -2534,15 +2563,17 @@ void process_commands()
               && (current_position[Y_AXIS]-Y_PROBE_OFFSET_FROM_EXTRUDER >= Y_MIN_POS) \
               && (current_position[Y_AXIS]-Y_PROBE_OFFSET_FROM_EXTRUDER <= Y_MAX_POS)) {
 
-              /*current_position[Z_AXIS] = 0;
-              plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
-              destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
-              feedrate = max_feedrate[Z_AXIS];
-              plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
-              st_synchronize();
+              if (!z_is_safe) {
+                current_position[Z_AXIS] = 0;
+                plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
+                destination[Z_AXIS] = Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS) * (-1);    // Set destination away from bed
+                feedrate = max_feedrate[Z_AXIS];
+                plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
+              }
 
-              HOMEAXIS(Z);*/
-            } else if (!((axis_known_position[X_AXIS]) && (axis_known_position[Y_AXIS]))) {
+              st_synchronize();
+              HOMEAXIS(Z);
+            } else if (!axis_known_position[X_AXIS] || !axis_known_position[Y_AXIS]) {
                 LCD_MESSAGEPGM(MSG_POSITION_UNKNOWN);
                 SERIAL_ECHO_START;
                 SERIAL_ECHOLNPGM(MSG_POSITION_UNKNOWN);
@@ -2601,17 +2632,17 @@ void process_commands()
         {
           destination[Y_AXIS] = current_position[Y_AXIS]+Y_HOME_PARK_OFFSET;
         }
-        
+
         // update destination position as it was moved during G28 Z homing,
         // otherwise the bed will run away upwards
         destination[Z_AXIS] = current_position[Z_AXIS];
-        
+
         // Move away from the z endstops if not G28
         if(home_z_axis && !z_probe_activation)
         {
           destination[Z_AXIS] -= Z_HOME_PARK_OFFSET;
         }
-        
+
         destination[E_AXIS] = current_position[E_AXIS];
         feedrate = max_feedrate[Z_AXIS];
         plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], feedrate, active_extruder);
@@ -2631,6 +2662,7 @@ void process_commands()
         monitor_secure_endstop = saved_monitor_secure_endstop;
       }
 
+      feedrate = saved_feedrate;
       break;
 
 
@@ -2717,7 +2749,7 @@ void process_commands()
                 }
 
                 if(Stopped) break;
-                
+
                 float measured_z=0;
 
                 for(int avg_measured_z=0; avg_measured_z<AVG_MEASURED_Z_MAX;avg_measured_z++)
@@ -2880,19 +2912,19 @@ void process_commands()
           destination[X_AXIS] = current_position[X_AXIS];
           destination[Y_AXIS] = current_position[Y_AXIS];
           destination[Z_AXIS] = current_position[Z_AXIS];
-          
+
           if (code_seen('X') && move_x_axis) {
             destination[X_AXIS] = code_value() + relative_mode*current_position[X_AXIS];
           }
-          
+
           if (code_seen('Y') && move_y_axis) {
             destination[Y_AXIS] = code_value() + relative_mode*current_position[Y_AXIS];
           }
-          
+
           if (code_seen('Z') && move_z_axis) {
             destination[Z_AXIS] = code_value() + relative_mode*current_position[Z_AXIS];
           }
-          
+
           if(default_axis_move)
           {
             // move upwards
@@ -2923,10 +2955,10 @@ void process_commands()
           SERIAL_PROTOCOL(current_position[Z_AXIS]);
           SERIAL_PROTOCOLPGM("\n");
 
-          // disable external endstop from stopping movements so that 
+          // disable external endstop from stopping movements so that
           // G27/G28 does not get interrupted because of probe vibrations
           ExternalProbe::disable();
-          
+
           clean_up_after_endstop_move();
         }
       }
@@ -3559,7 +3591,7 @@ void process_commands()
     case 18: //compatibility
     case 84: // M84
       if(code_seen('S')){
-        max_inactive_time = code_value() * 1000;
+        max_steppers_inactive_time = code_value() * 1000;
       }
       else
       {
@@ -3567,10 +3599,7 @@ void process_commands()
         if(all_axis)
         {
           st_synchronize();
-          disable_e0();
-          disable_e1();
-          disable_e2();
-          disable_e3();
+          disable_e_steppers();
           finishAndDisableSteppers();
         }
         else
@@ -3581,18 +3610,16 @@ void process_commands()
           if(code_seen('Z')) disable_z();
           #if ((E0_ENABLE_PIN != X_ENABLE_PIN) && (E1_ENABLE_PIN != Y_ENABLE_PIN)) // Only enable on boards that have seperate ENABLE_PINS
             if(code_seen('E')) {
-              disable_e0();
-              disable_e1();
-              disable_e2();
-              disable_e3();
+              disable_e_steppers();
             }
           #endif
         }
       }
       break;
     case 85: // M85
-      code_seen('S');
-      max_inactive_time = code_value() * 1000;
+      if (code_seen('S')) {
+        max_inactive_time = code_value() * 1000;
+      }
       break;
 
 
@@ -4526,7 +4553,7 @@ void process_commands()
 
       uint8_t sRX = 255, sTX = 255;
       switch (port_n) {
-        case 4: sRX = RX4; sTX = TX4; break;
+        case 4: sRX = RXD4; sTX = TXD4; break;
       }
       if (code_seen('R')) {
          sRX = code_value_long() & 0xFF;
@@ -5496,24 +5523,24 @@ void process_commands()
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
     /**
      * M746 [S<0-2>] - Set/get external probe source
-     * 
+     *
      * 0 - disabled
      * 1 - secure_sw pin
      * 2 - i2c_scl   pin (head connector)
-     * 
+     *
      * The actual pin is provided by NOT_SECURE_SW_PIN macro, which is pin 71
      * (in totumduino's silk screen "Secure_sw", see also M743).
-     * 
+     *
      * If enabled you need to keep an external zprobe connected to this totumduino connector that makes the endstop read "open" in normal state or
      * you will have undesirable behaviour (only during the time a Z probe is done, so during homing, G30 and G38).
-     * 
+     *
      * A possible probe is an electrical continuity probe between a copper cad (for making PCBs) and the mill (that in the hybrid head is to GND), like this:
-     * 
+     *
      * |  | (secure_sw)
      * |  \------------------------------+----- attach this to copper clad (via a metal washer to which the wire is soldered?)
      * \-----------------------/\/\/\/---|
      *                         1 kOhm
-     */ 
+     */
     case 746:
     {
       int value;
@@ -5635,7 +5662,7 @@ void process_commands()
           Z_MAX_ENDSTOP_INVERTING=false;
         }
       }
-      
+
       if( code_seen('E') )
       {
         value = code_value();
@@ -5648,7 +5675,7 @@ void process_commands()
           ExternalProbe::setInverted(false);
         }
       }
-      
+
       if( !code_seen('X') && !code_seen('Y') && !code_seen('Z') && !code_seen('E') )
       {
         #if defined(X_MIN_PIN) && X_MIN_PIN > -1
@@ -5984,12 +6011,12 @@ void process_commands()
    /**
     * M790 - Send command(s) to smart head.
     */
-   case 790: {
-
+   case 790:
+   {
        if (head_is_dummy) {
          SERIAL_ERROR_START;
           SERIAL_ERRORLNPGM("Smart head communication disabled by active tool definition");
-          return;
+          break;
        }
 
       int8_t port = forward_commands_to;
@@ -6000,7 +6027,7 @@ void process_commands()
       if (port < 0) {
          SERIAL_ERROR_START;
          SERIAL_ERRORLNPGM("Communication interface not specified");
-         return;
+         break;
       }
 
       if (code_seen(LINE_FORWARDING_ENCLOSING_CHAR))
@@ -6009,15 +6036,16 @@ void process_commands()
         if (s)
           *s = 0;
         forward_command(port, strchr_pointer+1);
+        break;
       }
       else
       {
          // Forward lines until empty line is found
          forward_commands_to = port;
          feedback_responses  = true;
+         break;
       }
-
-   } break;
+  }
 
     case 793: // M793 - Set/read installed head soft ID
     {
@@ -6210,6 +6238,92 @@ void process_commands()
       }
     }
     break;
+#endif
+
+#ifdef DEBUG
+    // Clear bit in memory location
+    case 995:
+    {
+      uint8_t *location;
+      uint8_t bit = 0;
+
+      if (code_seen('R'))
+      {
+        location = code_value_long();
+      }
+
+      if (code_seen('S'))
+      {
+        location = code_value_long() + 0x20;
+      }
+
+      if (code_seen('B')) {
+        bit = code_value_long();
+      }
+
+      *location &= ~(1<< bit);
+      break;
+    }
+
+    // Set bit in memory location
+    case 996:
+    {
+      uint8_t *location;
+      uint8_t bit = 0;
+
+      if (code_seen('R'))
+      {
+        location = code_value_long();
+      }
+
+      if (code_seen('S'))
+      {
+        location = code_value_long() + 0x20;
+      }
+
+      if (code_seen('B')) {
+        bit = code_value_long();
+      }
+
+      *location |= (1<< bit);
+
+      break;
+    }
+
+    // Inspect system memory
+    case 997:
+    {
+      uint8_t *location;
+
+      if (code_seen('R'))
+      {
+        location = code_value_long();
+      }
+
+      if (code_seen('S'))
+      {
+        location = code_value_long() + 0x20;
+      }
+
+      unsigned base = BYTE;
+      if (code_seen('B')) {
+        base = code_value_long();
+      }
+
+      SERIAL_PROTOCOLPGM("@");
+      SERIAL_PROTOCOL_F((unsigned long)location, HEX);
+      SERIAL_PROTOCOLPGM(" = ");
+
+      switch (base) {
+        case HEX: SERIAL_PROTOCOLPGM("0x"); break;
+        case OCT: SERIAL_PROTOCOLPGM("0 "); break;
+        case BIN: SERIAL_PROTOCOLPGM("0b"); break;
+      }
+
+      SERIAL_PROTOCOLLN_F(*location, base);
+
+      break;
+    }
 #endif
 
       case 998: // M998: Restart after being killed
@@ -6664,9 +6778,10 @@ void handle_status_leds (void)
 
 void manage_inactivity()
 {
+  unsigned long int elapsed = millis() - previous_millis_cmd;
+
   if (max_steppers_inactive_time)
   {
-    unsigned long int elapsed = millis() - previous_millis_cmd;
     if (elapsed >  max_steppers_inactive_time)
     {
         if (blocks_queued() == false) {
@@ -6674,22 +6789,26 @@ void manage_inactivity()
             disable_x();
             disable_y();
             disable_z();
-            disable_e0();
-            disable_e1();
-            disable_e2();
-            disable_e3();
+            disable_e_steppers();
 
 #ifdef ENABLE_LASER_MODE
-            // Zero laser power whether it's active or not
+            // Shut-down laser when motors do if laser is syncronized
             if (Laser::synchronized) {
-              Laser::power = 0;
-            } else if (Laser::max_inactive_time && elapsed > Laser::max_inactive_time) {
               Laser::power = 0;
             }
 #endif
         }
     }
   }
+
+#ifdef ENABLE_LASER_MODE
+  if (!Laser::synchronized && Laser::max_inactive_time)
+  {
+    if (Laser::max_inactive_time && elapsed > Laser::max_inactive_time) {
+      Laser::power = 0;
+    }
+  }
+#endif
 
   if(max_inactive_time)  {
     if( (millis() - previous_millis_cmd) >  max_inactive_time )
