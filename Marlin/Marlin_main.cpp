@@ -881,7 +881,7 @@ void setup_addon (uint8_t id)
 
         maxttemp[0] = installed_head.maxtemp;
         CRITICAL_SECTION_START
-        heater_0_init_maxtemp(installed_head.maxtemp);
+        tp_init_maxtemp(installed_head.maxtemp);
         CRITICAL_SECTION_END
      }
 #endif
@@ -6124,7 +6124,7 @@ void process_commands()
 		// M801 returns the current max temp of extruder0
     {
       int value;
-      uint8_t heater = 1;
+      uint8_t heater = TP_HEATER_0;
       bool notset = true;
 
       if (code_seen('P'))
@@ -6143,7 +6143,7 @@ void process_commands()
 
         minttemp[heater-1] = mintemp;
         CRITICAL_SECTION_START
-        init_mintemp(mintemp, heater);
+        tp_init_mintemp(mintemp, heater);
         CRITICAL_SECTION_END
         notset = false;
       }
@@ -6155,7 +6155,7 @@ void process_commands()
         {
           maxttemp[heater-1] = value;
           CRITICAL_SECTION_START
-          heater_0_init_maxtemp(value, heater);
+          tp_init_maxtemp(value, heater);
           CRITICAL_SECTION_END
         }
         notset = false;

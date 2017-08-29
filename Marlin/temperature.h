@@ -33,8 +33,10 @@ enum tp_features : uint8_t {
   TP_HEATERS=0x0f, TP_HEATER_0=0x01, TP_HEATER_1=0x02, TP_HEATER_2=0x04, TP_HEATER_BED=0x08,
   TP_SENSORS=0xf0, TP_SENSOR_0=0x10, TP_SENSOR_1=0x20, TP_SENSOR_2=0x40, TP_SENSOR_BED=0x80
 };
-enum tp_heaters  : uint8_t { HEATER_BED=0x01, HEATER_0=0x02 };
-enum tp_sensors  : uint8_t { TEMP_0=0x01, TEMP_1=0x02, TEMP_BED=0x02 };
+//enum tp_heaters  : uint8_t { HEATER_BED=0x01, HEATER_0=0x02 };
+//enum tp_sensors  : uint8_t { TEMP_0=0x01, TEMP_1=0x02, TEMP_BED=0x02 };
+
+typedef uint8_t tp_features_map;
 
 // public functions
 void tp_init ();  //initialize the heating
@@ -216,8 +218,8 @@ FORCE_INLINE float MainCurrent() {
 
 //#define MAX_PWM    127
 
-void init_mintemp (int8_t, uint8_t=1);
-void heater_0_init_maxtemp (int16_t, uint8_t=1);
+void tp_init_mintemp (int8_t, tp_features=TP_HEATER_0);
+void tp_init_maxtemp (int16_t, tp_features=TP_HEATER_0);
 int getHeaterPower(int heater);
 
 void tp_enable_heater  (uint8_t=TP_HEATERS);

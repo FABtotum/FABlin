@@ -763,61 +763,134 @@ static void updateTemperaturesFromRawValues()
     CRITICAL_SECTION_END;
 }
 
-void init_mintemp (int8_t value, uint8_t heater)
+// TODO: make this dynamic by actually probing the configured ttable for the selected sensor
+bool ttable_sorting (tp_features sensor)
 {
-LOG_DEBUGPGM("init_mintemp");
-  switch (heater)
-  {
-    // case 0 is for bed
+  // Treat heaters as their numerically matching sensors
+  // e.g.: TP_HEATER_0 (0x01) >> TP_SENSOR_0 (0x10)
+  if (sensor < TP_SENSORS) sensor <<= 4;
 
-#if HEATERS > 0
-    case 1:
-SERIAL_DEBUG(heater);
-SERIAL_DEBUG(value);
-SERIAL_DEBUG(HEATER_0_RAW_LO_TEMP);
-SERIAL_DEBUG(HEATER_0_RAW_HI_TEMP);
-  #if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
-    minttemp_raw[0] = 0;
-  #else
-    minttemp_raw[0] = 1024 *OVERSAMPLENR;
-  #endif
-SERIAL_DEBUG(minttemp_raw[0]);
-      while (analog2temp(minttemp_raw[0], 0) < value) {
-SERIAL_DEBUG(minttemp_raw[0]);
-  #if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
-        minttemp_raw[0] += OVERSAMPLENR;
-  #else
-        minttemp_raw[0] -= OVERSAMPLENR;
-  #endif
-      }
+  switch (sensor)
+  {
+    case TP_SENSOR_BED:
+#if HEATER_BED_RAW_LO_TEMP < HEATER_BED_RAW_HI_TEMP
+      return true;
+#else
+      return false;
+#endif
       break;
+
+    case TP_SENSOR_2:
+#if HEATER_2_RAW_LO_TEMP < HEATER_2_RAW_HI_TEMP
+      return true;
+#else
+      return false;
+#endif
+      break;
+
+    case TP_SENSOR_1:
+#if HEATER_1_RAW_LO_TEMP < HEATER_2_RAW_HI_TEMP
+      return true;
+#else
+      return false;
+#endif
+      break;
+
+    default:
+    case TP_SENSOR_0:
+#if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
+      return true;
+#else
+      return false;
 #endif
   }
 }
 
-void heater_0_init_maxtemp (int16_t value, uint8_t heater)
+/*
+ * Function: tp_init_mintemp
+ *
+ * Set min temp limit for the given heater(s). Only available for head
+ * heaters; not for the bed heater.
+ *
+ * Parameters:
+ *
+ *  value - min temp value in °C to set for the given heater(s). Valid values go from -127 to +127
+ *  heater - the heater for which to set min temp, can be a bitmask of tp_features
+ *
+ */
+void tp_init_mintemp (int8_t value, tp_features heater)
 {
-  switch (heater)
+  for (unsigned int h = 0; h < HEATERS; h++)
   {
-#if HEATERS > 0
-    case 1:
-//  #ifdef HEATER_0_MAXTEMP
-  #if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
-      maxttemp_raw[0] = 1024 *OVERSAMPLENR;
-  #else
-      maxttemp_raw[0] = 0;
-  #endif
-      while(analog2temp(maxttemp_raw[0], 0) > value) {
-  #if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
-        maxttemp_raw[0] -= OVERSAMPLENR;
-  #else
-        maxttemp_raw[0] += OVERSAMPLENR;
-  #endif
+    if ((heater & (1<<h)) == 0) continue;
+
+LOG_DEBUGPGM("tp_init_mintemp");
+    minttemp[h] = value;
+
+SERIAL_DEBUG(heater);
+SERIAL_DEBUG(value);
+SERIAL_DEBUG(HEATER_0_RAW_LO_TEMP);
+SERIAL_DEBUG(HEATER_0_RAW_HI_TEMP);
+    bool direct = ttable_sorting(heater);
+    if (direct) {
+      minttemp_raw[h] = 0;
+    } else {
+      minttemp_raw[h] = 1024 *OVERSAMPLENR;
+    }
+SERIAL_DEBUG(minttemp_raw[h]);
+    while (analog2temp(minttemp_raw[h], h) < value) {
+SERIAL_DEBUG(minttemp_raw[h]);
+      if (direct) {
+        minttemp_raw[h] += OVERSAMPLENR;
+      } else {
+        minttemp_raw[h] -= OVERSAMPLENR;
       }
-      break;
-//  #endif
-#endif
+    }
   }
+}
+
+/*
+ * Function: heater_0_init_maxtemp
+ *
+ * Parameters:
+ *  value - Max temp value (from 0 to 65535)
+ *
+ */
+void tp_init_maxtemp (int16_t value, tp_features heater)
+{
+  for (unsigned int h = 0; h < HEATERS; h++)
+  {
+    if ((heater & (1<<h)) == 0) continue;
+
+    maxttemp[h] = value;
+    bool direct = ttable_sorting(heater);
+
+    if (direct) {
+      maxttemp_raw[0] = 1024 *OVERSAMPLENR;
+    } else {
+      maxttemp_raw[0] = 0;
+    }
+    while(analog2temp(maxttemp_raw[0], 0) > value) {
+      if (direct) {
+        maxttemp_raw[0] -= OVERSAMPLENR;
+      } else {
+        maxttemp_raw[0] += OVERSAMPLENR;
+      }
+    }
+  }
+}
+
+inline void tp_enable_fan ()
+{
+  #if defined(FAN_PIN) && (FAN_PIN > -1)
+    SET_OUTPUT(FAN_PIN);
+    #ifdef FAST_PWM_FAN
+    setPwmFrequency(FAN_PIN, 1); // No prescaling. Pwm frequency = F_CPU/256/8
+    #endif
+    #ifdef FAN_SOFT_PWM
+    soft_pwm_fan = fanSpeedSoftPwm / 2;
+    #endif
+  #endif
 }
 
 void tp_init (uint8_t features)
@@ -850,38 +923,7 @@ void tp_init()
 
   tp_enable_heater(enabled_features & TP_HEATERS);
 
-  #if defined(FAN_PIN) && (FAN_PIN > -1)
-    SET_OUTPUT(FAN_PIN);
-    #ifdef FAST_PWM_FAN
-    setPwmFrequency(FAN_PIN, 1); // No prescaling. Pwm frequency = F_CPU/256/8
-    #endif
-    #ifdef FAN_SOFT_PWM
-    soft_pwm_fan = fanSpeedSoftPwm / 2;
-    #endif
-  #endif
-
-  #ifdef HEATER_0_USES_MAX6675
-    #ifndef SDSUPPORT
-      SET_OUTPUT(MAX_SCK_PIN);
-      WRITE(MAX_SCK_PIN,0);
-
-      SET_OUTPUT(MAX_MOSI_PIN);
-      WRITE(MAX_MOSI_PIN,1);
-
-      SET_INPUT(MAX_MISO_PIN);
-      WRITE(MAX_MISO_PIN,1);
-    #endif
-
-    SET_OUTPUT(MAX6675_SS);
-    WRITE(MAX6675_SS,1);
-  #endif
-
-  // Set analog inputs
-  ADCSRA = 1<<ADEN | 1<<ADSC | 1<<ADIF | 0x07;
-  DIDR0 = 0;
-  #ifdef DIDR2
-    DIDR2 = 0;
-  #endif
+  tp_enable_fan();
 
   tp_enable_sensor(enabled_features & TP_SENSORS);
 
@@ -895,14 +937,7 @@ void tp_init()
   }
 
 #ifdef HEATER_0_MINTEMP
-  minttemp[0] = HEATER_0_MINTEMP;
-  while(analog2temp(minttemp_raw[0], 0) < HEATER_0_MINTEMP) {
-#if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
-    minttemp_raw[0] += OVERSAMPLENR;
-#else
-    minttemp_raw[0] -= OVERSAMPLENR;
-#endif
-  }
+  tp_init_mintemp(HEATER_0_MINTEMP, TP_HEATER_0);
 #endif //MINTEMP
 #ifdef HEATER_0_MAXTEMP
   maxttemp[0] = HEATER_0_MAXTEMP;
@@ -916,14 +951,7 @@ void tp_init()
 #endif //MAXTEMP
 
 #if (HEATERS > 1) && defined(HEATER_1_MINTEMP)
-  minttemp[1] = HEATER_1_MINTEMP;
-  while(analog2temp(minttemp_raw[1], 1) < HEATER_1_MINTEMP) {
-#if HEATER_1_RAW_LO_TEMP < HEATER_1_RAW_HI_TEMP
-    minttemp_raw[1] += OVERSAMPLENR;
-#else
-    minttemp_raw[1] -= OVERSAMPLENR;
-#endif
-  }
+  tp_init_mintemp(HEATER_1_MINTEMP, TP_HEATER_1);
 #endif // MINTEMP 1
 #if (HEATERS > 1) && defined(HEATER_1_MAXTEMP)
   maxttemp[1] = HEATER_1_MAXTEMP;
@@ -937,14 +965,7 @@ void tp_init()
 #endif //MAXTEMP 1
 
 #if (HEATERS > 2) && defined(HEATER_2_MINTEMP)
-  minttemp[2] = HEATER_2_MINTEMP;
-  while(analog2temp(minttemp_raw[2], 2) < HEATER_2_MINTEMP) {
-#if HEATER_2_RAW_LO_TEMP < HEATER_2_RAW_HI_TEMP
-    minttemp_raw[2] += OVERSAMPLENR;
-#else
-    minttemp_raw[2] -= OVERSAMPLENR;
-#endif
-  }
+  tp_init_mintemp(HEATER_2_MINTEMP, TP_HEATER_2);
 #endif //MINTEMP 2
 #if (HEATERS > 2) && defined(HEATER_2_MAXTEMP)
   maxttemp[2] = HEATER_2_MAXTEMP;
@@ -995,8 +1016,6 @@ void setWatch()
 
 void tp_enable_heater (uint8_t heaters)
 {
-  enabled_features |= heaters;
-
   if (heaters & TP_HEATER_0) {
 #if defined(HEATER_0_PIN) && (HEATER_0_PIN > -1)
     SET_OUTPUT(HEATER_0_PIN);
@@ -1035,6 +1054,8 @@ void tp_enable_heater (uint8_t heaters)
     SET_OUTPUT(HEATER_BED_PIN);
 #endif
   }
+
+  enabled_features |= heaters;
 }
 
 void tp_disable_heater (uint8_t heaters)
@@ -1086,8 +1107,6 @@ void disable_heater(uint8_t heaters)
 
 void tp_enable_sensor (uint8_t sensors)
 {
-  enabled_features |= sensors;
-
   if (sensors) {
     // Set analog inputs
     ADCSRA = 1<<ADEN | 1<<ADSC | 1<<ADIF | 0x07;
@@ -1120,6 +1139,8 @@ void tp_enable_sensor (uint8_t sensors)
   SET_ANALOG(TEMP_BED_PIN);
 #endif
   }
+
+  enabled_features |= sensors;
 }
 
 void tp_disable_sensor (uint8_t sensors)
@@ -1166,7 +1187,6 @@ void tp_disable_sensor (uint8_t sensors)
 #endif
   }
 }
-
 
 void max_temp_error(uint8_t e) {
   disable_heater();
