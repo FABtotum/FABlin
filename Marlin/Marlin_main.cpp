@@ -386,7 +386,7 @@ float extruder_offset[NUM_EXTRUDER_OFFSETS][EXTRUDERS] = {
 #endif
 uint8_t active_tool = 0;     // Active logical tool
 uint8_t active_extruder = 0; // Active actual extruder
-bool head_is_dummy = false;  // Head reaquires TWI silencing
+//bool head_is_dummy = false;  // Head reaquires TWI silencing
 int8_t tool_extruder_mapping[TOOLS_MAGAZINE_SIZE]/* = { 0, 1, 2, ... }*/;  // Tool to drive mapping
 int8_t extruder_heater_mapping[EXTRUDERS];     // Extruder to heater mapping
 int8_t tool_heater_mapping[TOOLS_MAGAZINE_SIZE]/*   = { 0, -1, 0, ... }*/;  // Tool to heater mapping
@@ -6023,7 +6023,7 @@ void process_commands()
     */
    case 790:
    {
-       if (head_is_dummy) {
+       if (tools.magazine[active_tool].serial == TOOL_SERIAL_NONE) {
          SERIAL_ERROR_START;
           SERIAL_ERRORLNPGM("Smart head communication disabled by active tool definition");
           break;
@@ -7170,15 +7170,20 @@ void manage_amb_color_fading()
 
 void Read_Head_Info(bool force)
 {
+#if defined(SMART_COMM)
   // Dummy heads can't be read...
-  if (head_is_dummy)
+  if (tools.magazine[active_tool].serial == TOOL_SERIAL_NONE)
   {
     // ...unless you force it
     if (force) {
-#if defined(SMART_COMM)
       // It's understood that SmartHead has been configured beforehand
       SmartHead.begin();
 #else
+  // Dummy heads can't be read...
+  if (tools.magazine[active_tool].serial != TOOL_SERIAL_TWI)
+  {
+    // ...unless you force it
+    if (force) {
       Wire.begin();
 #endif
     } else {

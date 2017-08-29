@@ -92,19 +92,25 @@ uint8_t tools_s::change (uint8_t tool)
    }
    extruder_heater_mapping[tool_extruder_mapping[tool]] = tool_heater_mapping[tool];
 
+   // Bed must be initialized separately because Marlin
+   if (magazine[tool].heaters & TP_HEATER_BED) {
+      tp_enable_sensor(TP_SENSOR_BED);
+      tp_enable_heater(TP_HEATER_BED);
+   }
+
    // Set globals
-   head_is_dummy = !tool_twi_support[tool];
+   //head_is_dummy = !tool_twi_support[tool];
    active_extruder = tool_extruder_mapping[tool];
 
    // Copy, so we can customize the installed tool without changing tools in the magazine
-   memcpy(installed_head, &(magazine[tool]), sizeof magazine[tool]);
+   memcpy(&installed_head, &(magazine[tool]), sizeof magazine[tool]);
 
 #ifdef SMART_COMM
    if (installed_head_id <= FAB_HEADS_laser_ID)
    {
 #endif
       // For legacy heads we do not rely on SmartComm module
-      if (head_is_dummy) {
+      if (!tool_twi_support[tool]) {
          TWCR = 0;
       } else {
          Wire.begin();
@@ -113,7 +119,7 @@ uint8_t tools_s::change (uint8_t tool)
    }
    else
    {
-      if (head_is_dummy) {
+      if (!tool_twi_support[tool]) {
          SmartHead.end();
       } else {
          SmartHead.begin();

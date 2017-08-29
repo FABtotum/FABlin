@@ -364,7 +364,6 @@ extern unsigned long stoptime;
 
 extern unsigned int ERROR_CODE;
 
-extern bool head_is_dummy;
 extern bool head_placed;
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
@@ -399,7 +398,7 @@ extern uint8_t active_extruder;
 extern int8_t extruder_heater_mapping[EXTRUDERS];
 
 void StopTool();
-extern bool head_is_dummy;
+//extern bool head_is_dummy;
 extern int8_t tool_extruder_mapping[TOOLS_MAGAZINE_SIZE];
 extern int8_t tool_heater_mapping[TOOLS_MAGAZINE_SIZE];
 extern bool    tool_twi_support[TOOLS_MAGAZINE_SIZE];
