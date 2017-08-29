@@ -1155,25 +1155,28 @@ void setup()
   // loads data from EEPROM if available else uses defaults (and resets step acceleration rate)
   Config_RetrieveSettings();
 
-  if (installed_head_id >= 1 && installed_head_id <= 3) {
-    tp_init();    // Initialize temperature loop
-    servo_init();
-  }
-
+  // Initialize temperature loop
+#if (MOTHERBOARD == 25)
+  if (installed_head_id >= 1 && installed_head_id < 3)
+#endif
+  tp_init();
   plan_init();  // Initialize planner;
   watchdog_init();
   st_init();    // Initialize stepper, this enables interrupts!
-
   setup_photpin();
+#if (MOTHERBOARD == 25)
+  if (installed_head_id >= 1 && installed_head_id <= 3)
+#endif
+  servo_init();
 
+#if (MOTHERBOARD == 25)
   FabtotumIO_init();
   FabtotumHeads_init();
-
-  #if MOTHERBOARD != 25
+#else
   // no lcd on totumduino
   lcd_init();
   _delay_ms(1000);	// wait 1sec to display the splash screen
-  #endif
+#endif
 
   #if defined(CONTROLLERFAN_PIN) && CONTROLLERFAN_PIN > -1
     SET_OUTPUT(CONTROLLERFAN_PIN); //Set pin used for driver cooling fan
