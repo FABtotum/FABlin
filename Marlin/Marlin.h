@@ -424,7 +424,7 @@ extern unsigned int hotplate_board_version;
 extern unsigned int general_assembly_version;
 extern unsigned int installed_head_id;
 
-extern tool_t* installed_head;
+extern tool_t installed_head;
 
 #ifdef SMART_COMM
 

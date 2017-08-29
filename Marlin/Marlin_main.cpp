@@ -455,7 +455,7 @@ unsigned int installed_head_id=0;
 
 bool head_placed = false;
 
-tool_t* installed_head;
+tool_t installed_head;
 
 //===========================================================================
 //=============================Private Variables=============================
@@ -869,19 +869,19 @@ void setup_addon (uint8_t id)
     tools.load(active_tool, id);
 
     // Forcefully reset mode...
-    working_mode_change(installed_head->mode, true);
+    working_mode_change(installed_head.mode, true);
 
    // Update heaters max temp
 #if (EXTRUDERS > 0)
-    if (installed_head->maxtemp > installed_head->mintemp)
+    if (installed_head.maxtemp > installed_head.mintemp)
     {
       // Activate custom thermistor table
       // Important: do this before changing max temp cause we need correct raw values
-      ThermistorHotswap::setTable(installed_head->thtable);
+      ThermistorHotswap::setTable(installed_head.thtable);
 
-        maxttemp[0] = installed_head->maxtemp;
+        maxttemp[0] = installed_head.maxtemp;
         CRITICAL_SECTION_START
-        heater_0_init_maxtemp(installed_head->maxtemp);
+        heater_0_init_maxtemp(installed_head.maxtemp);
         CRITICAL_SECTION_END
      }
 #endif
@@ -890,8 +890,8 @@ void setup_addon (uint8_t id)
     tools.change(active_tool);
 
     // Set hardcoded head modification codes to be run
-    if (installed_head->mods) {
-      set_mods(installed_head->mods);
+    if (installed_head.mods) {
+      set_mods(installed_head.mods);
     }
   }
 
@@ -7192,7 +7192,7 @@ void Read_Head_Info(bool force)
     }
   }
 
-  if (installed_head->serial == TOOL_SERIAL_TWI)
+  if (installed_head.serial == TOOL_SERIAL_TWI)
   {
     SERIAL_HEAD_0=I2C_read(SERIAL_N_FAM_DEV_CODE);
     SERIAL_HEAD_1=I2C_read(SERIAL_N_0);
