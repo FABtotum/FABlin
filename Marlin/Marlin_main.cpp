@@ -953,16 +953,25 @@ void StopTool ()
 {
   head_placed = false;
 
-   #if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
-      // Shut down +24V line if FABtotum DirectDrive head is present
-      //if (installed_head_id==FAB_HEADS_direct_ID) {
-         MILL_MOTOR_OFF();
-      //}
-   #endif
+  // High power outputs...
 
-   fanSpeed = 0;
+  tp_disable_heater(TP_HEATER_0);
+  WRITE(HEATER_0_PIN,0);
 
-   TWCR &= ~MASK(TWEN);
+  // This is quite special to the fabtotum so we conditionally compile it
+#if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
+  MILL_MOTOR_OFF();
+  WRITE(SERVO0_PIN,0);
+#endif
+
+  // Low power outputs...
+
+  fanSpeed = 0;
+  WRITE(FAN_PIN, 0);
+
+#if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
+  TWCR &= ~MASK(TWEN);
+#endif
 }
 
 void FabtotumIO_init()
