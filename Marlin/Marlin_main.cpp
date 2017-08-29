@@ -868,6 +868,9 @@ void setup_addon (uint8_t id)
     //installed_head = &(tools.factory[id]);
     tools.load(active_tool, id);
 
+    // Reselect active tool to make any tool configuration modification effective
+    tools.change(active_tool);
+
     // Forcefully reset mode...
     working_mode_change(installed_head.mode, true);
 
@@ -885,9 +888,6 @@ void setup_addon (uint8_t id)
         CRITICAL_SECTION_END
      }
 #endif
-
-    // Reselect active tool to make any tool configuration modification effective
-    tools.change(active_tool);
 
     // Set hardcoded head modification codes to be run
     if (installed_head.mods) {
@@ -4442,35 +4442,45 @@ void process_commands()
         target_tool = code_value_long();
       }
 
-       // Assign drive
-      int8_t drive;
-      if (code_seen('D')) {
+      // Assign drive
+      uint8_t drive = installed_head.extruders;
+      if (code_seen('D'))
+      {
         codes_seen = true;
-        drive = code_value_long();
-      } else  {
-        drive = -1;
+        do {
+          int8_t ext = code_value_long();
+          if (ext >= 0) drive |= 1 << ext;
+        } while (next_value);
       }
 
-        // Assign heater
-      int8_t heater;
-      if (code_seen('H')) {
+      // Assign heater
+      tp_features heaters = installed_head.heaters;
+      if (code_seen('H'))
+      {
         codes_seen = true;
-        heater = code_value_long();
-      } else  {
-        heater = -1;
+        // Can read a string of values separated by ':'
+        do {
+          switch (code_value_long())
+          {
+            case 0: heaters |= TP_HEATER_BED; break;
+            case 1: heaters |= TP_HEATER_0; break;
+            case 2: heaters |= TP_HEATER_1; break;
+            case 3: heaters |= TP_HEATER_2; break;
+          }
+        } while (next_value);
       }
 
-      bool twi;
+      bool twi = installed_head.serial;
       if (code_seen('S')) {
         codes_seen = true;
-        twi = code_value_long()==1 ? true : false;
+        twi = code_value_long() != 0 ? true : false;
       } else {
         twi = false;
       }
 
       if (codes_seen)
       {
-        tools.define(target_tool, drive, heater, twi);
+        tools.define(target_tool, drive, heaters, twi, true);
 
         // Reselect active tool to reload definition
         tools.change(active_tool);
@@ -4482,19 +4492,15 @@ void process_commands()
         // Output tool definitions
         for (target_tool = 0; target_tool < TOOLS_MAGAZINE_SIZE; target_tool++)
         {
-          SERIAL_ECHOPAIR("T", (unsigned long)target_tool);
+          SERIAL_ECHOPAIR("P", (unsigned long)target_tool);
           int8_t extruder = tool_extruder_mapping[target_tool];
-          if (extruder >= 0) {
-             SERIAL_ECHOPAIR(": Drive=", (unsigned long)(tool_extruder_mapping[target_tool]));
-             SERIAL_ECHOPAIR(" Heater=", (unsigned long)(EtoH(tool_extruder_mapping[target_tool])+1));
-          } else {
-             SERIAL_ECHOPGM(" Drive/Heater=undef.");
-          }
-          if (tool_twi_support[target_tool]) {
-            SERIAL_ECHOLNPGM(" Serial=on");
-          } else {
-            SERIAL_ECHOLNPGM(" Serial=off");
-          }
+          SERIAL_ECHOPGM(" D<");
+          SERIAL_PROTOCOL_F((unsigned long)(tools.magazine[target_tool].extruders), BIN);
+          SERIAL_ECHOPGM("> H<");
+          SERIAL_PROTOCOL_F((unsigned long)(tools.magazine[target_tool].heaters), BIN);
+
+          SERIAL_ECHOPAIR_P(PSTR("> S"),(unsigned long)(tools.magazine[target_tool].serial));
+          SERIAL_PROTOCOLLNPGM("");
         }
       }
     }
@@ -4505,12 +4511,12 @@ void process_commands()
    *
    * Restrict axes movements to the set limits
    *
-   * Descirption:
+   * Description:
    *  This command let you set max coordinates for axes
    * (the minimum is always 0) and optionally restrict movements inside
    *  those limits.
    *
-   * Paramaters:
+   * Parameters:
    *  X<max_x> - Set X max coordinate
    *  Y<max_y> - Set Y max coordinate
    *  Z<max_z> - Set Z max coordinate
@@ -7451,11 +7457,11 @@ void setPwmFrequency(uint8_t pin, int val)
 bool setTargetedHotend(int code){
   tmp_extruder = active_extruder;
   if(code_seen('T')) {
-    tmp_extruder = code_value();
-}
+    tmp_extruder = tool_extruder_mapping[code_value_long()];
+  }
     tmp_extruder = extruder_heater_mapping[tmp_extruder];
     if(tmp_extruder >= HEATERS) {
-      SERIAL_ECHO_START;
+      SERIAL_ERROR_START;
       switch(code){
         case 104:
           SERIAL_ECHO(MSG_M104_INVALID_EXTRUDER);

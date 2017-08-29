@@ -72,16 +72,16 @@ uint8_t tools_s::change (uint8_t tool)
       }
    }
 
-   // Load last selected heater into map
-   // Starting from higher ordered heaters to lower ordered
+   // Load last selected heater into map, starting from higher ordered
+   // heaters to lower ordered.
    // While we're at it, we enable and disable the heaters and temp sensors
    tool_heater_mapping[tool] = -1;
    for (int8_t h = HEATERS-1; h >= 0; h--)
    {
       if (magazine[tool].heaters & (1 << h))
       {
-         tp_enable_heater(h);
          tp_enable_sensor(h << 4);  // MAGIC
+         tp_enable_heater(h);
          tool_heater_mapping[tool] = h;
       }
       else
