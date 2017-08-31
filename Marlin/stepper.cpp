@@ -540,7 +540,7 @@ ISR(TIMER1_COMPA_vect)
           #endif
         }
       }
-      
+
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
       if( ExternalProbe::isEnabled() )
       {
@@ -553,7 +553,7 @@ ISR(TIMER1_COMPA_vect)
           old_external_z_endstop = external_endstop;
       }
       #endif // defined(EXTERNAL_ENDSTOP_Z_PROBING)
-      
+
     }
     else { // +direction
       CHECK_ENDSTOPS
@@ -575,7 +575,7 @@ ISR(TIMER1_COMPA_vect)
           #endif
         }
       }
-      
+
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
       if( ExternalProbe::isEnabled() )
       {
@@ -607,7 +607,7 @@ ISR(TIMER1_COMPA_vect)
           old_y_min_endstop = y_min_endstop;
         #endif
       }
-      
+
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
       if( ExternalProbe::isEnabled() )
       {
@@ -620,7 +620,7 @@ ISR(TIMER1_COMPA_vect)
           old_external_z_endstop = external_endstop;
       }
       #endif // defined(EXTERNAL_ENDSTOP_Z_PROBING)
-      
+
     }
     else { // +direction
       CHECK_ENDSTOPS
@@ -635,7 +635,7 @@ ISR(TIMER1_COMPA_vect)
           old_y_max_endstop = y_max_endstop;
         #endif
       }
-      
+
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
       if( ExternalProbe::isEnabled() )
       {
@@ -1215,10 +1215,7 @@ void finishAndDisableSteppers()
   disable_x();
   disable_y();
   disable_z();
-  disable_e0();
-  disable_e1();
-  disable_e2();
-  disable_e3();
+  st_disable_e();
 }
 
 void quickStop()

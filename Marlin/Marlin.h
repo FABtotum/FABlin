@@ -69,6 +69,11 @@
   #include <SmartComm.h>
 #endif
 
+#ifndef CRITICAL_SECTION_START
+  #define CRITICAL_SECTION_START  unsigned char _sreg = SREG; cli();
+  #define CRITICAL_SECTION_END    SREG = _sreg;
+#endif //CRITICAL_SECTION_START
+
 enum tp_report_t:uint8_t { TP_REPORT_NONE=0, TP_REPORT_AUTO=1, TP_REPORT_FULL=2 };
 
 #define SERIAL_PROTOCOL(x) (MYSERIAL.print(x))
@@ -309,11 +314,6 @@ void setPwmFrequency(uint8_t pin, int val);
 
 void print_heaterstates (tp_report_t format=TP_REPORT_FULL);
 
-#ifndef CRITICAL_SECTION_START
-  #define CRITICAL_SECTION_START  unsigned char _sreg = SREG; cli();
-  #define CRITICAL_SECTION_END    SREG = _sreg;
-#endif //CRITICAL_SECTION_START
-
 extern bool min_software_endstops;
 extern bool max_software_endstops;
 
@@ -532,6 +532,14 @@ extern uint8_t working_mode;
 #define ERROR_EXTRUDE_MINTEMP   123
 #define ERROR_LONG_EXTRUSION   124
 #define ERROR_HEAD_ABSENT    125
+
+#define ERROR_INVALID_EXTRUDER 252
+#if (EXTRUDERS > 1)
+  #define ERROR_INVALID_EXTRUDER_1 (ERROR_INVALID_EXTRUDER | 1)
+#endif
+#if (EXTRUDERS > 2)
+  #define ERROR_INVALID_EXTRUDER_2 (ERROR_INVALID_EXTRUDER | 2)
+#endif
 
 //POWER SHUTDOWN REQUEST:
 #define ERROR_PWR_OFF    999

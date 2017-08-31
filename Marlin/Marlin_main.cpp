@@ -3585,11 +3585,9 @@ void process_commands()
 
       case 81: // M81 - Turn off Power Supply
         disable_heater();
-        st_synchronize();
-        disable_e0();
-        disable_e1();
-        disable_e2();
-        disable_e3();
+        // Redundant: already done inside finishAndDisableSteppers
+        //st_synchronize();
+        //disable_e_steppers();
         finishAndDisableSteppers();
         fanSpeed = 0;
         delay(1000); // Wait a little before to switch off
@@ -3623,8 +3621,8 @@ void process_commands()
         bool all_axis = !((code_seen(axis_codes[X_AXIS])) || (code_seen(axis_codes[Y_AXIS])) || (code_seen(axis_codes[Z_AXIS]))|| (code_seen(axis_codes[E_AXIS])));
         if(all_axis)
         {
-          st_synchronize();
-          disable_e_steppers();
+          //st_synchronize();
+          //disable_e_steppers();
           finishAndDisableSteppers();
         }
         else
@@ -3635,7 +3633,7 @@ void process_commands()
           if(code_seen('Z')) disable_z();
           #if ((E0_ENABLE_PIN != X_ENABLE_PIN) && (E1_ENABLE_PIN != Y_ENABLE_PIN)) // Only enable on boards that have seperate ENABLE_PINS
             if(code_seen('E')) {
-              disable_e_steppers();
+              st_disable_e();
             }
           #endif
         }
@@ -4702,10 +4700,7 @@ void process_commands()
         //finish moves
         st_synchronize();
         //disable extruder steppers so filament can be removed
-        disable_e0();
-        disable_e1();
-        disable_e2();
-        disable_e3();
+        st_disable_e();
         delay(100);
         LCD_ALERTMESSAGEPGM(MSG_FILAMENTCHANGE);
         uint8_t cnt=0;
@@ -5157,10 +5152,7 @@ void process_commands()
       disable_x();
       disable_y();
       disable_z();
-      disable_e0();
-      disable_e1();
-      disable_e2();
-      disable_e3();
+      st_disable_e();
 
       //outro tune
       if (!silent){
@@ -6837,7 +6829,7 @@ void manage_inactivity()
             disable_x();
             disable_y();
             disable_z();
-            disable_e_steppers();
+            st_disable_e();
 
 #ifdef ENABLE_LASER_MODE
             // Shut-down laser when motors do if laser is syncronized
@@ -6868,10 +6860,7 @@ void manage_inactivity()
           disable_x();
           disable_y();
           disable_z();
-          disable_e0();
-          disable_e1();
-          disable_e2();
-          disable_e3();
+          st_disable_e();
 
           // disable heating & motors
           disable_heater();
@@ -7291,10 +7280,7 @@ void kill_by_door()
   disable_x();
   disable_y();
   disable_z();
-  disable_e0();
-  disable_e1();
-  disable_e2();
-  disable_e3();
+  st_disable_e();
 
   set_amb_color(MAX_PWM,0,0);
 
@@ -7343,10 +7329,7 @@ void kill()
   disable_x();
   disable_y();
   disable_z();
-  disable_e0();
-  disable_e1();
-  disable_e2();
-  disable_e3();
+  st_disable_e();
 
   set_amb_color(MAX_PWM,0,0);
 

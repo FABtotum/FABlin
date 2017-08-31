@@ -120,6 +120,18 @@ void endstops_hit_on_purpose(); //avoid creation of the message, i.e. after homi
 void enable_endstops(bool check); // Enable/disable endstop checking
 
 void checkStepperErrors(); //Print errors detected by the stepper
+FORCE_INLINE void st_disable_e()
+{
+  disable_e0();
+  disable_e1();
+  // FABtotum shares pins between feeder #2 and servo #0, so the following disable must be made conditional
+#if (MOTHERBOARD==25)
+  if (active_extruder == 2) disable_e2();
+#else
+  disable_e2();
+#endif
+  disable_e3();
+}
 
 void finishAndDisableSteppers();
 
