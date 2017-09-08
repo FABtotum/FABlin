@@ -4459,6 +4459,7 @@ void process_commands()
       if (code_seen('D'))
       {
         codes_seen = true;
+        drive = 0;
         do {
           int8_t ext = code_value_long();
           if (ext >= 0) drive |= 1 << ext;
@@ -4470,6 +4471,7 @@ void process_commands()
       if (code_seen('H'))
       {
         codes_seen = true;
+        heaters = 0;
         // Can read a string of values separated by ':'
         do {
           switch (code_value_long())
