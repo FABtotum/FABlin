@@ -1016,6 +1016,9 @@ void setWatch()
 
 void tp_enable_heater (uint8_t heaters)
 {
+  // Sensors must also be enabled, otherwise we are screwed
+  tp_enable_sensor(heaters << 4);
+
   if (heaters & TP_HEATER_0) {
 #if defined(HEATER_0_PIN) && (HEATER_0_PIN > -1)
     SET_OUTPUT(HEATER_0_PIN);
@@ -1145,7 +1148,8 @@ void tp_enable_sensor (uint8_t sensors)
 
 void tp_disable_sensor (uint8_t sensors)
 {
-  enabled_features &= ~sensors;
+  // When sensors are disabled heaters cannot work as well
+  tp_disable_heater(sensors >> 4);
 
   if (enabled_features & TP_SENSOR_0) {
 #if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)
@@ -1186,6 +1190,8 @@ void tp_disable_sensor (uint8_t sensors)
   #endif
 #endif
   }
+
+  enabled_features &= ~sensors;
 }
 
 void max_temp_error(uint8_t e) {

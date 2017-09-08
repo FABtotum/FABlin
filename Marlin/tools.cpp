@@ -16,6 +16,8 @@
 #include "tools.h"
 #include "temperature.h"
 
+int8_t tool_heater_mapping[TOOLS_MAGAZINE_SIZE]/*   = { 0, -1, 0, ... }*/;  // Tool to heater mapping
+
 /**
  * tools.load
  *
@@ -86,8 +88,8 @@ uint8_t tools_s::change (uint8_t tool)
       }
       else
       {
+         tp_disable_heater(h);
          tp_disable_sensor(h << 4);  // MAGIC
-         //tp_disable_heater(h);
       }
    }
    extruder_heater_mapping[tool_extruder_mapping[tool]] = tool_heater_mapping[tool];

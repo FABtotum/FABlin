@@ -400,7 +400,6 @@ extern int8_t extruder_heater_mapping[EXTRUDERS];
 void StopTool();
 //extern bool head_is_dummy;
 extern int8_t tool_extruder_mapping[TOOLS_MAGAZINE_SIZE];
-extern int8_t tool_heater_mapping[TOOLS_MAGAZINE_SIZE];
 extern bool    tool_twi_support[TOOLS_MAGAZINE_SIZE];
 
 #ifdef DIGIPOT_I2C

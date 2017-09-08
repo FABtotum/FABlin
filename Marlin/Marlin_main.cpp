@@ -389,7 +389,6 @@ uint8_t active_extruder = 0; // Active actual extruder
 //bool head_is_dummy = false;  // Head reaquires TWI silencing
 int8_t tool_extruder_mapping[TOOLS_MAGAZINE_SIZE]/* = { 0, 1, 2, ... }*/;  // Tool to drive mapping
 int8_t extruder_heater_mapping[EXTRUDERS];     // Extruder to heater mapping
-int8_t tool_heater_mapping[TOOLS_MAGAZINE_SIZE]/*   = { 0, -1, 0, ... }*/;  // Tool to heater mapping
 bool    tool_twi_support[TOOLS_MAGAZINE_SIZE]/*      = { true, false, false, ... }*/;  // Tool TWI support
 int fanSpeed=0;
 
@@ -1093,13 +1092,13 @@ FORCE_INLINE void init ()
     tool_extruder_mapping[i] = i;
   }
 
-  // tool_heater_mapping <- {0, -1, 0, -1}
+/*  // tool_heater_mapping <- {0, -1, 0, -1}
 #if EXTRUDERS > 1
   tool_heater_mapping[1] = -1;
 #endif
 #if EXTRUDERS > 3
   tool_heater_mapping[3] = -1;
-#endif
+#endif*/
 
   // tool_twi_support <- {true, false, ...}
   tool_twi_support[0] = true;

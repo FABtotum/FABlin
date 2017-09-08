@@ -38,4 +38,6 @@ extern struct tools_s
 
 } tools;
 
+extern int8_t tool_heater_mapping[TOOLS_MAGAZINE_SIZE];
+
 #endif
