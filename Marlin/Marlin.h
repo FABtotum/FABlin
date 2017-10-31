@@ -394,7 +394,7 @@ extern uint8_t extruder_0_thermistor_input_index;
 
 // Handling multiple extruders pins
 extern uint8_t active_tool;     // Active logical tool
-extern uint8_t active_extruder;
+extern int8_t active_extruder;
 extern int8_t extruder_heater_mapping[EXTRUDERS];
 
 void StopTool();

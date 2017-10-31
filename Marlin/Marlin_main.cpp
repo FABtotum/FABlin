@@ -385,7 +385,7 @@ float extruder_offset[NUM_EXTRUDER_OFFSETS][EXTRUDERS] = {
 };
 #endif
 uint8_t active_tool = 0;     // Active logical tool
-uint8_t active_extruder = 0; // Active actual extruder
+int8_t active_extruder = 0;  // Active actual extruder
 //bool head_is_dummy = false;  // Head reaquires TWI silencing
 int8_t tool_extruder_mapping[TOOLS_MAGAZINE_SIZE]/* = { 0, 1, 2, ... }*/;  // Tool to drive mapping
 int8_t extruder_heater_mapping[EXTRUDERS];     // Extruder to heater mapping
@@ -501,7 +501,7 @@ static unsigned long next_temp_report_ms;
 unsigned long starttime=0;
 unsigned long stoptime=0;
 
-static uint8_t tmp_extruder;
+static int8_t tmp_extruder;
 
 #if NUM_SERVOS > 0
   Servo servos[NUM_SERVOS];
@@ -6405,7 +6405,7 @@ void process_commands()
       SERIAL_ECHOPGM(" ");
       SERIAL_ECHOLN(MSG_INVALID_EXTRUDER);
     }
-    else {
+    else if (tmp_extruder >= 0) {
       boolean make_move = false;
       if(code_seen('F')) {
         make_move = true;
@@ -6495,10 +6495,10 @@ void process_commands()
         }
       }
       #endif
-      SERIAL_ECHO_START;
-      SERIAL_ECHO(MSG_ACTIVE_EXTRUDER);
-      SERIAL_PROTOCOLLN((int)active_extruder);
     }
+    SERIAL_ECHO_START;
+    SERIAL_ECHO(MSG_ACTIVE_EXTRUDER);
+    SERIAL_PROTOCOLLN((int)active_extruder);
   }
 
   else
