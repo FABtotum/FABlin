@@ -941,8 +941,12 @@ void FabtotumHeads_init ()
    tools.factory[FAB_HEADS_direct_ID].mode = WORKING_MODE_FFF;
    tools.factory[FAB_HEADS_direct_ID].extruders = 1 << 2;
    tools.factory[FAB_HEADS_direct_ID].heaters = TP_HEATER_0 | TP_HEATER_BED;
-   tools.factory[FAB_HEADS_direct_ID].mods = "M563 P2 D0\nM720\n";
+   tools.factory[FAB_HEADS_direct_ID].mods = "M720\n";
 
+  tools.factory[FAB_HEADS_digitizer_ID].mode = WORKING_MODE_SCAN;
+  tools.factory[FAB_HEADS_digitizer_ID].extruders = 0;
+  tools.factory[FAB_HEADS_digitizer_ID].heaters = 0;
+  tools.factory[FAB_HEADS_digitizer_ID].mintemp  = -1;
 }
 
 /*
