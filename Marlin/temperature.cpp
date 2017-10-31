@@ -333,7 +333,7 @@ bool PID_autotune(float temp, int extruder, int ncycles)
       return false;
     }
     if(millis() - temp_millis > 2000) {
-      int p;
+      //int p;
       print_heaterstates(TP_REPORT_AUTO);
 
       temp_millis = millis();
@@ -1063,49 +1063,56 @@ void tp_enable_heater (uint8_t heaters)
 
 void tp_disable_heater (uint8_t heaters)
 {
-  enabled_features &= ~heaters;
   disable_heater(heaters);
+  enabled_features &= ~heaters;
 }
 
 // DEPRECATED
 void disable_heater(uint8_t heaters)
 {
-  for(int i=0;i<HEATERS;i++)
+  /*for(int i=0;i<HEATERS;i++)
     setTargetHotend(0,i);
-  setTargetBed(0);
-  #if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
-  target_temperature[0]=0;
-  soft_pwm[0]=0;
-   #if defined(HEATER_0_PIN) && HEATER_0_PIN > -1
-     WRITE(HEATER_0_PIN,LOW);
-   #endif
-  #endif
+  setTargetBed(0);*/
 
-  #if defined(TEMP_1_PIN) && TEMP_1_PIN > -1
-    #if (HEATERS > 1)
-      target_temperature[1]=0;
-      soft_pwm[1]=0;
-    #endif
-    #if defined(HEATER_1_PIN) && HEATER_1_PIN > -1
-      WRITE(HEATER_1_PIN,LOW);
-    #endif
+#if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
+  if (heaters & TP_HEATER_0) {
+    target_temperature[0]=0;
+    soft_pwm[0]=0;
+  #if defined(HEATER_0_PIN) && HEATER_0_PIN > -1
+    WRITE(HEATER_0_PIN,LOW);
   #endif
+  }
+#endif
 
-  #if defined(TEMP_2_PIN) && TEMP_2_PIN > -1
+#if defined(TEMP_1_PIN) && TEMP_1_PIN > -1
+  if (heaters & TP_HEATER_1) {
+    target_temperature[1]=0;
+    soft_pwm[1]=0;
+  #if defined(HEATER_1_PIN) && HEATER_1_PIN > -1
+    WRITE(HEATER_1_PIN,LOW);
+  #endif
+  }
+#endif
+
+#if defined(TEMP_2_PIN) && TEMP_2_PIN > -1
+  if (heaters & TP_HEATER_2) {
     target_temperature[2]=0;
     soft_pwm[2]=0;
-    #if defined(HEATER_2_PIN) && HEATER_2_PIN > -1
-      WRITE(HEATER_2_PIN,LOW);
-    #endif
+  #if defined(HEATER_2_PIN) && HEATER_2_PIN > -1
+    WRITE(HEATER_2_PIN,LOW);
   #endif
+  }
+#endif
 
-  #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
+#if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
+  if (heaters & TP_HEATER_BED) {
     target_temperature_bed=0;
     soft_pwm_bed=0;
-    #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
-      WRITE(HEATER_BED_PIN,LOW);
-    #endif
+  #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
+    WRITE(HEATER_BED_PIN,LOW);
   #endif
+  }
+#endif
 }
 
 void tp_enable_sensor (uint8_t sensors)
@@ -1151,7 +1158,7 @@ void tp_disable_sensor (uint8_t sensors)
   // When sensors are disabled heaters cannot work as well
   tp_disable_heater(sensors >> 4);
 
-  if (enabled_features & TP_SENSOR_0) {
+  if (sensors & TP_SENSOR_0) {
 #if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)
   #if TEMP_0_PIN < 8
     DIDR0 &= ~(1 << TEMP_0_PIN);
@@ -1161,7 +1168,7 @@ void tp_disable_sensor (uint8_t sensors)
 #endif
   }
 
-  if (enabled_features & TP_SENSOR_1) {
+  if (sensors & TP_SENSOR_1) {
 #if defined(TEMP_1_PIN) && (TEMP_1_PIN > -1)
   #if TEMP_1_PIN < 8
     DIDR0 &= ~(1<<TEMP_1_PIN);
@@ -1171,7 +1178,7 @@ void tp_disable_sensor (uint8_t sensors)
 #endif
   }
 
-  if (enabled_features & TP_SENSOR_2) {
+  if (sensors & TP_SENSOR_2) {
 #if defined(TEMP_2_PIN) && (TEMP_2_PIN > -1)
   #if TEMP_2_PIN < 8
     DIDR0 &= ~(1 << TEMP_2_PIN);
@@ -1181,7 +1188,7 @@ void tp_disable_sensor (uint8_t sensors)
 #endif
   }
 
-  if (enabled_features & TP_SENSOR_BED) {
+  if (sensors & TP_SENSOR_BED) {
 #if defined(TEMP_BED_PIN) && (TEMP_BED_PIN > -1)
   #if TEMP_BED_PIN < 8
     DIDR0 &= ~(1<<TEMP_BED_PIN);
