@@ -9,15 +9,16 @@ namespace Laser
 	bool    synchronized = false;
 	unsigned long max_inactive_time = 0;
 
-	bool isEnabled ()
+	/*bool isEnabled ()
 	{
 	  // Test power for Laser head
-	  if (installed_head_id == FAB_HEADS_laser_ID) {
+	  //if (installed_head_id == FAB_HEADS_laser_ID
+	  //|| installed_head_id == FAB_HEADS_laser_pro_ID) {
 		 enabled = READ(HEATER_0_PIN);
-	  }
+	  //}
 
 	  return enabled;
-	}
+	}*/
 
 	void enable ()
 	{
