@@ -73,6 +73,7 @@ bool setSource(uint8_t id)
 			external_zprobe_inverting = true;
 			break;
 		case 2:
+			TWCR &= ~(1 << TWEN);
 			SET_INPUT(I2C_SCL);
 			external_zprobe_inverting = false;
 			break;

@@ -764,7 +764,7 @@ void servo_init()
   #endif
 }
 
-inline void servo_attach (uint8_t idx, uint8_t pin)
+void servo_attach (uint8_t idx, uint8_t pin)
 {
   servos[idx].attach(pin);
 }
