@@ -22,26 +22,34 @@ namespace Laser
 
 	void enable ()
 	{
-	  // Laser tools use servo 0 pwm, in the future this may be configurable
-	  SERVO1_ON();
+	  // Laser tools use servo 0 lines, in the future this may be configurable
+	  // This should be more or less shared code, apart from the ugly servo pin names
 	  ::servo_detach(0);
+	  SERVO1_OFF();
+	  SET_OUTPUT(SERVO0_PIN);
+	  SET_OUTPUT(NOT_SERVO1_ON_PIN);
 
-	  // Enable supplementary +24v power for fabtotum laser head
-	  if (installed_head_id == FAB_HEADS_laser_ID) {
+#if MOTHERBOARD == 25  // FABtotum's TOTUMduino
+		// Proprietary laser extensions (and quirks)
+	  if (installed_head_id == FAB_HEADS_laser_ID || installed_head_id == FAB_HEADS_laser_pro_ID) {
 		 tp_disable_heater();
+		 SET_OUTPUT(HEATER_0_PIN);
 		 WRITE(HEATER_0_PIN, 1);
+		 tp_enable_sensor(TP_SENSOR_0);
 	  }
+#endif
 	}
 
 	void disable ()
 	{
 	  power = 0;
+	  ::servo_attach(0, SERVO0_PIN);
 
 	  // Disable supplementary +24v power for fabtotum laser head
-	  if (installed_head_id == FAB_HEADS_laser_ID) {
-		 tp_enable_heater();
+	  //if (installed_head_id == FAB_HEADS_laser_ID) {
 		 WRITE(HEATER_0_PIN, 0);
-	  }
+		 //tp_enable_heater();
+	  //}
 	}
 
 	void setPower (uint16_t _power)
@@ -54,7 +62,8 @@ namespace Laser
 		 power = _power;
 	  }
 
-	  if (power && !fanSpeed) {
+		// QUIRK: auto turn on blower when activating laser head
+	  if (power && !fanSpeed && installed_head_id == FAB_HEADS_laser_ID) {
 		 fanSpeed = EXTRUDER_AUTO_FAN_SPEED;
 	  }
 	}
