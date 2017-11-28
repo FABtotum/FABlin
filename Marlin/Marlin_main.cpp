@@ -988,8 +988,8 @@ void FabtotumIO_init()
 {
    digitalWrite(I2C_SDA,0);
    digitalWrite(I2C_SCL,0);
-   pinMode(I2C_SDA,INPUT);
-   pinMode(I2C_SCL,INPUT);
+   //pinMode(I2C_SDA,INPUT);
+   //pinMode(I2C_SCL,INPUT);
 
    BEEP_ON()
 

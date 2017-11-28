@@ -20,25 +20,28 @@ namespace Laser
 	  return enabled;
 	}*/
 
-	void enable ()
-	{
-	  // Laser tools use servo 0 lines, in the future this may be configurable
-	  // This should be more or less shared code, apart from the ugly servo pin names
-	  ::servo_detach(0);
-	  SERVO1_OFF();
-	  SET_OUTPUT(SERVO0_PIN);
-	  SET_OUTPUT(NOT_SERVO1_ON_PIN);
+  void enable ()
+  {
+    // Laser tools use servo 0 lines, in the future this may be configurable
+    // This should be more or less shared code, apart from the ugly servo pin names
+    ::servo_detach(0);
+    SERVO1_OFF();
+    SET_OUTPUT(SERVO0_PIN);
+    SET_OUTPUT(NOT_SERVO1_ON_PIN);
 
+    // Heaters disabled
+    tp_disable_heater();
 #if MOTHERBOARD == 25  // FABtotum's TOTUMduino
-		// Proprietary laser extensions (and quirks)
-	  if (installed_head_id == FAB_HEADS_laser_ID || installed_head_id == FAB_HEADS_laser_pro_ID) {
-		 tp_disable_heater();
-		 SET_OUTPUT(HEATER_0_PIN);
-		 WRITE(HEATER_0_PIN, 1);
-		 tp_enable_sensor(TP_SENSOR_0);
-	  }
+    // Proprietary laser extensions (and quirks)
+    if (installed_head_id == FAB_HEADS_laser_ID || installed_head_id == FAB_HEADS_laser_pro_ID) {
+      SET_OUTPUT(HEATER_0_PIN);
+      WRITE(HEATER_0_PIN, 1);
+    }
 #endif
-	}
+
+    // Temperature sensor #0 (head) provisionally enabled
+    tp_enable_sensor(TP_SENSOR_0);
+  }
 
 	void disable ()
 	{
