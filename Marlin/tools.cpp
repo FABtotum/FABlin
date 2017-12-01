@@ -25,6 +25,8 @@ int8_t tool_heater_mapping[TOOLS_MAGAZINE_SIZE]/*   = { 0, -1, 0, ... }*/;  // T
  */
 void tools_s::load (uint8_t tool, uint8_t id)
 {
+   if (id == 0 || id >= TOOLS_FACTORY_SIZE) return;
+   if (tool >= TOOLS_MAGAZINE_SIZE) return;
    memcpy(&(magazine[tool]), &(factory[id]), sizeof factory[id]);
 }
 
@@ -80,24 +82,28 @@ uint8_t tools_s::change (uint8_t tool)
    tool_heater_mapping[tool] = -1;
    for (int8_t h = HEATERS-1; h >= 0; h--)
    {
-      if (magazine[tool].heaters & (1 << h))
-      {
-         tp_enable_sensor(h << 4);  // MAGIC
-         tp_enable_heater(h);
-         tool_heater_mapping[tool] = h;
+      if (magazine[tool].heaters & (TP_SENSOR_0 << h)) {
+         tp_enable_sensor(TP_SENSOR_0 << h);
+      } else {
+         tp_disable_sensor(TP_SENSOR_0 << h);
       }
-      else
-      {
-         tp_disable_heater(h);
-         tp_disable_sensor(h << 4);  // MAGIC
+   }
+   for (int8_t h = HEATERS-1; h >= 0; h--)
+   {
+      if (magazine[tool].heaters & (TP_HEATER_0 << h)) {
+         tp_enable_heater(TP_HEATER_0 << h);
+         tool_heater_mapping[tool] = h;
+      } else {
+         tp_disable_sensor(TP_SENSOR_0 << h);
       }
    }
    extruder_heater_mapping[tool_extruder_mapping[tool]] = tool_heater_mapping[tool];
 
    // Bed must be initialized separately because Marlin
    if (magazine[tool].heaters & TP_HEATER_BED) {
-      tp_enable_sensor(TP_SENSOR_BED);
       tp_enable_heater(TP_HEATER_BED);
+   } else {
+      tp_disable_sensor(TP_SENSOR_BED);
    }
 
    // Set globals

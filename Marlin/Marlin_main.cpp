@@ -800,12 +800,16 @@ void working_mode_change (uint8_t new_mode, bool reset = false)
   {
     case WORKING_MODE_HYBRID:
       tp_init();
-    case WORKING_MODE_CNC:
       servo_init();
       break;
 
     case WORKING_MODE_FFF:
       tp_init();
+      break;
+
+    case WORKING_MODE_CNC:
+      tp_disable_heater();
+      servo_init();
       break;
 
 #ifdef ENABLE_LASER_MODE
@@ -860,18 +864,19 @@ void set_mods (const char* modstring)
 
 void setup_addon (uint8_t id)
 {
-  // Shutdown head
+  // Shutdown head: equivalent to `M793 S0` if not explicitely given by the host
   StopTool();
 
-  if (id <= TOOLS_FACTORY_SIZE) {
+  if ((id > 0) && (id < TOOLS_FACTORY_SIZE))
+  {
     //installed_head = &(tools.factory[id]);
     tools.load(active_tool, id);
 
-    // Reselect active tool to make any tool configuration modification effective
-    tools.change(active_tool);
-
     // Forcefully reset mode...
     working_mode_change(installed_head.mode, true);
+
+    // Reselect active tool to make any tool configuration modification effective
+    tools.change(active_tool);
 
    // Update heaters max temp
 #if (EXTRUDERS > 0)
@@ -923,20 +928,21 @@ void FabtotumHeads_init ()
    tools.factory[FAB_HEADS_print_v2_ID].extruders= 1;
    tools.factory[FAB_HEADS_print_v2_ID].heaters  = TP_HEATER_0 | TP_HEATER_BED;
 
-   tools.factory[FAB_HEADS_mill_v2_ID].mode = WORKING_MODE_CNC;
-   tools.factory[FAB_HEADS_mill_v2_ID].extruders= 0;
-   tools.factory[FAB_HEADS_mill_v2_ID].heaters  = 0;
-   tools.factory[FAB_HEADS_mill_v2_ID].mintemp  = 0;
+  tools.factory[FAB_HEADS_mill_v2_ID].mode = WORKING_MODE_CNC;
+  tools.factory[FAB_HEADS_mill_v2_ID].extruders= 1;
+  tools.factory[FAB_HEADS_mill_v2_ID].heaters  = 0;
+  tools.factory[FAB_HEADS_mill_v2_ID].mintemp  = -1;
+  tools.factory[FAB_HEADS_mill_v2_ID].maxtemp  = 0;
 
-   tools.factory[FAB_HEADS_laser_ID].mode = WORKING_MODE_LASER;
-   tools.factory[FAB_HEADS_laser_ID].extruders= 1;
-   tools.factory[FAB_HEADS_laser_ID].heaters  = TP_HEATER_0;
-   tools.factory[FAB_HEADS_laser_ID].thtable = 3;
-   tools.factory[FAB_HEADS_laser_ID].maxtemp = 80;
-   tools.factory[FAB_HEADS_laser_ID].mintemp = -1;
+  tools.factory[FAB_HEADS_laser_ID].mode = WORKING_MODE_LASER;
+  tools.factory[FAB_HEADS_laser_ID].extruders= 1;
+  tools.factory[FAB_HEADS_laser_ID].heaters  = TP_SENSOR_0;
+  tools.factory[FAB_HEADS_laser_ID].thtable = 3;
+  tools.factory[FAB_HEADS_laser_ID].maxtemp = 80;
+  tools.factory[FAB_HEADS_laser_ID].mintemp = 10;
 
   tools.factory[FAB_HEADS_5th_axis_ID].extruders = 1 << 1;
-  tools.factory[FAB_HEADS_5th_axis_ID].mintemp  = -1;
+  tools.factory[FAB_HEADS_5th_axis_ID].mintemp  = -127;
 
    tools.factory[FAB_HEADS_direct_ID].mode = WORKING_MODE_FFF;
    tools.factory[FAB_HEADS_direct_ID].extruders = 1 << 2;
@@ -945,13 +951,13 @@ void FabtotumHeads_init ()
 
   tools.factory[FAB_HEADS_laser_pro_ID].mode = WORKING_MODE_LASER;
   tools.factory[FAB_HEADS_laser_pro_ID].extruders= 1;
-  tools.factory[FAB_HEADS_laser_pro_ID].heaters = TP_HEATER_0;
+  tools.factory[FAB_HEADS_laser_pro_ID].heaters = TP_SENSOR_0;
   tools.factory[FAB_HEADS_laser_pro_ID].thtable =  3;
   tools.factory[FAB_HEADS_laser_pro_ID].mintemp = -1;
   tools.factory[FAB_HEADS_laser_pro_ID].maxtemp = 80;
 
   tools.factory[FAB_HEADS_digitizer_ID].mode = WORKING_MODE_SCAN;
-  tools.factory[FAB_HEADS_digitizer_ID].extruders = 0;
+  tools.factory[FAB_HEADS_digitizer_ID].extruders = 1;
   tools.factory[FAB_HEADS_digitizer_ID].heaters = 0;
   tools.factory[FAB_HEADS_digitizer_ID].mintemp  = -1;
 }
@@ -961,12 +967,7 @@ void FabtotumHeads_init ()
  */
 void StopTool ()
 {
-  head_placed = false;
-
-  // High power outputs...
-
-  tp_disable_heater(TP_HEATER_0);
-  WRITE(HEATER_0_PIN,0);
+  /* High power outputs... */
 
   // This is quite special to the fabtotum so we conditionally compile it
 #if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
@@ -974,14 +975,24 @@ void StopTool ()
   WRITE(SERVO0_PIN,0);
 #endif
 
-  // Low power outputs...
+  tp_disable_heater(TP_HEATERS);
+  WRITE(HEATER_0_PIN,0);
+
+  /* Low power outputs... */
+
+  servo_detach(0);
 
   fanSpeed = 0;
   WRITE(FAN_PIN, 0);
 
+  // Kill TWI on TOTUMduino
 #if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
   TWCR &= ~MASK(TWEN);
+  WRITE(I2C_SDA, 0);
+  WRITE(I2C_SCL, 0);
 #endif
+
+  head_placed = false;
 }
 
 void FabtotumIO_init()
@@ -1079,7 +1090,7 @@ void FabtotumIO_init()
   DISABLE_SECURE_SWITCH_ZPROBE();
 #endif
 
-  // This legacy function has been written when only the hybrid head was around
+  // This legacy function was written when only the hybrid head was around
   // and should only be called in such case
   if (installed_head_id == 1) {
     Read_Head_Info();
@@ -1167,16 +1178,19 @@ void setup()
 
   // Initialize temperature loop
 #if (MOTHERBOARD == 25)
-  if (installed_head_id >= 1 && installed_head_id < 3)
+  // On TOTUMduino do only a basic tp init for non legacy heads
+  if (installed_head_id == 0 || installed_head_id > FAB_HEADS_print_v2_ID) {
+    tp_init(0);
+  } else
 #endif
   tp_init();
   plan_init();  // Initialize planner;
   watchdog_init();
   st_init();    // Initialize stepper, this enables interrupts!
   setup_photpin();
-#if (MOTHERBOARD == 25)
-  if (installed_head_id >= 1 && installed_head_id <= 3)
-#endif
+//#if (MOTHERBOARD == 25)
+//  if (installed_head_id >= 1 && installed_head_id <= 3)
+//#endif
   servo_init();
 
 #if (MOTHERBOARD == 25)
@@ -1315,6 +1329,37 @@ void loop()
   lcd_update();
 }
 
+float code_value()
+{
+  char *str = &cmdbuffer[bufindr][strchr_pointer - cmdbuffer[bufindr] + 1];
+  char *str_end = 0;
+  float value = strtod(str, &str_end);
+  next_value = (str_end[0] == VALUE_LIST_SEPARATOR);
+  if (next_value) {
+    strchr_pointer = str_end;
+  }
+  return value;
+}
+
+long code_value_long()
+{
+  char *str = &cmdbuffer[bufindr][strchr_pointer - cmdbuffer[bufindr] + 1];
+  char *str_end = 0;
+  long value = strtol(str, &str_end, 10);
+  next_value = (str_end[0] == VALUE_LIST_SEPARATOR);
+  if (next_value) {
+    strchr_pointer = str_end;
+  }
+  return value;
+}
+
+bool code_seen(char code)
+{
+  next_value = false;
+  strchr_pointer = strchr(cmdbuffer[bufindr], code);
+  return (strchr_pointer != NULL);  //Return True if a character was found
+}
+
 /*
  * Function: print_heaterstates (tp_report_t format)
  *
@@ -1335,11 +1380,11 @@ void print_heaterstates (tp_report_t format)
   } else {
     SERIAL_PROTOCOLPGM("T: ");
   }
-  SERIAL_PROTOCOL_F(degHotend(tmp_extruder),1);
+  SERIAL_PROTOCOL_F(degTool(active_tool),1);
 
   if (format == TP_REPORT_FULL) {
     SERIAL_PROTOCOLPGM("/");
-    SERIAL_PROTOCOL_F(degTargetHotend(tmp_extruder),1);
+    SERIAL_PROTOCOL_F(degTargetTool(active_tool),1);
   }
 
   #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
@@ -1352,13 +1397,13 @@ void print_heaterstates (tp_report_t format)
   #endif //TEMP_BED_PIN
 
   if (format == TP_REPORT_FULL)
-  for (int8_t cur_extruder = 0; cur_extruder < HEATERS; ++cur_extruder) {
+  for (uint8_t cur_heater = 0; cur_heater < HEATERS; ++cur_heater) {
     SERIAL_PROTOCOLPGM(" T");
-    SERIAL_PROTOCOL(cur_extruder);
+    SERIAL_PROTOCOL((unsigned int)cur_heater);
     SERIAL_PROTOCOLPGM(": ");
-    SERIAL_PROTOCOL_F(degHotend(cur_extruder),1);
+    SERIAL_PROTOCOL_F(current_temperature[cur_heater],1);
     SERIAL_PROTOCOLPGM("/");
-    SERIAL_PROTOCOL_F(degTargetHotend(cur_extruder),1);
+    SERIAL_PROTOCOL_F(target_temperature[cur_heater] * 1.0,1);
   }
 #else
   SERIAL_ERROR_START;
@@ -1587,37 +1632,6 @@ void get_command()
 
 }
 
-
-float code_value()
-{
-  char *str = &cmdbuffer[bufindr][strchr_pointer - cmdbuffer[bufindr] + 1];
-  char *str_end = 0;
-  float value = strtod(str, &str_end);
-  next_value = (str_end[0] == VALUE_LIST_SEPARATOR);
-  if (next_value) {
-    strchr_pointer = str_end;
-  }
-  return value;
-}
-
-long code_value_long()
-{
-  char *str = &cmdbuffer[bufindr][strchr_pointer - cmdbuffer[bufindr] + 1];
-  char *str_end = 0;
-  long value = strtol(str, &str_end, 10);
-  next_value = (str_end[0] == VALUE_LIST_SEPARATOR);
-  if (next_value) {
-    strchr_pointer = str_end;
-  }
-  return value;
-}
-
-bool code_seen(char code)
-{
-  next_value = false;
-  strchr_pointer = strchr(cmdbuffer[bufindr], code);
-  return (strchr_pointer != NULL);  //Return True if a character was found
-}
 
 #define DEFINE_PGM_READ_ANY(type, reader)       \
     static inline type pgm_read_any(const type *p)  \
@@ -4484,10 +4498,26 @@ void process_commands()
         do {
           switch (code_value_long())
           {
-            case 0: heaters |= TP_HEATER_BED; break;
-            case 1: heaters |= TP_HEATER_0; break;
-            case 2: heaters |= TP_HEATER_1; break;
-            case 3: heaters |= TP_HEATER_2; break;
+            case 0:
+              heaters |= TP_HEATER_BED;
+            case 4:
+              heaters |= TP_SENSOR_BED;
+              break;
+            case 1:
+              heaters |= TP_HEATER_0;
+            case 5:
+              heaters |= TP_SENSOR_0;
+              break;
+            case 2:
+              heaters |= TP_HEATER_1;
+            case 6:
+              heaters |= TP_SENSOR_1;
+              break;
+            case 3:
+              heaters |= TP_HEATER_2;
+            case 7:
+              heaters |= TP_SENSOR_2;
+              break;
           }
         } while (next_value);
       }
@@ -4505,7 +4535,7 @@ void process_commands()
         tools.define(target_tool, drive, heaters, twi, true);
 
         // Reselect active tool to reload definition
-        tools.change(active_tool);
+        if (target_tool == active_tool) tools.change(active_tool);
       }
       else
       {
@@ -6099,7 +6129,7 @@ void process_commands()
         // - new ID != 0 and:
         //   - new ID == stored ID (we are presumably in the startup)
         //   - stored ID == 0 (no head was set, we may be in startup or not)
-        if (id == 0 || (id == installed_head_id || installed_head_id == 0)) {
+        if (id == 0 || id == installed_head_id || installed_head_id == 0) {
           setup_addon(id);
         } else {
           installed_head_id = id;

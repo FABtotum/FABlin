@@ -27,7 +27,10 @@
   #include "stepper.h"
 #endif
 
-#define NOT_A_TEMPERATURE -274
+#define NOT_A_TEMPERATURE 0  // °C -- even though -274°C == <0K would be better if you ask me
+
+#define CtoK(x) (x + 274)
+#define KtoC(x) (x - 274)
 
 enum tp_features : uint8_t {
   TP_HEATERS=0x0f, TP_HEATER_0=0x01, TP_HEATER_1=0x02, TP_HEATER_2=0x04, TP_HEATER_BED=0x08,
@@ -102,8 +105,32 @@ extern int maxttemp[HEATERS];
 
 #define EtoH(ext) extruder_heater_mapping[ext]
 
-FORCE_INLINE float degHotend(uint8_t extruder) {
-  return current_temperature[EtoH(extruder)];
+FORCE_INLINE float degHotend(int8_t extruder) {
+  /*SERIAL_ASYNC_START;
+  SERIAL_PROTOCOLPGM("degHotend: extruder = ");
+  SERIAL_PROTOCOLLN_F(extruder, DEC);*/
+  if (extruder >= 0) {
+    /*SERIAL_ASYNC_START;
+    SERIAL_PROTOCOLPGM("degHotend: heater = ");
+    SERIAL_PROTOCOLLN_F(EtoH(extruder), DEC);*/
+    return current_temperature[EtoH(extruder)];
+  } else {
+    return NOT_A_TEMPERATURE;
+  }
+};
+
+FORCE_INLINE float degTool(uint8_t tool) {
+  /*SERIAL_ASYNC_START;
+  SERIAL_PROTOCOLPGM("degTool: tool = ");
+  SERIAL_PROTOCOLLN_F(tool, DEC);
+  SERIAL_ASYNC_START;
+  SERIAL_PROTOCOLPGM("degHotend: heater = ");
+  SERIAL_PROTOCOLLN_F(tool_heater_mapping[tool], DEC);*/
+  if (tool_heater_mapping[tool] >= 0) {
+    return current_temperature[tool_heater_mapping[tool]];
+  } else {
+    return NOT_A_TEMPERATURE;
+  }
 };
 
 #ifdef SHOW_TEMP_ADC_VALUES
@@ -120,8 +147,12 @@ FORCE_INLINE float degBed() {
   return current_temperature_bed;
 };
 
-FORCE_INLINE float degTargetHotend(uint8_t extruder) {
+FORCE_INLINE float degTargetHotend(int8_t extruder) {
   return target_temperature[EtoH(extruder)];
+};
+
+FORCE_INLINE float degTargetTool(uint8_t tool) {
+  return target_temperature[tool_heater_mapping[tool]];
 };
 
 FORCE_INLINE float degTargetBed() {
@@ -222,11 +253,10 @@ void tp_init_mintemp (int8_t, tp_features=TP_HEATER_0);
 void tp_init_maxtemp (int16_t, tp_features=TP_HEATER_0);
 int getHeaterPower(int heater);
 
+void disable_heater();  // DEPRECABLE
 void tp_enable_heater  (uint8_t=TP_HEATERS);
-void tp_disable_heater (uint8_t=TP_HEATERS);
-void disable_heater(uint8_t=TP_HEATERS);  // DEPRECATED
-
 void tp_enable_sensor  (uint8_t=TP_SENSORS);
+void tp_disable_heater (uint8_t=TP_HEATERS);
 void tp_disable_sensor (uint8_t=TP_HEATERS);
 
 void setWatch();

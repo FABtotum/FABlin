@@ -106,7 +106,7 @@ unsigned int ERROR_CODE;
 //===========================================================================
 //=============================private variables============================
 //===========================================================================
-static uint8_t enabled_features = 0xff;
+/*volatile*/ uint8_t enabled_features = 0xff;
 
 static volatile bool temp_meas_ready = false;
 
@@ -729,7 +729,7 @@ static float analog2tempBed(int raw) {
     and this function is called from normal context as it is too slow to run in interrupts and will block the stepper routine otherwise */
 static void updateTemperaturesFromRawValues()
 {
-    for(uint8_t e=0;e<HEATERS;e++)
+    for (uint8_t e=0; e < HEATERS; e++)
     {
       if (enabled_features & (TP_SENSOR_0<<e)) {
         current_temperature[e] = analog2temp(current_temperature_raw[e], e);
@@ -893,6 +893,23 @@ inline void tp_enable_fan ()
   #endif
 }
 
+void inline setup_isr (bool force=false)
+{
+  // Check if we have enabled feature while having the temp ISR disabled
+  if (enabled_features)
+  {
+    // Use timer0 for temperature measurement
+    // Interleave temperature interrupt with millies interrupt
+    OCR0B = 128;
+
+    if ((TIMSK0 & (1<<OCIE0B) == 0) || force) {
+      TIMSK0 |= (1<<OCIE0B);
+      // Wait for temperature measurement to settle
+      delay(250);
+    }
+  }
+}
+
 void tp_init (uint8_t features)
 {
   enabled_features = features;
@@ -925,16 +942,17 @@ void tp_init()
 
   tp_enable_fan();
 
-  tp_enable_sensor(enabled_features & TP_SENSORS);
+  //tp_enable_sensor(enabled_features & TP_SENSORS);
 
-  if (enabled_features) {
+  setup_isr(true);
+  /*if (enabled_features) {
     // Use timer0 for temperature measurement
     // Interleave temperature interrupt with millies interrupt
     OCR0B = 128;
     TIMSK0 |= (1<<OCIE0B);
     // Wait for temperature measurement to settle
     delay(250);
-  }
+  }*/
 
 #ifdef HEATER_0_MINTEMP
   tp_init_mintemp(HEATER_0_MINTEMP, TP_HEATER_0);
@@ -1059,23 +1077,14 @@ void tp_enable_heater (uint8_t heaters)
   }
 
   enabled_features |= heaters;
+  setup_isr();
 }
 
 void tp_disable_heater (uint8_t heaters)
 {
-  disable_heater(heaters);
-  enabled_features &= ~heaters;
-}
-
-// DEPRECATED
-void disable_heater(uint8_t heaters)
-{
-  /*for(int i=0;i<HEATERS;i++)
-    setTargetHotend(0,i);
-  setTargetBed(0);*/
-
 #if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
   if (heaters & TP_HEATER_0) {
+    setTargetHotend(0,0);
     target_temperature[0]=0;
     soft_pwm[0]=0;
   #if defined(HEATER_0_PIN) && HEATER_0_PIN > -1
@@ -1086,6 +1095,7 @@ void disable_heater(uint8_t heaters)
 
 #if defined(TEMP_1_PIN) && TEMP_1_PIN > -1
   if (heaters & TP_HEATER_1) {
+    setTargetHotend(0,1);
     target_temperature[1]=0;
     soft_pwm[1]=0;
   #if defined(HEATER_1_PIN) && HEATER_1_PIN > -1
@@ -1096,6 +1106,7 @@ void disable_heater(uint8_t heaters)
 
 #if defined(TEMP_2_PIN) && TEMP_2_PIN > -1
   if (heaters & TP_HEATER_2) {
+    setTargetHotend(0,2);
     target_temperature[2]=0;
     soft_pwm[2]=0;
   #if defined(HEATER_2_PIN) && HEATER_2_PIN > -1
@@ -1106,6 +1117,7 @@ void disable_heater(uint8_t heaters)
 
 #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
   if (heaters & TP_HEATER_BED) {
+    setTargetBed(0);
     target_temperature_bed=0;
     soft_pwm_bed=0;
   #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
@@ -1113,6 +1125,14 @@ void disable_heater(uint8_t heaters)
   #endif
   }
 #endif
+
+  enabled_features &= ~heaters;
+}
+
+// DEPRECATED
+void disable_heater()
+{
+  tp_disable_heater(TP_HEATERS);
 }
 
 void tp_enable_sensor (uint8_t sensors)
@@ -1128,29 +1148,30 @@ void tp_enable_sensor (uint8_t sensors)
 
   if (sensors & TP_SENSOR_0) {
 #if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)
-  SET_ANALOG(TEMP_0_PIN);
+    SET_ANALOG(TEMP_0_PIN);
 #endif
   }
 
   if (sensors & TP_SENSOR_1) {
 #if defined(TEMP_1_PIN) && (TEMP_1_PIN > -1)
-  SET_ANALOG(TEMP_1_PIN);
+    SET_ANALOG(TEMP_1_PIN);
 #endif
   }
 
   if (sensors & TP_SENSOR_2) {
 #if defined(TEMP_2_PIN) && (TEMP_2_PIN > -1)
-  SET_ANALOG(TEMP_2_PIN);
+    SET_ANALOG(TEMP_2_PIN);
 #endif
   }
 
   if (sensors & TP_SENSOR_BED) {
 #if defined(TEMP_BED_PIN) && (TEMP_BED_PIN > -1)
-  SET_ANALOG(TEMP_BED_PIN);
+    SET_ANALOG(TEMP_BED_PIN);
 #endif
   }
 
   enabled_features |= sensors;
+  setup_isr();
 }
 
 void tp_disable_sensor (uint8_t sensors)
@@ -1220,22 +1241,23 @@ void max_temp_error(uint8_t e) {
 void min_temp_error (uint8_t e)
 {
   // Only disable heater if the relevant TP_HEATER_e was enabled
-  if (!(enabled_features & 1<<e)) return;
-
-  if (head_placed) {
-    head_placed = false;
+  if (!(enabled_features & TP_HEATER_0<<e)) {
+    return;
   }
 
-  disable_heater();
-  if(IsStopped() == false) {
+  head_placed = false;
+
+  if (IsStopped() == false)
+  {
+    disable_heater();
     SERIAL_ASYNC_START;
     SERIAL_ERRORLN((int)e);
     SERIAL_ERRORLNPGM(": Extruder switched off. MINTEMP triggered !");
     LCD_ALERTMESSAGEPGM("Err: MINTEMP");
   }
-  #ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
+#ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
   Stop();
-  #endif
+#endif
 
   RPI_ERROR_ACK_ON();
   ERROR_CODE=ERROR_MIN_TEMP;
@@ -1246,6 +1268,7 @@ void bed_max_temp_error (void)
   // Oly disable heater if TP_HEATER_BED was enabled
   if (!(enabled_features & TP_HEATER_BED)) return;
 
+  disable_heater();
 #if HEATER_BED_PIN > -1
   WRITE(HEATER_BED_PIN, 0);
 #endif
@@ -1350,7 +1373,6 @@ ISR(TIMER0_COMPB_vect)
   WRITE(TP_ISR_PROFILE_PIN,1);
 #endif
 
-  // FABtotum laser head uses heater line for supplementary +24v dc power source
   if (enabled_features & TP_HEATERS)
   {
     if(pwm_count == 0){
@@ -1627,40 +1649,36 @@ ISR(TIMER0_COMPB_vect)
     if (enabled_features & TP_SENSOR_0)
     {
 #if HEATER_0_RAW_LO_TEMP > HEATER_0_RAW_HI_TEMP
-      if(current_temperature_raw[0] <= maxttemp_raw[0]) {
+      if(current_temperature_raw[0] <= maxttemp_raw[0])
 #else
-      if(current_temperature_raw[0] >= maxttemp_raw[0]) {
+      if(current_temperature_raw[0] >= maxttemp_raw[0])
 #endif
           max_temp_error(0);
-      }
 
 #if HEATER_0_RAW_LO_TEMP > HEATER_0_RAW_HI_TEMP
-      if(current_temperature_raw[0] >= minttemp_raw[0]) {
+      if(current_temperature_raw[0] >= minttemp_raw[0])
 #else
-      if(current_temperature_raw[0] <= minttemp_raw[0]) {
+      if(current_temperature_raw[0] <= minttemp_raw[0])
 #endif
         min_temp_error(0);
-      }
     }
 
 #if HEATERS > 1
     if (enabled_features & TP_SENSOR_1)
     {
 #if HEATER_1_RAW_LO_TEMP > HEATER_1_RAW_HI_TEMP
-      if(current_temperature_raw[1] <= maxttemp_raw[1]) {
+      if(current_temperature_raw[1] <= maxttemp_raw[1])
 #else
-      if(current_temperature_raw[1] >= maxttemp_raw[1]) {
+      if(current_temperature_raw[1] >= maxttemp_raw[1])
 #endif
-        max_temp_error(1);
-      }
+      max_temp_error(1);
 
 #if HEATER_1_RAW_LO_TEMP > HEATER_1_RAW_HI_TEMP
-      if(current_temperature_raw[1] >= minttemp_raw[1]) {
+      if(current_temperature_raw[1] >= minttemp_raw[1])
 #else
-      if(current_temperature_raw[1] <= minttemp_raw[1]) {
+      if(current_temperature_raw[1] <= minttemp_raw[1])
 #endif
-        min_temp_error(1);
-      }
+      min_temp_error(1);
     }
 #endif
 
@@ -1668,20 +1686,18 @@ ISR(TIMER0_COMPB_vect)
     if (enabled_features & TP_SENSOR_2)
     {
 #if HEATER_2_RAW_LO_TEMP > HEATER_2_RAW_HI_TEMP
-      if(current_temperature_raw[2] <= maxttemp_raw[2]) {
+      if(current_temperature_raw[2] <= maxttemp_raw[2])
 #else
-      if(current_temperature_raw[2] >= maxttemp_raw[2]) {
+      if(current_temperature_raw[2] >= maxttemp_raw[2])
 #endif
         max_temp_error(2);
-      }
 
 #if HEATER_2_RAW_LO_TEMP > HEATER_2_RAW_HI_TEMP
-      if(current_temperature_raw[2] >= minttemp_raw[2]) {
+      if(current_temperature_raw[2] >= minttemp_raw[2])
 #else
-      if(current_temperature_raw[2] <= minttemp_raw[2]) {
+      if(current_temperature_raw[2] <= minttemp_raw[2])
 #endif
-        min_temp_error(2);
-      }
+      min_temp_error(2);
     }
 #endif
 
@@ -1690,10 +1706,11 @@ ISR(TIMER0_COMPB_vect)
   /* No bed MINTEMP error? */
 #if defined(BED_MAXTEMP) && (TEMP_SENSOR_BED != 0)
   #if HEATER_BED_RAW_LO_TEMP > HEATER_BED_RAW_HI_TEMP
-      if(current_temperature_bed_raw <= bed_maxttemp_raw) {
+      if(current_temperature_bed_raw <= bed_maxttemp_raw)
   #else
-      if(current_temperature_bed_raw >= bed_maxttemp_raw) {
+      if(current_temperature_bed_raw >= bed_maxttemp_raw)
   #endif
+      {
          target_temperature_bed = 0;
          bed_max_temp_error();
       }
