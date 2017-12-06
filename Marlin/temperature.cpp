@@ -55,23 +55,6 @@ float current_mon_24v_value=0.0;
 float current_mon_5v_value=0.0;
 float current_main_current_value=0.0;
 
-/*unsigned int LaserSoftPwm_t;
-unsigned int FabSoftPwm_TMR_t;
-unsigned int HeadLightSoftPwm_t;
-unsigned int FabSoftPwm_LMT_t=MAX_PWM;
-unsigned int RedSoftPwm_t;
-unsigned int GreenSoftPwm_t;
-unsigned int BlueSoftPwm_t;
-
-
-unsigned int fading_speed=200;
-unsigned int led_update_cycles=0;
-bool red_fading=false;
-bool green_fading=false;
-bool blue_fading=false;
-bool slope=true;
-bool fading_started=false;*/
-
 #ifdef TEMP_SENSOR_1_AS_REDUNDANT
   int redundant_temperature_raw = 0;
   float redundant_temperature = 0.0;
@@ -902,7 +885,7 @@ void inline setup_isr (bool force=false)
     // Interleave temperature interrupt with millies interrupt
     OCR0B = 128;
 
-    if ((TIMSK0 & (1<<OCIE0B) == 0) || force) {
+    if ((TIMSK0 & (1<<OCIE0B)) == 0 || force) {
       TIMSK0 |= (1<<OCIE0B);
       // Wait for temperature measurement to settle
       delay(250);
@@ -1222,17 +1205,23 @@ void tp_disable_sensor (uint8_t sensors)
   enabled_features &= ~sensors;
 }
 
-void max_temp_error(uint8_t e) {
-  disable_heater();
+void max_temp_error (uint8_t e)
+{
+  // Only honor error if the relevant TP_SENSOR_e was enabled
+  if (!(enabled_features & TP_SENSOR_0<<e)) return;
+
+  if (enabled_features & TP_HEATER_0<<e) disable_heater();
+  WRITE(HEATER_0_PIN, 0);
+
   if(IsStopped() == false) {
     SERIAL_ASYNC_START;
     SERIAL_ERRORLN((int)e);
     SERIAL_ERRORLNPGM(": Extruder switched off. MAXTEMP triggered !");
     LCD_ALERTMESSAGEPGM("Err: MAXTEMP");
   }
-  #ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
+#ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
   Stop();
-  #endif
+#endif
 
   RPI_ERROR_ACK_ON();
   ERROR_CODE=ERROR_MAX_TEMP;
@@ -1240,16 +1229,21 @@ void max_temp_error(uint8_t e) {
 
 void min_temp_error (uint8_t e)
 {
-  // Only disable heater if the relevant TP_HEATER_e was enabled
-  if (!(enabled_features & TP_HEATER_0<<e)) {
+  // Only disable heater if the relevant TP_SENSOR_e was enabled
+  if (!(enabled_features & TP_SENSOR_0<<e)) {
     return;
   }
 
+  //
   head_placed = false;
+
+  if (enabled_features & TP_HEATER_0<<e) {
+    disable_heater();
+  }
+  WRITE(HEATER_0_PIN, 0);
 
   if (IsStopped() == false)
   {
-    disable_heater();
     SERIAL_ASYNC_START;
     SERIAL_ERRORLN((int)e);
     SERIAL_ERRORLNPGM(": Extruder switched off. MINTEMP triggered !");
@@ -1348,8 +1342,12 @@ ISR(TIMER0_COMPB_vect)
   //these variables are only accesible from the ISR, but static, so they don't lose their value
   static unsigned char temp_count = 0;
   static unsigned long raw_temp_0_value = 0;
+#if defined(TEMP_1_PIN) && (TEMP_1_PIN > -1)
   static unsigned long raw_temp_1_value = 0;
+#endif
+#if defined(TEMP_2_PIN) && (TEMP_2_PIN > -1)
   static unsigned long raw_temp_2_value = 0;
+#endif
   static unsigned long raw_temp_bed_value = 0;
   static unsigned long pressure_raw_value = 0;
   static unsigned long mon_24V_raw_value = 0;
@@ -1638,8 +1636,12 @@ ISR(TIMER0_COMPB_vect)
     temp_meas_ready = true;
     temp_count = 0;
     raw_temp_0_value = 0;
+#if defined(TEMP_1_PIN) && (TEMP_1_PIN > -1)
     raw_temp_1_value = 0;
+#endif
+#if defined(TEMP_2_PIN) && (TEMP_2_PIN > -1)
     raw_temp_2_value = 0;
+#endif
     raw_temp_bed_value = 0;
     pressure_raw_value = 0;
     mon_24V_raw_value = 0;

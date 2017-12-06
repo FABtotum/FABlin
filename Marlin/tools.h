@@ -16,7 +16,7 @@ typedef struct tool_s {
    uint8_t mode = 0;
    uint8_t serial  = 0;
    uint8_t extruders:4;
-   uint8_t heaters:4;
+   uint8_t heaters = 0;
    uint8_t thtable = THERMISTOR_HOTSWAP_DEFAULT_INDEX;
    int16_t mintemp = HEATER_0_MINTEMP;  // °C
    int16_t maxtemp = HEATER_0_MAXTEMP;  // °C

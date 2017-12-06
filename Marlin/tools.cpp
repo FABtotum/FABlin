@@ -82,19 +82,23 @@ uint8_t tools_s::change (uint8_t tool)
    tool_heater_mapping[tool] = -1;
    for (int8_t h = HEATERS-1; h >= 0; h--)
    {
-      if (magazine[tool].heaters & (TP_SENSOR_0 << h)) {
-         tp_enable_sensor(TP_SENSOR_0 << h);
-      } else {
-         tp_disable_sensor(TP_SENSOR_0 << h);
-      }
-   }
-   for (int8_t h = HEATERS-1; h >= 0; h--)
-   {
       if (magazine[tool].heaters & (TP_HEATER_0 << h)) {
          tp_enable_heater(TP_HEATER_0 << h);
          tool_heater_mapping[tool] = h;
       } else {
-         tp_disable_sensor(TP_SENSOR_0 << h);
+         // If sensor is specified only disable heater
+         if (magazine[tool].heaters & (TP_SENSOR_0 << h)) {
+            tp_disable_heater(TP_HEATER_0 << h);
+         } else {
+            tp_disable_sensor(TP_SENSOR_0 << h);
+         }
+      }
+   }
+   // Possibly enable sensor with no heater enabled
+   for (int8_t h = HEATERS-1; h >= 0; h--)
+   {
+      if (magazine[tool].heaters & (TP_SENSOR_0 << h)) {
+         tp_enable_sensor(TP_SENSOR_0 << h);
       }
    }
    extruder_heater_mapping[tool_extruder_mapping[tool]] = tool_heater_mapping[tool];
@@ -104,6 +108,9 @@ uint8_t tools_s::change (uint8_t tool)
       tp_enable_heater(TP_HEATER_BED);
    } else {
       tp_disable_sensor(TP_SENSOR_BED);
+   }
+   if (magazine[tool].heaters & TP_SENSOR_BED) {
+      tp_enable_sensor(TP_SENSOR_BED);
    }
 
    // Set globals

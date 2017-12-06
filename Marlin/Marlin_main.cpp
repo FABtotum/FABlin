@@ -808,7 +808,8 @@ void working_mode_change (uint8_t new_mode, bool reset = false)
       break;
 
     case WORKING_MODE_CNC:
-      tp_disable_heater();
+      //tp_disable_heater();
+      tp_disable_sensor();
       servo_init();
       break;
 
@@ -866,17 +867,18 @@ void setup_addon (uint8_t id)
 {
   // Shutdown head: equivalent to `M793 S0` if not explicitely given by the host
   StopTool();
+  Stopped=true;
 
-  if ((id > 0) && (id < TOOLS_FACTORY_SIZE))
+  set_mods("");
+
+  if (id > 0 && id < TOOLS_FACTORY_SIZE)
   {
-    //installed_head = &(tools.factory[id]);
+    // Load factory head in tools magazine
     tools.load(active_tool, id);
 
-    // Forcefully reset mode...
-    working_mode_change(installed_head.mode, true);
-
-    // Reselect active tool to make any tool configuration modification effective
-    tools.change(active_tool);
+    // Forcefully reset mode for the new head (taken from magazine)
+    // Tools module has no notion of working modes so we change it here
+    working_mode_change(tools.magazine[active_tool].mode, true);
 
    // Update heaters max temp
 #if (EXTRUDERS > 0)
@@ -893,6 +895,9 @@ void setup_addon (uint8_t id)
      }
 #endif
 
+    // Reselect active tool to make any tool configuration modification effective
+    tools.change(active_tool);
+
     // Set hardcoded head modification codes to be run
     if (installed_head.mods) {
       set_mods(installed_head.mods);
@@ -904,6 +909,8 @@ void setup_addon (uint8_t id)
   if (installed_head_id != 0) {
     head_placed = true;
   }
+
+  Stopped=false;
 }
 
 void FabtotumHeads_init ()
@@ -916,17 +923,17 @@ void FabtotumHeads_init ()
   tools.factory[0].serial = 0;
   tools.factory[0].extruders = 0;
   tools.factory[0].heaters = 0;
-  tools.factory[0].mintemp = 0;
+  tools.factory[0].mintemp = -1;
 
    // Factory heads definitions
-   tools.factory[FAB_HEADS_hybrid_ID].extruders= 1;
-   tools.factory[FAB_HEADS_hybrid_ID].heaters  = TP_HEATER_0 | TP_HEATER_BED;
-   tools.factory[FAB_HEADS_hybrid_ID].maxtemp = 235;
-   tools.factory[FAB_HEADS_hybrid_ID].serial  = TOOL_SERIAL_TWI;
+  tools.factory[FAB_HEADS_hybrid_ID].extruders= 1;
+  tools.factory[FAB_HEADS_hybrid_ID].heaters  = TP_HEATER_0 | TP_HEATER_BED;
+  tools.factory[FAB_HEADS_hybrid_ID].maxtemp = 235;
+  tools.factory[FAB_HEADS_hybrid_ID].serial  = TOOL_SERIAL_TWI;
 
-   tools.factory[FAB_HEADS_print_v2_ID].mode = WORKING_MODE_FFF;
-   tools.factory[FAB_HEADS_print_v2_ID].extruders= 1;
-   tools.factory[FAB_HEADS_print_v2_ID].heaters  = TP_HEATER_0 | TP_HEATER_BED;
+  tools.factory[FAB_HEADS_print_v2_ID].mode = WORKING_MODE_FFF;
+  tools.factory[FAB_HEADS_print_v2_ID].extruders= 1;
+  tools.factory[FAB_HEADS_print_v2_ID].heaters  = TP_HEATER_0 | TP_HEATER_BED;
 
   tools.factory[FAB_HEADS_mill_v2_ID].mode = WORKING_MODE_CNC;
   tools.factory[FAB_HEADS_mill_v2_ID].extruders= 1;
@@ -943,12 +950,12 @@ void FabtotumHeads_init ()
   tools.factory[FAB_HEADS_laser_ID].mods = "M718\n";
 
   tools.factory[FAB_HEADS_5th_axis_ID].extruders = 1 << 1;
-  tools.factory[FAB_HEADS_5th_axis_ID].mintemp  = -127;
+  tools.factory[FAB_HEADS_5th_axis_ID].mintemp  = -1;
 
-   tools.factory[FAB_HEADS_direct_ID].mode = WORKING_MODE_FFF;
-   tools.factory[FAB_HEADS_direct_ID].extruders = 1 << 2;
-   tools.factory[FAB_HEADS_direct_ID].heaters = TP_HEATER_0 | TP_HEATER_BED;
-   tools.factory[FAB_HEADS_direct_ID].mods = "M720\n";
+  tools.factory[FAB_HEADS_direct_ID].mode = WORKING_MODE_FFF;
+  tools.factory[FAB_HEADS_direct_ID].extruders = 1 << 2;
+  tools.factory[FAB_HEADS_direct_ID].heaters = TP_HEATER_0 | TP_HEATER_BED;
+  tools.factory[FAB_HEADS_direct_ID].mods = "M720\n";
 
   tools.factory[FAB_HEADS_laser_pro_ID].mode = WORKING_MODE_LASER;
   tools.factory[FAB_HEADS_laser_pro_ID].extruders= 1;
@@ -967,7 +974,7 @@ void FabtotumHeads_init ()
 /*
  * Shut-down anything connected to the head upon a forced stop
  */
-void StopTool ()
+inline void StopTool ()
 {
   /* High power outputs... */
 
@@ -977,12 +984,23 @@ void StopTool ()
   WRITE(SERVO0_PIN,0);
 #endif
 
+  // Disable all heaters for good measure
   tp_disable_heater(TP_HEATERS);
+  // Explicitely set heter outputs to low
+#if defined(HEATER_0_PIN) && (HEATER_0_PIN > -1)
   WRITE(HEATER_0_PIN,0);
+#endif
+#if defined(HEATER_1_PIN) && (HEATER_1_PIN > -1)
+  WRITE(HEATER_1_PIN,0);
+#endif
+#if defined(HEATER_2_PIN) && (HEATER_2_PIN > -1)
+  WRITE(HEATER_2_PIN,0);
+#endif
 
   /* Low power outputs... */
 
   servo_detach(0);
+  WRITE(NOT_SERVO1_ON_PIN, 1);
 
   fanSpeed = 0;
   WRITE(FAN_PIN, 0);
@@ -992,6 +1010,17 @@ void StopTool ()
   TWCR &= ~MASK(TWEN);
   WRITE(I2C_SDA, 0);
   WRITE(I2C_SCL, 0);
+#endif
+
+  tp_disable_sensor(TP_SENSORS);
+#if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)
+  WRITE(TEMP_0_PIN,0);
+#endif
+#if defined(TEMP_1_PIN) && (TEMP_1_PIN > -1)
+  WRITE(TEMP_1_PIN,0);
+#endif
+#if defined(TEMP_2_PIN) && (TEMP_2_PIN > -1)
+  WRITE(TEMP_2_PIN,0);
 #endif
 
   head_placed = false;
@@ -1135,12 +1164,11 @@ void setup()
   setup_killpin();
   setup_powerhold();
   MYSERIAL.begin(BAUDRATE);
-  /*SERIAL_PROTOCOLLNPGM("start");
-  SERIAL_ECHO_START;*/
+#if MOTHERBOARD != 25
+  SERIAL_PROTOCOLLNPGM("start");
+  SERIAL_ECHO_START;
 
   // Check startup - does nothing if bootloader sets MCUSR to 0
-
-#if MOTHERBOARD != 25
   byte mcu = MCUSR;
   // turn output off for totumduino
   if(mcu & 1) SERIAL_ECHOLNPGM(MSG_POWERUP);
@@ -1179,7 +1207,7 @@ void setup()
   Config_RetrieveSettings();
 
   // Initialize temperature loop
-#if (MOTHERBOARD == 25)
+#if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
   // On TOTUMduino do only a basic tp init for non legacy heads
   if (installed_head_id == 0 || installed_head_id > FAB_HEADS_print_v2_ID) {
     tp_init(0);
@@ -1190,9 +1218,9 @@ void setup()
   watchdog_init();
   st_init();    // Initialize stepper, this enables interrupts!
   setup_photpin();
-//#if (MOTHERBOARD == 25)
-//  if (installed_head_id >= 1 && installed_head_id <= 3)
-//#endif
+#if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
+  if (installed_head_id >= 1 && installed_head_id <= 3)
+#endif
   servo_init();
 
 #if (MOTHERBOARD == 25)
@@ -1456,7 +1484,9 @@ void get_command()
   ||     (modl && modi < modl))
   {
     if (modi < modl) {
+      if (modi == 0) SERIAL_ASYNC_START;
       serial_char = mods[modi++];
+      SERIAL_PROTOCOL(serial_char);
     } else {
       serial_char = MYSERIAL.read();
     }
@@ -4548,12 +4578,35 @@ void process_commands()
         {
           SERIAL_ECHOPAIR("P", (unsigned long)target_tool);
           int8_t extruder = tool_extruder_mapping[target_tool];
-          SERIAL_ECHOPGM(" D<");
-          SERIAL_PROTOCOL_F((unsigned long)(tools.magazine[target_tool].extruders), BIN);
-          SERIAL_ECHOPGM("> H<");
-          SERIAL_PROTOCOL_F((unsigned long)(tools.magazine[target_tool].heaters), BIN);
 
-          SERIAL_ECHOPAIR_P(PSTR("> S"),(unsigned long)(tools.magazine[target_tool].serial));
+          bool values = false;
+
+          SERIAL_ECHOPGM(" D");
+          for (unsigned int d=0; d < EXTRUDERS; d++) {
+            if (tools.magazine[target_tool].extruders & (1<<d)) {
+              if (values) SERIAL_PROTOCOL(VALUE_LIST_SEPARATOR);
+              SERIAL_PROTOCOL_F(d, DEC);
+              values = true;
+            }
+          }
+          if (!values) SERIAL_PROTOCOLPGM("-1");
+          values = false;
+
+          SERIAL_ECHOPGM(" H");
+          if (tools.magazine[target_tool].heaters & (TP_HEATER_BED)) {
+            SERIAL_PROTOCOL_F(0, DEC);
+            values = true;
+          }
+          for (unsigned int h=0; h < HEATERS; h++) {
+            if (tools.magazine[target_tool].heaters & (TP_HEATER_0<<h)) {
+              if (values) SERIAL_PROTOCOL(VALUE_LIST_SEPARATOR);
+              SERIAL_PROTOCOL_F(h+1, DEC);
+              values = true;
+            }
+          }
+          if (!values) SERIAL_PROTOCOLPGM("-1");
+
+          SERIAL_ECHOPAIR_P(PMSG_WS_S,(unsigned long)(tools.magazine[target_tool].serial));
           SERIAL_PROTOCOLLNPGM("");
         }
       }
@@ -6572,7 +6625,14 @@ void process_commands()
     SERIAL_ECHOLNPGM("\"");
   }
 
-  ClearToSend();
+#if defined(DEBUG_MODS)
+  SERIAL_ASYNC_START;
+  SERIAL_PROTOCOLPGM("modl = ");
+  SERIAL_PROTOCOL_F(modl, DEC);
+  SERIAL_PROTOCOLPGM(", modi = ");
+  SERIAL_PROTOCOLLN_F(modi, DEC);
+#endif
+  if (modi >= modl) ClearToSend();
 }
 
 void FlushSerialRequestResend()
@@ -7423,18 +7483,19 @@ void Stop()
 {
   store_last_amb_color();
 
-  // Disable any subsystem work
-#ifdef ENABLE_LASER_MODE
-  Laser::disable();
-#endif
-
   // Disable any possible output to the head
-  disable_heater();
+  StopTool();
+  /*disable_heater();
   MILL_MOTOR_OFF();
 #ifdef FAST_PWM_FAN
   setPwmFrequency(FAN_PIN, 0);
 #endif
-  fanSpeed = 0;
+  fanSpeed = 0;*/
+
+  // Disable any subsystem work
+#ifdef ENABLE_LASER_MODE
+  Laser::disable();
+#endif
 
   set_amb_color(MAX_PWM,MAX_PWM,0);
   if(Stopped == false) {
