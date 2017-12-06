@@ -16,7 +16,10 @@ namespace Laser
 
 	inline bool isEnabled (void)
 	{
-		return READ(HEATER_0_PIN);
+#if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
+		enabled = READ(HEATER_0_PIN);
+#endif
+		return enabled;
 	}
 
 	void setPower (uint16_t);

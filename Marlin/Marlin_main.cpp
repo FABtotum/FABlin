@@ -940,6 +940,7 @@ void FabtotumHeads_init ()
   tools.factory[FAB_HEADS_laser_ID].thtable = 3;
   tools.factory[FAB_HEADS_laser_ID].maxtemp = 80;
   tools.factory[FAB_HEADS_laser_ID].mintemp = 10;
+  tools.factory[FAB_HEADS_laser_ID].mods = "M718\n";
 
   tools.factory[FAB_HEADS_5th_axis_ID].extruders = 1 << 1;
   tools.factory[FAB_HEADS_5th_axis_ID].mintemp  = -127;
@@ -953,8 +954,9 @@ void FabtotumHeads_init ()
   tools.factory[FAB_HEADS_laser_pro_ID].extruders= 1;
   tools.factory[FAB_HEADS_laser_pro_ID].heaters = TP_SENSOR_0;
   tools.factory[FAB_HEADS_laser_pro_ID].thtable =  3;
-  tools.factory[FAB_HEADS_laser_pro_ID].mintemp = -1;
+  tools.factory[FAB_HEADS_laser_pro_ID].mintemp = 10;
   tools.factory[FAB_HEADS_laser_pro_ID].maxtemp = 80;
+  tools.factory[FAB_HEADS_laser_pro_ID].mods = "M718\n";
 
   tools.factory[FAB_HEADS_digitizer_ID].mode = WORKING_MODE_SCAN;
   tools.factory[FAB_HEADS_digitizer_ID].extruders = 1;
@@ -2258,7 +2260,7 @@ FORCE_INLINE void process_laser_power ()
 
   if (working_mode != WORKING_MODE_LASER || !Laser::isEnabled()) {
     SERIAL_ERROR_START;
-    SERIAL_ERRORLNPGM("Laser disabled (wrong mode or error)");
+    SERIAL_ERRORLNPGM("Laser disabled (wrong mode or hardware fault)");
     return;
   }
 
@@ -5078,6 +5080,34 @@ void process_commands()
           {
             SERIAL_PROTOCOLLN("Min endstop");
           }
+      }
+      break;
+    }
+
+    case 718:// M718 - 24VDC head heater ON
+    {
+      switch (working_mode) {
+        case WORKING_MODE_FFF:
+        case WORKING_MODE_HYBRID:
+          SERIAL_ERROR_START;
+          SERIAL_PROTOCOLLNPGM("Incompatible working mode");
+          break;
+        default:
+          tp_disable_heater(TP_HEATER_0);
+          SET_OUTPUT(HEATER_0_PIN);
+          WRITE(HEATER_0_PIN, 1);
+      }
+      break;
+    }
+
+    case 719:// M719 - 24VDC head heater OFF
+    {
+      switch (working_mode) {
+        case WORKING_MODE_FFF:
+        case WORKING_MODE_HYBRID:
+          break;
+        default:
+          WRITE(HEATER_0_PIN, 0);
       }
       break;
     }
