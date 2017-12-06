@@ -1066,7 +1066,7 @@ void tp_enable_heater (uint8_t heaters)
 void tp_disable_heater (uint8_t heaters)
 {
 #if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
-  if (heaters & TP_HEATER_0) {
+  if (enabled_features & (heaters & TP_HEATER_0)) {
     setTargetHotend(0,0);
     target_temperature[0]=0;
     soft_pwm[0]=0;
@@ -1077,7 +1077,7 @@ void tp_disable_heater (uint8_t heaters)
 #endif
 
 #if defined(TEMP_1_PIN) && TEMP_1_PIN > -1
-  if (heaters & TP_HEATER_1) {
+  if (enabled_features & (heaters & TP_HEATER_1)) {
     setTargetHotend(0,1);
     target_temperature[1]=0;
     soft_pwm[1]=0;
@@ -1088,7 +1088,7 @@ void tp_disable_heater (uint8_t heaters)
 #endif
 
 #if defined(TEMP_2_PIN) && TEMP_2_PIN > -1
-  if (heaters & TP_HEATER_2) {
+  if (enabled_features & (heaters & TP_HEATER_2)) {
     setTargetHotend(0,2);
     target_temperature[2]=0;
     soft_pwm[2]=0;
