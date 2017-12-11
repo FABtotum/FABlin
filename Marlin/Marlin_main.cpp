@@ -976,12 +976,16 @@ void FabtotumHeads_init ()
  */
 inline void StopTool ()
 {
+  Stopped=true;
+
   /* High power outputs... */
 
   // This is quite special to the fabtotum so we conditionally compile it
 #if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
+  // Unselect extruder to disable possible overrides
+  active_extruder=-1;
   MILL_MOTOR_OFF();
-  WRITE(SERVO0_PIN,0);
+  //WRITE(MILL_MOTOR_ON_PIN,0);
 #endif
 
   // Disable all heaters for good measure
@@ -1001,6 +1005,7 @@ inline void StopTool ()
 
   servo_detach(0);
   WRITE(NOT_SERVO1_ON_PIN, 1);
+  WRITE(SERVO0_PIN,0);
 
   fanSpeed = 0;
   WRITE(FAN_PIN, 0);
