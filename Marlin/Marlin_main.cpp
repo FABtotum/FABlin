@@ -5813,6 +5813,7 @@ void process_commands()
         }
       }
 
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
       if( code_seen('E') )
       {
         value = code_value();
@@ -5825,6 +5826,7 @@ void process_commands()
           ExternalProbe::setInverted(false);
         }
       }
+#endif
 
       if( !code_seen('X') && !code_seen('Y') && !code_seen('Z') && !code_seen('E') )
       {
