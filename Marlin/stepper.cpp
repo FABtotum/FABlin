@@ -515,6 +515,18 @@ ISR(TIMER1_COMPA_vect)
       count_direction[Y_AXIS]=1;
     }
 
+    bool external_endstop_z_hit = false;
+#if defined(EXTERNAL_ENDSTOP_Z_PROBING)
+    if (ExternalProbe::isEnabled())
+    {
+      bool external_endstop = ExternalProbe::readState();
+      if (external_endstop && old_external_z_endstop) {
+        external_endstop_z_hit = true;
+      }
+      old_external_z_endstop = external_endstop;
+    }
+#endif
+
     // Set direction en check limit switches
     #ifndef COREXY
     if ((out_bits & (1<<X_AXIS)) != 0) {   // stepping along -X axis
@@ -542,16 +554,11 @@ ISR(TIMER1_COMPA_vect)
       }
 
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
-      if( ExternalProbe::isEnabled() )
-      {
-          bool external_endstop = ExternalProbe::readState();
-          if(external_endstop && old_external_z_endstop && (current_block->steps_y > 0)) {
+          if (external_endstop_z_hit && (current_block->steps_y > 0)) {
             endstops_trigsteps[X_AXIS] = count_position[X_AXIS];
             endstop_z_hit=true;
             step_events_completed = current_block->step_event_count;
           }
-          old_external_z_endstop = external_endstop;
-      }
       #endif // defined(EXTERNAL_ENDSTOP_Z_PROBING)
 
     }
@@ -577,16 +584,11 @@ ISR(TIMER1_COMPA_vect)
       }
 
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
-      if( ExternalProbe::isEnabled() )
-      {
-          bool external_endstop = ExternalProbe::readState();
-          if(external_endstop && old_external_z_endstop && (current_block->steps_y > 0)) {
+          if (external_endstop_z_hit && (current_block->steps_y > 0)) {
             endstops_trigsteps[X_AXIS] = count_position[X_AXIS];
             endstop_z_hit=true;
             step_events_completed = current_block->step_event_count;
           }
-          old_external_z_endstop = external_endstop;
-      }
       #endif // defined(EXTERNAL_ENDSTOP_Z_PROBING)
     }
 
@@ -609,16 +611,11 @@ ISR(TIMER1_COMPA_vect)
       }
 
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
-      if( ExternalProbe::isEnabled() )
-      {
-          bool external_endstop = ExternalProbe::readState();
-          if(external_endstop && old_external_z_endstop && (current_block->steps_y > 0)) {
+          if (external_endstop_z_hit && (current_block->steps_y > 0)) {
             endstops_trigsteps[Y_AXIS] = count_position[Y_AXIS];
             endstop_z_hit=true;
             step_events_completed = current_block->step_event_count;
           }
-          old_external_z_endstop = external_endstop;
-      }
       #endif // defined(EXTERNAL_ENDSTOP_Z_PROBING)
 
     }
@@ -637,16 +634,11 @@ ISR(TIMER1_COMPA_vect)
       }
 
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
-      if( ExternalProbe::isEnabled() )
-      {
-          bool external_endstop = ExternalProbe::readState();
-          if(external_endstop && old_external_z_endstop && (current_block->steps_y > 0)) {
+          if (external_endstop_z_hit && (current_block->steps_y > 0)) {
             endstops_trigsteps[Y_AXIS] = count_position[Y_AXIS];
             endstop_z_hit=true;
             step_events_completed = current_block->step_event_count;
           }
-          old_external_z_endstop = external_endstop;
-      }
       #endif // defined(EXTERNAL_ENDSTOP_Z_PROBING)
     }
 
@@ -672,16 +664,11 @@ ISR(TIMER1_COMPA_vect)
       }
 
       #if defined(EXTERNAL_ENDSTOP_Z_PROBING)
-      if( ExternalProbe::isEnabled() )
-      {
-          bool external_endstop = ExternalProbe::readState();
-          if(external_endstop && old_external_z_endstop && (current_block->steps_z > 0)) {
+          if (external_endstop_z_hit && (current_block->steps_z > 0)) {
             endstops_trigsteps[Z_AXIS] = count_position[Z_AXIS];
             endstop_z_hit=true;
             step_events_completed = current_block->step_event_count;
           }
-          old_external_z_endstop = external_endstop;
-      }
     #endif
     }
     else { // +direction
