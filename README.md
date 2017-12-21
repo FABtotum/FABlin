@@ -1,6 +1,5 @@
-==========================
 FABlin Firmware
-==========================
+===============
 FABtotum Marlin Derivate Firmware.
 
 This is the FABlin, a Marlin Derivate Firmware. Marlin was originally
@@ -46,13 +45,21 @@ defintion, run:
 Latest Changes
 --------------
 
-### Version 1.1.0.2
+### Version 1.1.1
 
-- Improvements in homing procedure
-- Make stepper motor's idle hold timout configurable with `M84`
-- Fix temperature readings
-- Fix parameter parsing inside `M85`
-- Fix parsing of line number words (N's can now be used inside `M790`...)
-
+- Add support functions for Fabtotum Laser Head PRO
+- Added support for head-installed _external probe_, `M746 S2` selects it
+- Expanded `G38` for external-probing with movement on all the three axes
+- Better emergency stop in case of head faults
+- `M793 S0` can be issued to shut-down all head lines and functions
+- Changes in tool configuration
+  - `M563` accepts multiple values per parameter, e.g. `M563 P0 D0 H0:1`
+  - Revised heaters numbering:
+    - 0: bed heater
+    - 1: head heater
+    - 4: bed temp sensor with disabled heater
+    - 5: head temp sensor with disabled heater
+  - Revised `M563` command output
+- Added support for a motor driver (drive n.3) through bed pins; no DIR pin available
 
 For the complete changelog, see [ChangeLog](ChangeLog.txt).

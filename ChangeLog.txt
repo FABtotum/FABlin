@@ -1,6 +1,23 @@
 Revision history
 ================
 
+Min: 1.1.1 (2017-12-21)
+-----------------------
+- Add support functions for Fabtotum Laser Head PRO
+- Added support for head-installed _external probe_, `M746 S2` selects it
+- Expanded `G38` for external-probing with movement on all the three axes
+- Better emergency stop in case of head faults
+- `M793 S0` can be issued to shut-down all head lines and functions
+- Changes in tool configuration
+  - `M563` accepts multiple values per parameter, e.g. `M563 P0 D0 H0:1`
+  - Revised heaters numbering:
+    - 0: bed heater
+    - 1: head heater
+    - 4: bed temp sensor with disabled heater
+    - 5: head temp sensor with disabled heater
+  - Revised `M563` command output
+- Added support for a motor driver (drive n.3) through bed pins; no DIR pin available
+
 Fix: 1.1.0.2 (2017-06-29)
 -------------------------
 - Improvements in homing procedure
