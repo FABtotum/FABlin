@@ -880,6 +880,9 @@ void setup_addon (uint8_t id)
     // Tools module has no notion of working modes so we change it here
     working_mode_change(tools.magazine[active_tool].mode, true);
 
+    // Reselect active tool to make any tool configuration modification effective
+    tools.change(active_tool);
+
    // Update heaters max temp
 #if (EXTRUDERS > 0)
     if (installed_head.maxtemp > installed_head.mintemp)
@@ -894,9 +897,6 @@ void setup_addon (uint8_t id)
         CRITICAL_SECTION_END
      }
 #endif
-
-    // Reselect active tool to make any tool configuration modification effective
-    tools.change(active_tool);
 
     // Set hardcoded head modification codes to be run
     if (installed_head.mods) {
@@ -4569,10 +4569,12 @@ void process_commands()
 
       if (codes_seen)
       {
+        Stopped=true;
         tools.define(target_tool, drive, heaters, twi, true);
 
         // Reselect active tool to reload definition
         if (target_tool == active_tool) tools.change(active_tool);
+        Stopped=false;
       }
       else
       {
@@ -4606,6 +4608,10 @@ void process_commands()
             if (tools.magazine[target_tool].heaters & (TP_HEATER_0<<h)) {
               if (values) SERIAL_PROTOCOL(VALUE_LIST_SEPARATOR);
               SERIAL_PROTOCOL_F(h+1, DEC);
+              values = true;
+            } else if (tools.magazine[target_tool].heaters & (TP_SENSOR_0<<h)) {
+              if (values) SERIAL_PROTOCOL(VALUE_LIST_SEPARATOR);
+              SERIAL_PROTOCOL_F(h+5, DEC);
               values = true;
             }
           }
@@ -5148,7 +5154,7 @@ void process_commands()
         case WORKING_MODE_FFF:
         case WORKING_MODE_HYBRID:
           SERIAL_ERROR_START;
-          SERIAL_PROTOCOLLNPGM("Incompatible working mode");
+          SERIAL_PROTOCOLLNPGM("Wrong working mode");
           break;
         default:
           tp_disable_heater(TP_HEATER_0);
@@ -7486,7 +7492,7 @@ void kill()
 
 }
 
-void Stop()
+void Stop(uint8_t error_code)
 {
   store_last_amb_color();
 
@@ -7512,9 +7518,8 @@ void Stop()
     SERIAL_ERRORLNPGM(MSG_ERR_STOPPED);
     LCD_MESSAGEPGM(MSG_STOPPED);
   }
-
   RPI_ERROR_ACK_ON();
-  ERROR_CODE=ERROR_STOPPED;
+  ERROR_CODE=error_code;
 }
 
 bool IsStopped() { return Stopped; };

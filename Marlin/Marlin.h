@@ -98,6 +98,8 @@ const char commentmagic[] PROGMEM = "// ";
 #define SERIAL_ERRORLN_P(x)  SERIAL_PROTOCOLLN_P(x)
 #define SERIAL_ERRORLNPGM(x) SERIAL_PROTOCOLLNPGM(x)
 
+#define _ERROR_STOPPED     101
+
 #define SERIAL_ASYNC_START  (serialprintPGM(asyncmagic))
 #define SERIAL_ASYNCLN       SERIAL_PROTOCOLLN(x)
 #define SERIAL_ASYNCLN_P     SERIAL_PROTOCOLLN_P(x)
@@ -278,7 +280,7 @@ extern float delta[3];
 #endif
 void prepare_move();
 void kill();
-void Stop();
+void Stop(uint8_t=_ERROR_STOPPED);
 
 void kill_by_door();
 
@@ -511,7 +513,7 @@ extern uint8_t working_mode;
 
 //error codes
 #define ERROR_KILLED      100
-#define ERROR_STOPPED     101
+#define ERROR_STOPPED    _ERROR_STOPPED  // 101
 #define ERROR_DOOR_OPEN   102
 #define ERROR_MIN_TEMP    103
 #define ERROR_MAX_TEMP    104

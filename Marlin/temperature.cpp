@@ -89,7 +89,7 @@ unsigned int ERROR_CODE;
 //===========================================================================
 //=============================private variables============================
 //===========================================================================
-/*volatile*/ uint8_t enabled_features = 0xff;
+volatile uint8_t enabled_features = 0xff;
 
 static volatile bool temp_meas_ready = false;
 
@@ -876,31 +876,36 @@ inline void tp_enable_fan ()
   #endif
 }
 
-void inline setup_isr (bool force=false)
+void inline start_isr (bool force=false)
 {
-  // Check if we have enabled feature while having the temp ISR disabled
-  if (enabled_features)
-  {
-    // Use timer0 for temperature measurement
-    // Interleave temperature interrupt with millies interrupt
-    OCR0B = 128;
+  // Use timer0 for temperature measurement
+  // Interleave temperature interrupt with millies interrupt
+  OCR0B = 128;
 
-    if ((TIMSK0 & (1<<OCIE0B)) == 0 || force) {
-      TIMSK0 |= (1<<OCIE0B);
-      // Wait for temperature measurement to settle
-      delay(250);
-    }
+  if ((TIMSK0 & (1<<OCIE0B)) == 0 || force) {
+    temp_meas_ready = false;
+    TIMSK0 |= (1<<OCIE0B);
+    // Wait for temperature measurement to settle
+    delay(250);
   }
+}
+
+void inline stop_isr ()
+{
+  TIMSK0 &= ~(1<<OCIE0B);
 }
 
 void tp_init (uint8_t features)
 {
+  stop_isr();
   enabled_features = features;
   tp_init();
 }
 
 void tp_init()
 {
+  stop_isr();
+
 #if (MOTHERBOARD == 80) && ((TEMP_SENSOR_0==-1)||(TEMP_SENSOR_1==-1)||(TEMP_SENSOR_2==-1)||(TEMP_SENSOR_BED==-1))
   //disable RUMBA JTAG in case the thermocouple extension is plugged on top of JTAG connector
   MCUCR=(1<<JTD);
@@ -921,13 +926,12 @@ void tp_init()
 #endif //PIDTEMPBED
   }
 
-  tp_enable_heater(enabled_features & TP_HEATERS);
-
   tp_enable_fan();
+
+  tp_enable_heater(enabled_features & TP_HEATERS);
 
   //tp_enable_sensor(enabled_features & TP_SENSORS);
 
-  setup_isr(true);
   /*if (enabled_features) {
     // Use timer0 for temperature measurement
     // Interleave temperature interrupt with millies interrupt
@@ -941,42 +945,45 @@ void tp_init()
   tp_init_mintemp(HEATER_0_MINTEMP, TP_HEATER_0);
 #endif //MINTEMP
 #ifdef HEATER_0_MAXTEMP
-  maxttemp[0] = HEATER_0_MAXTEMP;
+  tp_init_maxtemp(HEATER_0_MAXTEMP, TP_HEATER_0);
+  /*maxttemp[0] = HEATER_0_MAXTEMP;
   while(analog2temp(maxttemp_raw[0], 0) > HEATER_0_MAXTEMP) {
 #if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
     maxttemp_raw[0] -= OVERSAMPLENR;
 #else
     maxttemp_raw[0] += OVERSAMPLENR;
 #endif
-  }
+  }*/
 #endif //MAXTEMP
 
 #if (HEATERS > 1) && defined(HEATER_1_MINTEMP)
   tp_init_mintemp(HEATER_1_MINTEMP, TP_HEATER_1);
 #endif // MINTEMP 1
 #if (HEATERS > 1) && defined(HEATER_1_MAXTEMP)
-  maxttemp[1] = HEATER_1_MAXTEMP;
+  tp_init_maxtemp(HEATER_1_MAXTEMP, TP_HEATER_1);
+  /*maxttemp[1] = HEATER_1_MAXTEMP;
   while(analog2temp(maxttemp_raw[1], 1) > HEATER_1_MAXTEMP) {
 #if HEATER_1_RAW_LO_TEMP < HEATER_1_RAW_HI_TEMP
     maxttemp_raw[1] -= OVERSAMPLENR;
 #else
     maxttemp_raw[1] += OVERSAMPLENR;
 #endif
-  }
+  }*/
 #endif //MAXTEMP 1
 
 #if (HEATERS > 2) && defined(HEATER_2_MINTEMP)
   tp_init_mintemp(HEATER_2_MINTEMP, TP_HEATER_2);
 #endif //MINTEMP 2
 #if (HEATERS > 2) && defined(HEATER_2_MAXTEMP)
-  maxttemp[2] = HEATER_2_MAXTEMP;
+  tp_init_maxtemp(HEATER_2_MAXTEMP, TP_HEATER_2);
+  /*maxttemp[2] = HEATER_2_MAXTEMP;
   while(analog2temp(maxttemp_raw[2], 2) > HEATER_2_MAXTEMP) {
 #if HEATER_2_RAW_LO_TEMP < HEATER_2_RAW_HI_TEMP
     maxttemp_raw[2] -= OVERSAMPLENR;
 #else
     maxttemp_raw[2] += OVERSAMPLENR;
 #endif
-  }
+  }*/
 #endif //MAXTEMP 2
 
 #ifdef BED_MINTEMP
@@ -1017,6 +1024,8 @@ void setWatch()
 
 void tp_enable_heater (uint8_t heaters)
 {
+  stop_isr();
+
   // Sensors must also be enabled, otherwise we are screwed
   tp_enable_sensor(heaters << 4);
 
@@ -1060,11 +1069,13 @@ void tp_enable_heater (uint8_t heaters)
   }
 
   enabled_features |= heaters;
-  setup_isr();
+  start_isr();
 }
 
 void tp_disable_heater (uint8_t heaters)
 {
+  stop_isr();
+
 #if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
   if (enabled_features & (heaters & TP_HEATER_0)) {
     setTargetHotend(0,0);
@@ -1110,6 +1121,7 @@ void tp_disable_heater (uint8_t heaters)
 #endif
 
   enabled_features &= ~heaters;
+  start_isr();
 }
 
 // DEPRECATED
@@ -1120,6 +1132,8 @@ void disable_heater()
 
 void tp_enable_sensor (uint8_t sensors)
 {
+  stop_isr();
+
   if (sensors) {
     // Set analog inputs
     ADCSRA = 1<<ADEN | 1<<ADSC | 1<<ADIF | 0x07;
@@ -1133,32 +1147,61 @@ void tp_enable_sensor (uint8_t sensors)
 #if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)
     SET_ANALOG(TEMP_0_PIN);
 #endif
+/*#ifdef HEATER_0_MINTEMP
+  tp_init_mintemp(HEATER_0_MINTEMP, TP_HEATER_0);
+#endif
+#ifdef HEATER_0_MAXTEMP
+  tp_init_maxtemp(HEATER_0_MAXTEMP, TP_HEATER_0);
+#endif*/
   }
 
   if (sensors & TP_SENSOR_1) {
 #if defined(TEMP_1_PIN) && (TEMP_1_PIN > -1)
     SET_ANALOG(TEMP_1_PIN);
 #endif
+/*#ifdef HEATER_1_MINTEMP
+  tp_init_mintemp(HEATER_1_MINTEMP, TP_HEATER_1);
+#endif
+#ifdef HEATER_1_MAXTEMP
+  tp_init_maxtemp(HEATER_1_MAXTEMP, TP_HEATER_1);
+#endif*/
   }
 
   if (sensors & TP_SENSOR_2) {
 #if defined(TEMP_2_PIN) && (TEMP_2_PIN > -1)
     SET_ANALOG(TEMP_2_PIN);
 #endif
+/*#ifdef HEATER_2_MINTEMP
+  tp_init_mintemp(HEATER_2_MINTEMP, TP_HEATER_2);
+#endif
+#ifdef HEATER_2_MAXTEMP
+  tp_init_maxtemp(HEATER_2_MAXTEMP, TP_HEATER_2);
+#endif*/
   }
 
   if (sensors & TP_SENSOR_BED) {
 #if defined(TEMP_BED_PIN) && (TEMP_BED_PIN > -1)
     SET_ANALOG(TEMP_BED_PIN);
 #endif
+/*#ifdef BED_MAXTEMP
+    while(analog2tempBed(bed_maxttemp_raw) > BED_MAXTEMP) {
+  #if HEATER_BED_RAW_LO_TEMP < HEATER_BED_RAW_HI_TEMP
+      bed_maxttemp_raw -= OVERSAMPLENR;
+  #else
+      bed_maxttemp_raw += OVERSAMPLENR;
+  #endif
+    }
+#endif //BED_MAXTEMP*/
   }
+  start_isr(true);
 
   enabled_features |= sensors;
-  setup_isr();
 }
 
 void tp_disable_sensor (uint8_t sensors)
 {
+  stop_isr();
+
   // When sensors are disabled heaters cannot work as well
   tp_disable_heater(sensors >> 4);
 
@@ -1203,9 +1246,10 @@ void tp_disable_sensor (uint8_t sensors)
   }
 
   enabled_features &= ~sensors;
+  start_isr();
 }
 
-void max_temp_error (uint8_t e)
+void inline max_temp_error (uint8_t e)
 {
   // Only honor error if the relevant TP_SENSOR_e was enabled
   if (!(enabled_features & TP_SENSOR_0<<e)) return;
@@ -1213,18 +1257,18 @@ void max_temp_error (uint8_t e)
   if (enabled_features & TP_HEATER_0<<e) disable_heater();
   WRITE(HEATER_0_PIN, 0);
 
-  if(IsStopped() == false) {
+  if (IsStopped() == false)
+  {
+    RPI_ERROR_ACK_ON();
+    ERROR_CODE=ERROR_MAX_TEMP;
     SERIAL_ASYNC_START;
     SERIAL_ERRORLN((int)e);
     SERIAL_ERRORLNPGM(": Extruder switched off. MAXTEMP triggered !");
     LCD_ALERTMESSAGEPGM("Err: MAXTEMP");
-  }
 #ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
-  Stop();
+  Stop(ERROR_MAX_TEMP);
 #endif
-
-  RPI_ERROR_ACK_ON();
-  ERROR_CODE=ERROR_MAX_TEMP;
+  }
 }
 
 void min_temp_error (uint8_t e)
@@ -1260,24 +1304,24 @@ void min_temp_error (uint8_t e)
 void bed_max_temp_error (void)
 {
   // Oly disable heater if TP_HEATER_BED was enabled
-  if (!(enabled_features & TP_HEATER_BED)) return;
+  if (!(enabled_features & TP_SENSOR_BED)) return;
 
-  disable_heater();
+  if (enabled_features & TP_HEATER_BED) disable_heater();
 #if HEATER_BED_PIN > -1
   WRITE(HEATER_BED_PIN, 0);
 #endif
 
-  if(IsStopped() == false) {
+  if (IsStopped() == false)
+  {
+    RPI_ERROR_ACK_ON();
+    ERROR_CODE=ERROR_MAX_BED_TEMP;
     SERIAL_ASYNC_START;
     SERIAL_ERRORLNPGM("Temperature heated bed switched off. MAXTEMP triggered !!");
     LCD_ALERTMESSAGEPGM("Err: MAXTEMP BED");
+#ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
+    Stop();
+#endif
   }
-  #ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
-  Stop();
-  #endif
-
-  RPI_ERROR_ACK_ON();
-  ERROR_CODE=ERROR_MAX_BED_TEMP;
 }
 
 #ifdef HEATER_0_USES_MAX6675
