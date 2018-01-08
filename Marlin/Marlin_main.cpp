@@ -393,7 +393,7 @@ bool    tool_twi_support[TOOLS_MAGAZINE_SIZE]/*      = { true, false, false, ...
 int fanSpeed=0;
 
 #ifdef SERVO_ENDSTOPS
-  int servo_endstops[] = SERVO_ENDSTOPS;
+  const int servo_endstops[] = SERVO_ENDSTOPS;
   int servo_endstop_angles[] = SERVO_ENDSTOP_ANGLES;
 #endif
 #ifdef BARICUDA
@@ -1223,9 +1223,6 @@ void setup()
   watchdog_init();
   st_init();    // Initialize stepper, this enables interrupts!
   setup_photpin();
-#if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
-  if (installed_head_id >= 1 && installed_head_id <= 3)
-#endif
   servo_init();
 
 #if (MOTHERBOARD == 25)

@@ -341,7 +341,7 @@ extern float zprobe_zoffset;
 extern int fanSpeed;
 
 #ifdef SERVO_ENDSTOPS
-extern int servo_endstops[];
+extern const int servo_endstops[];
 extern int servo_endstop_angles[];
 #endif
 
