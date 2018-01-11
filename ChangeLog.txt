@@ -1,7 +1,7 @@
 Revision history
 ================
 
-Min: 1.1.1 (2017-12-21)
+Rev: 1.1.1 (2018-01-11)
 -----------------------
 - Add support functions for Fabtotum Laser Head PRO
 - Added support for head-installed _external probe_, `M746 S2` selects it
