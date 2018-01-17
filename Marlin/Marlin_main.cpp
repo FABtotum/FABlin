@@ -898,6 +898,9 @@ void setup_addon (uint8_t id)
      }
 #endif
 
+    // Forced delay to settle possible temp readings
+    delay(1000);
+
     // Set hardcoded head modification codes to be run
     if (installed_head.mods) {
       set_mods(installed_head.mods);
@@ -4572,6 +4575,8 @@ void process_commands()
 
         // Reselect active tool to reload definition
         if (target_tool == active_tool) tools.change(active_tool);
+
+        delay(1000);  // Way more than the minimum ~130 msecs (as per temperature ISR measuring cycles): seems to work
         Stopped=false;
       }
       else
@@ -6534,7 +6539,12 @@ void process_commands()
   else if(code_seen('T'))
   {
     tmp_extruder = code_value_long();
+
+    Stopped = true;
     tmp_extruder = tools.change(tmp_extruder);
+    delay(1000);
+    Stopped = false;
+
     if(tmp_extruder >= EXTRUDERS) {
       SERIAL_ECHO_START;
       SERIAL_ECHOPGM(" T");
