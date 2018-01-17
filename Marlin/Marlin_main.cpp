@@ -7602,11 +7602,11 @@ void setPwmFrequency(uint8_t pin, int val)
 #endif //FAST_PWM_FAN
 
 bool setTargetedHotend(int code){
-  tmp_extruder = active_extruder;
+  tmp_extruder = tool_heater_mapping[active_tool];
   if(code_seen('T')) {
-    tmp_extruder = tool_extruder_mapping[code_value_long()];
+    tmp_extruder = tool_heater_mapping[code_value_long()];
   }
-    tmp_extruder = extruder_heater_mapping[tmp_extruder];
+    //tmp_extruder = extruder_heater_mapping[tmp_extruder];
     if(tmp_extruder >= HEATERS) {
       SERIAL_ERROR_START;
       switch(code){

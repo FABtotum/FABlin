@@ -106,13 +106,7 @@ extern int maxttemp[HEATERS];
 #define EtoH(ext) extruder_heater_mapping[ext]
 
 FORCE_INLINE float degHotend(int8_t extruder) {
-  /*SERIAL_ASYNC_START;
-  SERIAL_PROTOCOLPGM("degHotend: extruder = ");
-  SERIAL_PROTOCOLLN_F(extruder, DEC);*/
   if (extruder >= 0) {
-    /*SERIAL_ASYNC_START;
-    SERIAL_PROTOCOLPGM("degHotend: heater = ");
-    SERIAL_PROTOCOLLN_F(EtoH(extruder), DEC);*/
     return current_temperature[EtoH(extruder)];
   } else {
     return NOT_A_TEMPERATURE;
@@ -120,12 +114,6 @@ FORCE_INLINE float degHotend(int8_t extruder) {
 };
 
 FORCE_INLINE float degTool(uint8_t tool) {
-  /*SERIAL_ASYNC_START;
-  SERIAL_PROTOCOLPGM("degTool: tool = ");
-  SERIAL_PROTOCOLLN_F(tool, DEC);
-  SERIAL_ASYNC_START;
-  SERIAL_PROTOCOLPGM("degHotend: heater = ");
-  SERIAL_PROTOCOLLN_F(tool_heater_mapping[tool], DEC);*/
   if (tool_heater_mapping[tool] >= 0) {
     return current_temperature[tool_heater_mapping[tool]];
   } else {

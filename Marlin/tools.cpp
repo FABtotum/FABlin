@@ -99,9 +99,18 @@ uint8_t tools_s::change (uint8_t tool)
    {
       if (magazine[tool].heaters & (TP_SENSOR_0 << h)) {
          tp_enable_sensor(TP_SENSOR_0 << h);
+         tool_heater_mapping[tool] = h;
       }
    }
-   extruder_heater_mapping[tool_extruder_mapping[tool]] = tool_heater_mapping[tool];
+
+   if (tool_extruder_mapping[tool] >= 0 && tool_extruder_mapping[tool] < EXTRUDERS)
+   {
+      if (tool_heater_mapping[tool] >= 0 && tool_heater_mapping[tool] < HEATERS) {
+         extruder_heater_mapping[tool_extruder_mapping[tool]] = tool_heater_mapping[tool];
+      } else {
+         extruder_heater_mapping[tool_extruder_mapping[tool]] = -1;
+      }
+   }
 
    // Bed must be initialized separately because Marlin
    if (magazine[tool].heaters & TP_HEATER_BED) {
