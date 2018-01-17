@@ -253,7 +253,7 @@ void tp_init_mintemp (int8_t, tp_features=TP_HEATER_0);
 void tp_init_maxtemp (int16_t, tp_features=TP_HEATER_0);
 int getHeaterPower(int heater);
 
-void disable_heater();  // DEPRECABLE
+void disable_heater();
 void tp_enable_heater  (uint8_t=TP_HEATERS);
 void tp_enable_sensor  (uint8_t=TP_SENSORS);
 void tp_disable_heater (uint8_t=TP_HEATERS);

@@ -1124,10 +1124,44 @@ void tp_disable_heater (uint8_t heaters)
   start_isr();
 }
 
-// DEPRECATED
 void disable_heater()
 {
-  tp_disable_heater(TP_HEATERS);
+  for(int i=0;i<HEATERS;i++)
+    setTargetHotend(0,i);
+  setTargetBed(0);
+  #if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
+    target_temperature[0]=0;
+    soft_pwm[0]=0;
+    #if defined(HEATER_0_PIN) && HEATER_0_PIN > -1
+    WRITE(HEATER_0_PIN,LOW);
+   #endif
+  #endif
+
+  #if defined(TEMP_1_PIN) && TEMP_1_PIN > -1
+    #if (HEATERS > 1)
+      target_temperature[1]=0;
+      soft_pwm[1]=0;
+    #endif
+    #if defined(HEATER_1_PIN) && HEATER_1_PIN > -1
+      WRITE(HEATER_1_PIN,LOW);
+    #endif
+  #endif
+
+  #if defined(TEMP_2_PIN) && TEMP_2_PIN > -1
+     target_temperature[2]=0;
+     soft_pwm[2]=0;
+    #if defined(HEATER_2_PIN) && HEATER_2_PIN > -1
+      WRITE(HEATER_2_PIN,LOW);
+    #endif
+  #endif
+
+  #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
+    target_temperature_bed=0;
+    soft_pwm_bed=0;
+    #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
+      WRITE(HEATER_BED_PIN,LOW);
+    #endif
+  #endif
 }
 
 void tp_enable_sensor (uint8_t sensors)
@@ -1147,51 +1181,24 @@ void tp_enable_sensor (uint8_t sensors)
 #if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)
     SET_ANALOG(TEMP_0_PIN);
 #endif
-/*#ifdef HEATER_0_MINTEMP
-  tp_init_mintemp(HEATER_0_MINTEMP, TP_HEATER_0);
-#endif
-#ifdef HEATER_0_MAXTEMP
-  tp_init_maxtemp(HEATER_0_MAXTEMP, TP_HEATER_0);
-#endif*/
   }
 
   if (sensors & TP_SENSOR_1) {
 #if defined(TEMP_1_PIN) && (TEMP_1_PIN > -1)
     SET_ANALOG(TEMP_1_PIN);
 #endif
-/*#ifdef HEATER_1_MINTEMP
-  tp_init_mintemp(HEATER_1_MINTEMP, TP_HEATER_1);
-#endif
-#ifdef HEATER_1_MAXTEMP
-  tp_init_maxtemp(HEATER_1_MAXTEMP, TP_HEATER_1);
-#endif*/
   }
 
   if (sensors & TP_SENSOR_2) {
 #if defined(TEMP_2_PIN) && (TEMP_2_PIN > -1)
     SET_ANALOG(TEMP_2_PIN);
 #endif
-/*#ifdef HEATER_2_MINTEMP
-  tp_init_mintemp(HEATER_2_MINTEMP, TP_HEATER_2);
-#endif
-#ifdef HEATER_2_MAXTEMP
-  tp_init_maxtemp(HEATER_2_MAXTEMP, TP_HEATER_2);
-#endif*/
   }
 
   if (sensors & TP_SENSOR_BED) {
 #if defined(TEMP_BED_PIN) && (TEMP_BED_PIN > -1)
     SET_ANALOG(TEMP_BED_PIN);
 #endif
-/*#ifdef BED_MAXTEMP
-    while(analog2tempBed(bed_maxttemp_raw) > BED_MAXTEMP) {
-  #if HEATER_BED_RAW_LO_TEMP < HEATER_BED_RAW_HI_TEMP
-      bed_maxttemp_raw -= OVERSAMPLENR;
-  #else
-      bed_maxttemp_raw += OVERSAMPLENR;
-  #endif
-    }
-#endif //BED_MAXTEMP*/
   }
   start_isr(true);
 
