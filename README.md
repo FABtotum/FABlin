@@ -45,6 +45,14 @@ defintion, run:
 Latest Changes
 --------------
 
+#### Version 1.1.1.1
+
+- Fix heaters not working inside PID tuning procedure (M303 command)
+- Fix missing bed temperature readings with some toolheads
+- Better stability when reconfiguring tools and installing new heads
+- Fix M563 output when the bed's thermistor is active without the bed heater being so
+
+
 ### Version 1.1.1
 
 - Add support functions for Fabtotum Laser Head PRO
