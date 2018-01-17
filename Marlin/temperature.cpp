@@ -1262,7 +1262,6 @@ void inline max_temp_error (uint8_t e)
   if (!(enabled_features & TP_SENSOR_0<<e)) return;
 
   if (enabled_features & TP_HEATER_0<<e) disable_heater();
-  WRITE(HEATER_0_PIN, 0);
 
   if (IsStopped() == false)
   {
@@ -1285,13 +1284,11 @@ void min_temp_error (uint8_t e)
     return;
   }
 
-  //
   head_placed = false;
 
   if (enabled_features & TP_HEATER_0<<e) {
     disable_heater();
   }
-  WRITE(HEATER_0_PIN, 0);
 
   if (IsStopped() == false)
   {
@@ -1310,13 +1307,10 @@ void min_temp_error (uint8_t e)
 
 void bed_max_temp_error (void)
 {
-  // Oly disable heater if TP_HEATER_BED was enabled
+  // Only disable heater if TP_HEATER_BED was enabled
   if (!(enabled_features & TP_SENSOR_BED)) return;
 
   if (enabled_features & TP_HEATER_BED) disable_heater();
-#if HEATER_BED_PIN > -1
-  WRITE(HEATER_BED_PIN, 0);
-#endif
 
   if (IsStopped() == false)
   {
@@ -1764,7 +1758,7 @@ ISR(TIMER0_COMPB_vect)
       if(current_temperature_bed_raw >= bed_maxttemp_raw)
   #endif
       {
-         target_temperature_bed = 0;
+         //target_temperature_bed = 0;
          bed_max_temp_error();
       }
 #endif

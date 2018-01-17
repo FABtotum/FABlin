@@ -937,19 +937,20 @@ void FabtotumHeads_init ()
 
   tools.factory[FAB_HEADS_mill_v2_ID].mode = WORKING_MODE_CNC;
   tools.factory[FAB_HEADS_mill_v2_ID].extruders= 1;
-  tools.factory[FAB_HEADS_mill_v2_ID].heaters  = 0;
+  tools.factory[FAB_HEADS_mill_v2_ID].heaters  = TP_SENSOR_BED;
   tools.factory[FAB_HEADS_mill_v2_ID].mintemp  = -1;
   tools.factory[FAB_HEADS_mill_v2_ID].maxtemp  = 0;
 
   tools.factory[FAB_HEADS_laser_ID].mode = WORKING_MODE_LASER;
   tools.factory[FAB_HEADS_laser_ID].extruders= 1;
-  tools.factory[FAB_HEADS_laser_ID].heaters  = TP_SENSOR_0;
+  tools.factory[FAB_HEADS_laser_ID].heaters  = TP_SENSOR_0 | TP_SENSOR_BED;
   tools.factory[FAB_HEADS_laser_ID].thtable = 3;
   tools.factory[FAB_HEADS_laser_ID].maxtemp = 80;
   tools.factory[FAB_HEADS_laser_ID].mintemp = 10;
   tools.factory[FAB_HEADS_laser_ID].mods = "M718\n";
 
   tools.factory[FAB_HEADS_5th_axis_ID].extruders = 1 << 1;
+  tools.factory[FAB_HEADS_5th_axis_ID].heaters = 0;
   tools.factory[FAB_HEADS_5th_axis_ID].mintemp  = -1;
 
   tools.factory[FAB_HEADS_direct_ID].mode = WORKING_MODE_FFF;
@@ -959,7 +960,7 @@ void FabtotumHeads_init ()
 
   tools.factory[FAB_HEADS_laser_pro_ID].mode = WORKING_MODE_LASER;
   tools.factory[FAB_HEADS_laser_pro_ID].extruders= 1;
-  tools.factory[FAB_HEADS_laser_pro_ID].heaters = TP_SENSOR_0;
+  tools.factory[FAB_HEADS_laser_pro_ID].heaters = TP_SENSOR_0 | TP_SENSOR_BED;
   tools.factory[FAB_HEADS_laser_pro_ID].thtable =  3;
   tools.factory[FAB_HEADS_laser_pro_ID].mintemp = 10;
   tools.factory[FAB_HEADS_laser_pro_ID].maxtemp = 80;
@@ -967,7 +968,7 @@ void FabtotumHeads_init ()
 
   tools.factory[FAB_HEADS_digitizer_ID].mode = WORKING_MODE_SCAN;
   tools.factory[FAB_HEADS_digitizer_ID].extruders = 1;
-  tools.factory[FAB_HEADS_digitizer_ID].heaters = 0;
+  tools.factory[FAB_HEADS_digitizer_ID].heaters = TP_SENSOR_BED;
   tools.factory[FAB_HEADS_digitizer_ID].mintemp  = -1;
 }
 
