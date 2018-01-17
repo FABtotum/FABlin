@@ -4606,7 +4606,17 @@ void process_commands()
               if (values) SERIAL_PROTOCOL(VALUE_LIST_SEPARATOR);
               SERIAL_PROTOCOL_F(h+1, DEC);
               values = true;
-            } else if (tools.magazine[target_tool].heaters & (TP_SENSOR_0<<h)) {
+            }
+          }
+          if (! (tools.magazine[target_tool].heaters & (TP_HEATER_BED)))
+          if (tools.magazine[target_tool].heaters & (TP_SENSOR_BED)) {
+            if (values) SERIAL_PROTOCOL(VALUE_LIST_SEPARATOR);
+            SERIAL_PROTOCOL_F(4, DEC);
+            values = true;
+          }
+          for (unsigned int h=0; h < HEATERS; h++) {
+            if (! (tools.magazine[target_tool].heaters & (TP_HEATER_0<<h)))
+            if (tools.magazine[target_tool].heaters & (TP_SENSOR_0<<h)) {
               if (values) SERIAL_PROTOCOL(VALUE_LIST_SEPARATOR);
               SERIAL_PROTOCOL_F(h+5, DEC);
               values = true;
