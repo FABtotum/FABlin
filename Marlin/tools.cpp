@@ -25,7 +25,7 @@ int8_t tool_heater_mapping[TOOLS_MAGAZINE_SIZE]/*   = { 0, -1, 0, ... }*/;  // T
  */
 void tools_s::load (uint8_t tool, uint8_t id)
 {
-   if (id == 0 || id >= TOOLS_FACTORY_SIZE) return;
+   if (/*id == 0 ||*/ id >= TOOLS_FACTORY_SIZE) return;
    if (tool >= TOOLS_MAGAZINE_SIZE) return;
    memcpy(&(magazine[tool]), &(factory[id]), sizeof factory[id]);
 }

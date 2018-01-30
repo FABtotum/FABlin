@@ -890,21 +890,21 @@ void inline start_isr (bool force=false)
   }
 }
 
-void inline stop_isr ()
+/*void inline stop_isr ()
 {
   TIMSK0 &= ~(1<<OCIE0B);
-}
+}*/
 
 void tp_init (uint8_t features)
 {
-  stop_isr();
+  //stop_isr();
   enabled_features = features;
   tp_init();
 }
 
 void tp_init()
 {
-  stop_isr();
+  //stop_isr();
 
 #if (MOTHERBOARD == 80) && ((TEMP_SENSOR_0==-1)||(TEMP_SENSOR_1==-1)||(TEMP_SENSOR_2==-1)||(TEMP_SENSOR_BED==-1))
   //disable RUMBA JTAG in case the thermocouple extension is plugged on top of JTAG connector
@@ -1024,7 +1024,7 @@ void setWatch()
 
 void tp_enable_heater (uint8_t heaters)
 {
-  stop_isr();
+  //stop_isr();
 
   // Sensors must also be enabled, otherwise we are screwed
   tp_enable_sensor(heaters << 4);
@@ -1074,7 +1074,8 @@ void tp_enable_heater (uint8_t heaters)
 
 void tp_disable_heater (uint8_t heaters)
 {
-  stop_isr();
+  //stop_isr();
+  enabled_features &= ~heaters;
 
 #if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
   if (enabled_features & (heaters & TP_HEATER_0)) {
@@ -1120,8 +1121,7 @@ void tp_disable_heater (uint8_t heaters)
   }
 #endif
 
-  enabled_features &= ~heaters;
-  start_isr();
+  //start_isr();
 }
 
 void disable_heater()
@@ -1166,7 +1166,7 @@ void disable_heater()
 
 void tp_enable_sensor (uint8_t sensors)
 {
-  stop_isr();
+  //stop_isr();
 
   if (sensors) {
     // Set analog inputs
@@ -1200,14 +1200,15 @@ void tp_enable_sensor (uint8_t sensors)
     SET_ANALOG(TEMP_BED_PIN);
 #endif
   }
-  start_isr(true);
+  start_isr(/*true*/);
 
   enabled_features |= sensors;
 }
 
 void tp_disable_sensor (uint8_t sensors)
 {
-  stop_isr();
+  //stop_isr();
+  enabled_features &= ~sensors;
 
   // When sensors are disabled heaters cannot work as well
   tp_disable_heater(sensors >> 4);
@@ -1252,8 +1253,7 @@ void tp_disable_sensor (uint8_t sensors)
 #endif
   }
 
-  enabled_features &= ~sensors;
-  start_isr();
+  //start_isr();
 }
 
 void inline max_temp_error (uint8_t e)
@@ -1416,71 +1416,63 @@ ISR(TIMER0_COMPB_vect)
   WRITE(TP_ISR_PROFILE_PIN,1);
 #endif
 
-  if (enabled_features & TP_HEATERS)
-  {
-    if(pwm_count == 0){
-      soft_pwm_0 = soft_pwm[0];
-      if(soft_pwm_0 > 0) {
-        WRITE(HEATER_0_PIN,1);
-        #ifdef HEATERS_PARALLEL
-        WRITE(HEATER_1_PIN,1);
-        #endif
-      } else WRITE(HEATER_0_PIN,0);
+  if(pwm_count == 0){
+    soft_pwm_0 = soft_pwm[0];
+    if(soft_pwm_0 > 0) {
+      WRITE(HEATER_0_PIN,1);
+      #ifdef HEATERS_PARALLEL
+      WRITE(HEATER_1_PIN,1);
+      #endif
+    } else WRITE(HEATER_0_PIN,0);
 
-      #if HEATERS > 1
-      soft_pwm_1 = soft_pwm[1];
-      if(soft_pwm_1 > 0) WRITE(HEATER_1_PIN,1); else WRITE(HEATER_1_PIN,0);
-      #endif
-      #if HEATERS > 2
-      soft_pwm_2 = soft_pwm[2];
-      if(soft_pwm_2 > 0) WRITE(HEATER_2_PIN,1); else WRITE(HEATER_2_PIN,0);
-      #endif
-      #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
-      soft_pwm_b = soft_pwm_bed;
-      if(soft_pwm_b > 0) {
-        WRITE(HEATER_BED_PIN,1);
-      } else {
-        if (enabled_features & TP_HEATER_BED)
-          WRITE(HEATER_BED_PIN,0);
-      }
-      #endif
-      #ifdef FAN_SOFT_PWM
-      soft_pwm_fan = fanSpeedSoftPwm / 2;
-      if(soft_pwm_fan > 0) WRITE(FAN_PIN,1); else WRITE(FAN_PIN,0);
-      #endif
-    }
-    if(soft_pwm_0 < pwm_count) {
-        WRITE(HEATER_0_PIN,0);
-        #ifdef HEATERS_PARALLEL
-        WRITE(HEATER_1_PIN,0);
-        #endif
-      }
     #if HEATERS > 1
-    if(soft_pwm_1 < pwm_count) WRITE(HEATER_1_PIN,0);
+    soft_pwm_1 = soft_pwm[1];
+    if(soft_pwm_1 > 0) WRITE(HEATER_1_PIN,1); else WRITE(HEATER_1_PIN,0);
     #endif
     #if HEATERS > 2
-    if(soft_pwm_2 < pwm_count) WRITE(HEATER_2_PIN,0);
+    soft_pwm_2 = soft_pwm[2];
+    if(soft_pwm_2 > 0) WRITE(HEATER_2_PIN,1); else WRITE(HEATER_2_PIN,0);
     #endif
     #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
-    if (soft_pwm_b < pwm_count)
-    if (enabled_features & TP_HEATER_BED)
-      WRITE(HEATER_BED_PIN,0);
+    soft_pwm_b = soft_pwm_bed;
+    if(soft_pwm_b > 0) {
+      WRITE(HEATER_BED_PIN,1);
+    } else {
+      if (enabled_features & TP_HEATER_BED)
+        WRITE(HEATER_BED_PIN,0);
+    }
     #endif
     #ifdef FAN_SOFT_PWM
-    if(soft_pwm_fan < pwm_count) WRITE(FAN_PIN,0);
+    soft_pwm_fan = fanSpeedSoftPwm / 2;
+    if(soft_pwm_fan > 0) WRITE(FAN_PIN,1); else WRITE(FAN_PIN,0);
     #endif
+  }
+  if(soft_pwm_0 < pwm_count) {
+      WRITE(HEATER_0_PIN,0);
+      #ifdef HEATERS_PARALLEL
+      WRITE(HEATER_1_PIN,0);
+      #endif
+    }
+  #if HEATERS > 1
+  if(soft_pwm_1 < pwm_count) WRITE(HEATER_1_PIN,0);
+  #endif
+  #if HEATERS > 2
+  if(soft_pwm_2 < pwm_count) WRITE(HEATER_2_PIN,0);
+  #endif
+  #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
+  if (soft_pwm_b < pwm_count)
+  if (enabled_features & TP_HEATER_BED)
+    WRITE(HEATER_BED_PIN,0);
+  #endif
+  #ifdef FAN_SOFT_PWM
+  if(soft_pwm_fan < pwm_count) WRITE(FAN_PIN,0);
+  #endif
 
-    pwm_count += (1 << SOFT_PWM_SCALE);
-    pwm_count &= 0x7f;
-
-  }  // if (working_mode == WORKING_MODE_FFF)
+  pwm_count += (1 << SOFT_PWM_SCALE);
+  pwm_count &= 0x7f;
 
   switch(temp_state) {
     case 0: // Prepare TEMP_0
-      if (!(enabled_features & TP_SENSOR_0)) {
-        temp_state += 2;
-        break;
-      }
       #if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)
         #if TEMP_0_PIN > 7
           ADCSRB = 1<<MUX5;
@@ -1503,10 +1495,6 @@ ISR(TIMER0_COMPB_vect)
       temp_state = 2;
       break;
     case 2: // Prepare TEMP_BED
-      if (!(enabled_features & TP_SENSOR_BED)) {
-        temp_state += 2;
-        break;
-      }
       #if defined(TEMP_BED_PIN) && (TEMP_BED_PIN > -1)
         #if TEMP_BED_PIN > 7
           ADCSRB = 1<<MUX5;
@@ -1646,123 +1634,125 @@ ISR(TIMER0_COMPB_vect)
   }
 
   if(temp_count >= OVERSAMPLENR) // 8 * 16 * 1/(16000000/64/256)  = 131ms.
-  if (enabled_features & TP_SENSORS)
   {
-    if (!temp_meas_ready) //Only update the raw values if they have been read. Else we could be updating them during reading.
+    if (enabled_features & TP_SENSORS)
     {
+      if (!temp_meas_ready) //Only update the raw values if they have been read. Else we could be updating them during reading.
+      {
 
-      #ifdef THERMISTOR_INPUT_HOTSWAP
-         #if (TEMP_1_PIN < 0)
-         #error "THERMISTOR_INPUT_HOTSWAP needs both TEMP_0 and TEMP_1 to be defined"
-         #endif
-      current_temperature_raw[0] = ((extruder_0_thermistor_input_index == 1)?raw_temp_1_value:raw_temp_0_value);
-      #else
-      current_temperature_raw[0] = raw_temp_0_value;
-      #endif
+        #ifdef THERMISTOR_INPUT_HOTSWAP
+           #if (TEMP_1_PIN < 0)
+           #error "THERMISTOR_INPUT_HOTSWAP needs both TEMP_0 and TEMP_1 to be defined"
+           #endif
+        current_temperature_raw[0] = ((extruder_0_thermistor_input_index == 1)?raw_temp_1_value:raw_temp_0_value);
+        #else
+        current_temperature_raw[0] = raw_temp_0_value;
+        #endif
 
-#if HEATERS > 1
-      current_temperature_raw[1] = raw_temp_1_value;
-#endif
-#ifdef TEMP_SENSOR_1_AS_REDUNDANT
-      redundant_temperature_raw = raw_temp_1_value;
-#endif
-#if HEATERS > 2
-      current_temperature_raw[2] = raw_temp_2_value;
-#endif
-      current_temperature_bed_raw = raw_temp_bed_value;
+  #if HEATERS > 1
+        current_temperature_raw[1] = raw_temp_1_value;
+  #endif
+  #ifdef TEMP_SENSOR_1_AS_REDUNDANT
+        redundant_temperature_raw = raw_temp_1_value;
+  #endif
+  #if HEATERS > 2
+        current_temperature_raw[2] = raw_temp_2_value;
+  #endif
+        current_temperature_bed_raw = raw_temp_bed_value;
 
-      current_pressure_raw_value = pressure_raw_value;
-      current_mon_main_supply_raw_value = mon_24V_raw_value;
-      current_mon_sec_supply_raw_value = mon_5V_raw_value;
-      current_main_current_raw_value = main_curr_raw_value;
+        current_pressure_raw_value = pressure_raw_value;
+        current_mon_main_supply_raw_value = mon_24V_raw_value;
+        current_mon_sec_supply_raw_value = mon_5V_raw_value;
+        current_main_current_raw_value = main_curr_raw_value;
 
+      }
+
+      if (enabled_features & TP_SENSOR_0)
+      {
+  #if HEATER_0_RAW_LO_TEMP > HEATER_0_RAW_HI_TEMP
+        if(current_temperature_raw[0] <= maxttemp_raw[0])
+  #else
+        if(current_temperature_raw[0] >= maxttemp_raw[0])
+  #endif
+            max_temp_error(0);
+
+  #if HEATER_0_RAW_LO_TEMP > HEATER_0_RAW_HI_TEMP
+        if(current_temperature_raw[0] >= minttemp_raw[0])
+  #else
+        if(current_temperature_raw[0] <= minttemp_raw[0])
+  #endif
+          min_temp_error(0);
+      }
+
+  #if HEATERS > 1
+      if (enabled_features & TP_SENSOR_1)
+      {
+  #if HEATER_1_RAW_LO_TEMP > HEATER_1_RAW_HI_TEMP
+        if(current_temperature_raw[1] <= maxttemp_raw[1])
+  #else
+        if(current_temperature_raw[1] >= maxttemp_raw[1])
+  #endif
+        max_temp_error(1);
+
+  #if HEATER_1_RAW_LO_TEMP > HEATER_1_RAW_HI_TEMP
+        if(current_temperature_raw[1] >= minttemp_raw[1])
+  #else
+        if(current_temperature_raw[1] <= minttemp_raw[1])
+  #endif
+        min_temp_error(1);
+      }
+  #endif
+
+  #if HEATERS > 2
+      if (enabled_features & TP_SENSOR_2)
+      {
+  #if HEATER_2_RAW_LO_TEMP > HEATER_2_RAW_HI_TEMP
+        if(current_temperature_raw[2] <= maxttemp_raw[2])
+  #else
+        if(current_temperature_raw[2] >= maxttemp_raw[2])
+  #endif
+          max_temp_error(2);
+
+  #if HEATER_2_RAW_LO_TEMP > HEATER_2_RAW_HI_TEMP
+        if(current_temperature_raw[2] >= minttemp_raw[2])
+  #else
+        if(current_temperature_raw[2] <= minttemp_raw[2])
+  #endif
+        min_temp_error(2);
+      }
+  #endif
+
+      if (enabled_features & TP_SENSOR_BED)
+      {
+    /* No bed MINTEMP error? */
+  #if defined(BED_MAXTEMP) && (TEMP_SENSOR_BED != 0)
+    #if HEATER_BED_RAW_LO_TEMP > HEATER_BED_RAW_HI_TEMP
+        if(current_temperature_bed_raw <= bed_maxttemp_raw)
+    #else
+        if(current_temperature_bed_raw >= bed_maxttemp_raw)
+    #endif
+        {
+           //target_temperature_bed = 0;
+           bed_max_temp_error();
+        }
+  #endif
+      }
     }
 
     temp_meas_ready = true;
     temp_count = 0;
     raw_temp_0_value = 0;
-#if defined(TEMP_1_PIN) && (TEMP_1_PIN > -1)
+  #if defined(TEMP_1_PIN) && (TEMP_1_PIN > -1)
     raw_temp_1_value = 0;
-#endif
-#if defined(TEMP_2_PIN) && (TEMP_2_PIN > -1)
+  #endif
+  #if defined(TEMP_2_PIN) && (TEMP_2_PIN > -1)
     raw_temp_2_value = 0;
-#endif
+  #endif
     raw_temp_bed_value = 0;
     pressure_raw_value = 0;
     mon_24V_raw_value = 0;
     mon_5V_raw_value = 0;
     main_curr_raw_value = 0;
-
-    if (enabled_features & TP_SENSOR_0)
-    {
-#if HEATER_0_RAW_LO_TEMP > HEATER_0_RAW_HI_TEMP
-      if(current_temperature_raw[0] <= maxttemp_raw[0])
-#else
-      if(current_temperature_raw[0] >= maxttemp_raw[0])
-#endif
-          max_temp_error(0);
-
-#if HEATER_0_RAW_LO_TEMP > HEATER_0_RAW_HI_TEMP
-      if(current_temperature_raw[0] >= minttemp_raw[0])
-#else
-      if(current_temperature_raw[0] <= minttemp_raw[0])
-#endif
-        min_temp_error(0);
-    }
-
-#if HEATERS > 1
-    if (enabled_features & TP_SENSOR_1)
-    {
-#if HEATER_1_RAW_LO_TEMP > HEATER_1_RAW_HI_TEMP
-      if(current_temperature_raw[1] <= maxttemp_raw[1])
-#else
-      if(current_temperature_raw[1] >= maxttemp_raw[1])
-#endif
-      max_temp_error(1);
-
-#if HEATER_1_RAW_LO_TEMP > HEATER_1_RAW_HI_TEMP
-      if(current_temperature_raw[1] >= minttemp_raw[1])
-#else
-      if(current_temperature_raw[1] <= minttemp_raw[1])
-#endif
-      min_temp_error(1);
-    }
-#endif
-
-#if HEATERS > 2
-    if (enabled_features & TP_SENSOR_2)
-    {
-#if HEATER_2_RAW_LO_TEMP > HEATER_2_RAW_HI_TEMP
-      if(current_temperature_raw[2] <= maxttemp_raw[2])
-#else
-      if(current_temperature_raw[2] >= maxttemp_raw[2])
-#endif
-        max_temp_error(2);
-
-#if HEATER_2_RAW_LO_TEMP > HEATER_2_RAW_HI_TEMP
-      if(current_temperature_raw[2] >= minttemp_raw[2])
-#else
-      if(current_temperature_raw[2] <= minttemp_raw[2])
-#endif
-      min_temp_error(2);
-    }
-#endif
-
-    if (enabled_features & TP_SENSOR_BED)
-    {
-  /* No bed MINTEMP error? */
-#if defined(BED_MAXTEMP) && (TEMP_SENSOR_BED != 0)
-  #if HEATER_BED_RAW_LO_TEMP > HEATER_BED_RAW_HI_TEMP
-      if(current_temperature_bed_raw <= bed_maxttemp_raw)
-  #else
-      if(current_temperature_bed_raw >= bed_maxttemp_raw)
-  #endif
-      {
-         //target_temperature_bed = 0;
-         bed_max_temp_error();
-      }
-#endif
-    }
   }
 
 #ifdef BABYSTEPPING

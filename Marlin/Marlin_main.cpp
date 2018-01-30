@@ -871,7 +871,7 @@ void setup_addon (uint8_t id)
 
   set_mods("");
 
-  if (id > 0 && id < TOOLS_FACTORY_SIZE)
+  if (id >= 0 && id < TOOLS_FACTORY_SIZE)
   {
     // Load factory head in tools magazine
     tools.load(active_tool, id);
@@ -897,9 +897,6 @@ void setup_addon (uint8_t id)
         CRITICAL_SECTION_END
      }
 #endif
-
-    // Forced delay to settle possible temp readings
-    delay(1000);
 
     // Set hardcoded head modification codes to be run
     if (installed_head.mods) {
@@ -1021,7 +1018,7 @@ inline void StopTool ()
   WRITE(I2C_SCL, 0);
 #endif
 
-  tp_disable_sensor(TP_SENSORS);
+  /*tp_disable_sensor(TP_SENSORS);
 #if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)
   WRITE(TEMP_0_PIN,0);
 #endif
@@ -1030,7 +1027,7 @@ inline void StopTool ()
 #endif
 #if defined(TEMP_2_PIN) && (TEMP_2_PIN > -1)
   WRITE(TEMP_2_PIN,0);
-#endif
+#endif*/
 
   head_placed = false;
 }
@@ -4576,7 +4573,6 @@ void process_commands()
         // Reselect active tool to reload definition
         if (target_tool == active_tool) tools.change(active_tool);
 
-        delay(1000);  // Way more than the minimum ~130 msecs (as per temperature ISR measuring cycles): seems to work
         Stopped=false;
       }
       else
@@ -6542,7 +6538,6 @@ void process_commands()
 
     Stopped = true;
     tmp_extruder = tools.change(tmp_extruder);
-    delay(1000);
     Stopped = false;
 
     if(tmp_extruder >= EXTRUDERS) {
