@@ -39,7 +39,7 @@ enum tp_features : uint8_t {
 //enum tp_heaters  : uint8_t { HEATER_BED=0x01, HEATER_0=0x02 };
 //enum tp_sensors  : uint8_t { TEMP_0=0x01, TEMP_1=0x02, TEMP_BED=0x02 };
 
-typedef uint8_t tp_features_map;
+//typedef uint8_t tp_features_map;
 
 // public functions
 void tp_init ();  //initialize the heating

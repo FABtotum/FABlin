@@ -5157,6 +5157,34 @@ void process_commands()
       break;
     }
 
+    case 716:// M716 - 24VDC bed heater ON
+    {
+      switch (working_mode) {
+        case WORKING_MODE_FFF:
+        case WORKING_MODE_HYBRID:
+          SERIAL_ERROR_START;
+          SERIAL_PROTOCOLLNPGM("Wrong working mode");
+          break;
+        default:
+          tp_disable_heater(TP_HEATER_BED);
+          SET_OUTPUT(HEATER_BED_PIN);
+          WRITE(HEATER_BED_PIN, 1);
+      }
+      break;
+    }
+
+    case 717:// M717 - 24VDC bed heater OFF
+    {
+      switch (working_mode) {
+        case WORKING_MODE_FFF:
+        case WORKING_MODE_HYBRID:
+          break;
+        default:
+          WRITE(HEATER_BED_PIN, 0);
+      }
+      break;
+    }
+
     case 718:// M718 - 24VDC head heater ON
     {
       switch (working_mode) {
