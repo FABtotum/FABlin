@@ -6534,8 +6534,29 @@ void process_commands()
         return;  // 'OK' is already printed from inside FlushSerialRequestResend()
       }
 
+      /**
+       * Command: M2208
+       *
+       * Init TMC2208 driver
+       *
+       * --- Prototype ---
+       * M2208 [Pmres] [Sen_spreadCycle]
+       * -----------------
+       *
+       * Parameters:
+       *  P - Microstepping: 256 / 2^mres. Default: 1.
+       *  S - Enable spreadCycle mode. 0: disabled, 1: enabled. Default: 1.
+       *
+       * Description:
+       * This is a temporary command for development purposes only.
+       *
+       */
       case 2208:
       {
+        bool en_spreadCycle = code_seen('S')? (code_value_long()!=0) : true;
+        int8_t mres = code_seen('P')? code_value_long() : -1;
+
+        // TMC UART is hardcoded for now
         servo_detach(0);
         SET_OUTPUT(11);
         SET_INPUT(13);
@@ -6545,19 +6566,21 @@ void process_commands()
 
         delay(10);
 
-        if (code_seen('M'))
-        {
-          TMC2208.mstep_reg_select(true);
-          delay(10);
-          TMC2208.mres(code_value_long());
-        }
+        // GCONF
+        TMC2208.en_spreadCycle(en_spreadCycle);
+        if (mres >= 0) TMC2208.mstep_reg_select(true);
 
         delay(10);
 
-        if (code_seen('S'))
-        {
-          TMC2208.en_spreadCycle(spreadCycle);
+        // CHOPCONF
+        if (mres >= 0) {
+          TMC2208.mres(mres);
+          TMC2208.intpol(true);
+          TMC2208.hend(5);
+          TMC2208.toff(3);
         }
+
+        delay(10);
 
         break;
       }
