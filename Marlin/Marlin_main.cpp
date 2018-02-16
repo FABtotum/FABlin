@@ -29,7 +29,13 @@
 
 
 #include <errno.h>
+
 #include <Wire.h>
+#include <SoftwareSerial.h>
+
+#include <SmartComm.h>
+#include <TMC2208Stepper.h>
+
 #include "Marlin.h"
 
 #ifdef ENABLE_AUTO_BED_LEVELING
@@ -69,9 +75,6 @@
 #include "tools.h"
 //#include "modes.h"
 #include "Configuration_heads.h"
-
-#include <SoftwareSerial.h>
-#include <SmartComm.h>
 
 #ifdef ENABLE_LASER_MODE
   #include "Laser.h"
@@ -594,6 +597,7 @@ bool auto_fan_on_temp_change = true;
   // Smart Heads
   SoftwareSerial Serial4(RXD4, TXD4);
   SmartComm SmartHead(Serial4);
+  TMC2208Stepper TMC2208(&Serial4, false);	// Create driver that uses SoftwareSerial for communication
 
 #endif
 
@@ -6528,6 +6532,34 @@ void process_commands()
         restore_last_amb_color();
         RPI_ERROR_ACK_OFF();
         return;  // 'OK' is already printed from inside FlushSerialRequestResend()
+      }
+
+      case 2208:
+      {
+        servo_detach(0);
+        SET_OUTPUT(11);
+        SET_INPUT(13);
+        Serial4 = SoftwareSerial(13, 11);
+        Serial4.begin(9600);
+        while (!Serial4);
+
+        delay(10);
+
+        if (code_seen('M'))
+        {
+          TMC2208.mstep_reg_select(true);
+          delay(10);
+          TMC2208.mres(code_value_long());
+        }
+
+        delay(10);
+
+        if (code_seen('S'))
+        {
+          TMC2208.en_spreadCycle(spreadCycle);
+        }
+
+        break;
       }
     }
   }
