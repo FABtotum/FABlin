@@ -1423,7 +1423,7 @@ ISR(TIMER0_COMPB_vect)
       #ifdef HEATERS_PARALLEL
       WRITE(HEATER_1_PIN,1);
       #endif
-    } else WRITE(HEATER_0_PIN,0);
+    } else if (enabled_features & TP_HEATER_0) WRITE(HEATER_0_PIN,0);
 
     #if HEATERS > 1
     soft_pwm_1 = soft_pwm[1];
@@ -1448,7 +1448,7 @@ ISR(TIMER0_COMPB_vect)
     #endif
   }
   if(soft_pwm_0 < pwm_count) {
-      WRITE(HEATER_0_PIN,0);
+      if (enabled_features & TP_HEATER_0) WRITE(HEATER_0_PIN,0);
       #ifdef HEATERS_PARALLEL
       WRITE(HEATER_1_PIN,0);
       #endif

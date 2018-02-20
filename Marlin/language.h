@@ -95,7 +95,7 @@
 #define MSG_Y_OUT " Y: "
 #define MSG_Z_OUT " Z: "
 
-#define ERR_OUT_OF_BOUNDS "Value out of bounds"
+#define MSG_COMMA ","
 
 #if LANGUAGE_CHOICE == 1
 
@@ -231,10 +231,6 @@
 	#define MSG_PLANNER_BUFFER_BYTES "  PlannerBufferBytes: "
 	#define MSG_OK "ok"
 	#define MSG_FILE_SAVED "Done saving file."
-	#define MSG_ERR_LINE_NO "Line Number is not Last Line Number+1, Last Line: "
-	#define MSG_ERR_CHECKSUM_MISMATCH "checksum mismatch, Last Line: "
-	#define MSG_ERR_NO_CHECKSUM "No Checksum with line number, Last Line: "
-	#define MSG_ERR_NO_LINENUMBER_WITH_CHECKSUM "No Line Number with checksum, Last Line: "
 	#define MSG_FILE_PRINTED "Done printing file"
 	#define MSG_BEGIN_FILE_LIST "Begin file list"
 	#define MSG_END_FILE_LIST "End file list"
@@ -243,7 +239,6 @@
 	#define MSG_M200_INVALID_EXTRUDER "M200 Invalid extruder "
 	#define MSG_M218_INVALID_EXTRUDER "M218 Invalid extruder "
 	#define MSG_M221_INVALID_EXTRUDER "M221 Invalid extruder "
-	#define MSG_ERR_NO_THERMISTORS "No thermistors - no temperature"
 	#define MSG_M109_INVALID_EXTRUDER "M109 Invalid extruder "
 	#define MSG_HEATING "Heating..."
 	#define MSG_HEATING_COMPLETE "Heating done."
@@ -252,9 +247,6 @@
 	#define MSG_M115_REPORT "FIRMWARE_NAME:" MSG_MARLIN " FIRMWARE_URL:" FIRMWARE_URL " PROTOCOL_VERSION:" PROTOCOL_VERSION " MACHINE_TYPE:" MACHINE_NAME " EXTRUDER_COUNT:" STRINGIFY(EXTRUDERS) " UUID:" MACHINE_UUID "\n"
 	#define MSG_COUNT_X " Count X: "
 	#define MSG_COUNT_A " Count A: "
-	#define MSG_ERR_KILLED "Printer halted. kill() called!"
-	#define MSG_ERR_PROBE_FAILED "Probe failed"
-	#define MSG_ERR_STOPPED "Printer stopped due to errors. Fix the error and use M999 to restart. (Temperature is reset. Set it after restarting)"
 	#define MSG_RESEND "Resend: "
 	#define MSG_UNKNOWN_COMMAND "Unknown command: \""
 	#define MSG_ACTIVE_EXTRUDER "Active Extruder: "
@@ -289,13 +281,23 @@
 
 	#define MSG_STEPPER_TOO_HIGH "Steprate too high: "
 	#define MSG_ENDSTOPS_HIT "endstops hit: "
-	#define MSG_ERR_COLD_EXTRUDE_STOP " cold extrusion prevented"
-	#define MSG_ERR_LONG_EXTRUDE_STOP " too long extrusion prevented"
 	#define MSG_BABYSTEPPING_X "Babystepping X"
 	#define MSG_BABYSTEPPING_Y "Babystepping Y"
 	#define MSG_BABYSTEPPING_Z "Babystepping Z"
 	#define MSG_SERIAL_ERROR_MENU_STRUCTURE "Error in menu structure"
 
+	#define MSG_ERR_LINE_NO "Line Number is not Last Line Number+1, Last Line: "
+	#define MSG_ERR_CHECKSUM_MISMATCH "checksum mismatch, Last Line: "
+	#define MSG_ERR_NO_CHECKSUM "No Checksum with line number, Last Line: "
+	#define MSG_ERR_NO_LINENUMBER_WITH_CHECKSUM "No Line Number with checksum, Last Line: "
+	#define MSG_ERR_NO_THERMISTORS "No thermistors - no temperature"
+	#define MSG_ERR_KILLED "Printer halted. kill() called!"
+	#define MSG_ERR_PROBE_FAILED "Probe failed"
+	#define MSG_ERR_STOPPED "Printer stopped due to errors. Fix the error and use M999 to restart. (Temperature is reset. Set it after restarting)"
+	#define MSG_ERR_COLD_EXTRUDE_STOP " cold extrusion prevented"
+	#define MSG_ERR_LONG_EXTRUDE_STOP " too long extrusion prevented"
+	#define MSG_ERR_OUT_OF_BOUNDS "Value out of bounds"
+	#define MSG_ERR_PROTECTED_PIN "Protected pin"
 #endif
 
 
@@ -2709,8 +2711,6 @@
 
 #endif
 
-#endif // ifndef LANGUAGE_H
-
 // The following redefinitions are optimized for minimal program space waste
 // please use the P* version of string literals with the relevant *_P output macros
 PSTRING(PMSG_WORKING_MODE, "Working Mode:")
@@ -2729,8 +2729,13 @@ PSTRING(PMSG_X_OUT,MSG_X_OUT)
 PSTRING(PMSG_Y_OUT,MSG_Y_OUT)
 PSTRING(PMSG_Z_OUT,MSG_Z_OUT)
 
+PSTRING(PMSG_COMMA, MSG_COMMA)
+
 PSTRING(PMSG_ENDSTOP_HIT,  MSG_ENDSTOP_HIT)
 PSTRING(PMSG_ENDSTOP_OPEN, MSG_ENDSTOP_HIT)
 
-PSTRING(PERR_OUT_OF_BOUNDS, ERR_OUT_OF_BOUNDS)
 PSTRING(PERR_PROBE_FAILED, MSG_ERR_PROBE_FAILED)
+PSTRING(PERR_OUT_OF_BOUNDS, MSG_ERR_OUT_OF_BOUNDS)
+PSTRING(PERR_PROTECTED_PIN, MSG_ERR_PROTECTED_PIN)
+
+#endif // ifndef LANGUAGE_H

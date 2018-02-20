@@ -947,7 +947,7 @@ void FabtotumHeads_init ()
   tools.factory[FAB_HEADS_laser_ID].thtable = 3;
   tools.factory[FAB_HEADS_laser_ID].maxtemp = 80;
   tools.factory[FAB_HEADS_laser_ID].mintemp = 10;
-  tools.factory[FAB_HEADS_laser_ID].mods = "M718\n";
+  tools.factory[FAB_HEADS_laser_ID].mods = "M720 H1\n";
 
   tools.factory[FAB_HEADS_5th_axis_ID].extruders = 1 << 1;
   tools.factory[FAB_HEADS_5th_axis_ID].heaters = 0;
@@ -964,7 +964,7 @@ void FabtotumHeads_init ()
   tools.factory[FAB_HEADS_laser_pro_ID].thtable =  3;
   tools.factory[FAB_HEADS_laser_pro_ID].mintemp = 10;
   tools.factory[FAB_HEADS_laser_pro_ID].maxtemp = 80;
-  tools.factory[FAB_HEADS_laser_pro_ID].mods = "M718\n";
+  tools.factory[FAB_HEADS_laser_pro_ID].mods = "M720 H1\n";
 
   tools.factory[FAB_HEADS_digitizer_ID].mode = WORKING_MODE_SCAN;
   tools.factory[FAB_HEADS_digitizer_ID].extruders = 1;
@@ -2318,7 +2318,7 @@ FORCE_INLINE void process_laser_power ()
 }
 #endif
 
-inline bool check_sensitive_pins (int pin_number)
+inline bool pin_is_protected (int pin_number)
 {
   for (unsigned int i = 0; i < (unsigned int)(sizeof(sensitive_pins)/sizeof(int)); i++)
   if (sensitive_pins[i] == pin_number) {
@@ -3254,13 +3254,49 @@ void process_commands()
     }
 #endif
 
-    case 42: //M42 - Change or read pin status via gcode
+    /*
+     * Command: M42
+     *
+     * Switch or read I/O pin
+     *
+     * === Prototype ===
+     * M42 [P<pin_n>] [S0-1]
+     * =================
+     *
+     * Parameters:
+     *  P - pin number: 2,3,4,...; optional, default: 13
+     *  S - pin status: 0-255; optional
+     *
+     * Description:
+     * If no pin number is specified the default pin is 13 (LED). When a
+     * value is specified for the pin, that pin is forced into output mode;
+     * if value is in the range 1-255 the firmware tries to
+     * set the pin as an analog output though PWM.
+     *
+     * If no value is given the current pin value is read and reported.
+     * In this case the pin is always treated as digital.
+     *
+     * Output:
+     * The current pin value.
+     *
+     * See Also:
+     * <M43>
+     */
+    case 42:
     {
-      int pin_number = LED_PIN, pin_status=-1;
-      bool pullup;
+      int pin_status = -1;
+      int pin_number = LED_PIN;
 
-      if (code_seen('R')) {
-        pullup = code_value_long() != 0;
+      if (code_seen('P')) {
+        pin_number = code_value();
+      }
+      if (pin_is_protected(pin_number)) {
+        SERIAL_ERROR_START;
+        SERIAL_PROTOCOL_P(PERR_PROTECTED_PIN);
+        SERIAL_PROTOCOL_P(PMSG_COMMA);
+        SERIAL_PROTOCOLLN(pin_number);
+        pin_number = -1;
+        break;
       }
 
       if (code_seen('S')) {
@@ -3268,18 +3304,8 @@ void process_commands()
         if (pin_status < 0 || pin_status > 255) {
           SERIAL_ERROR_START;
           SERIAL_PROTOCOLLN_P(PERR_OUT_OF_BOUNDS);
-          return;
+          break;
         }
-      }
-
-      if (code_seen('P')) {
-        pin_number = code_value_long();
-      }
-
-      if (check_sensitive_pins(pin_number)) {
-        SERIAL_ERROR_START;
-        SERIAL_PROTOCOLLNPGM(": sensitive pin");
-        return;
       }
 
     #if defined(FAN_PIN) && FAN_PIN > -1
@@ -3289,20 +3315,17 @@ void process_commands()
 
       if (pin_number > -1)
       {
-        if (pin_status < 0) {
-          // read
-          pinMode(pin_number, INPUT);
-          digitalWrite(pin_number, pullup);
-          delay(1);
-          pin_status = digitalRead(pin_number);
-        } else {
-          //Write
+        if (pin_status >= 0) {
+          // Write pin
           pinMode(pin_number, OUTPUT);
           if (pin_status > 1) {
             analogWrite(pin_number, pin_status);
           } else {
             digitalWrite(pin_number, pin_status);
           }
+        } else {
+          // Read pin
+          pin_status = digitalRead(pin_number);
         }
       }
 
@@ -5157,81 +5180,118 @@ void process_commands()
       break;
     }
 
-    case 716:// M716 - 24VDC bed heater ON
+    /*
+     * Command: M720
+     *
+     * 24VDC power ON
+     *
+     * === Prototype ===
+     * M720 [H<0-1>]
+     * =================
+     *
+     * Parameters:
+     *  H - Enable heater line. Optional
+     *
+     * Description:
+     *
+     * When issued with no parameters, this command enables the head's
+     * MILL MOTOR (24VDC) and SERVO +5V power lines. It also reset servo 0
+     * to the idle position.
+     *
+     * When the 'H' parameter is specified instead, the corresponding
+     * heater line is set to high. The available values are:
+     *
+     *  H0 - BED HEATER
+     *  H1 - HEATER E0
+     *
+     * Powering heater lines this way does not disables the heaters driver.
+     * When using this form the relevant heater driver needs to be disabled
+     * for the change to have any appreciable effect.
+     *
+     * See Also:
+     * <M721>
+     */
+    case 720:
     {
-      switch (working_mode) {
-        case WORKING_MODE_FFF:
-        case WORKING_MODE_HYBRID:
-          SERIAL_ERROR_START;
-          SERIAL_PROTOCOLLNPGM("Wrong working mode");
-          break;
-        default:
-          tp_disable_heater(TP_HEATER_BED);
+      if (code_seen('H'))
+      {
+        if (IsStopped()) break;
+
+        int heater = code_value_long();
+        switch (heater)
+        {
+          case 0:
           SET_OUTPUT(HEATER_BED_PIN);
-          WRITE(HEATER_BED_PIN, 1);
-      }
-      break;
-    }
-
-    case 717:// M717 - 24VDC bed heater OFF
-    {
-      switch (working_mode) {
-        case WORKING_MODE_FFF:
-        case WORKING_MODE_HYBRID:
+          WRITE(HEATER_BED_PIN,1);
           break;
-        default:
-          WRITE(HEATER_BED_PIN, 0);
-      }
-      break;
-    }
 
-    case 718:// M718 - 24VDC head heater ON
-    {
-      switch (working_mode) {
-        case WORKING_MODE_FFF:
-        case WORKING_MODE_HYBRID:
-          SERIAL_ERROR_START;
-          SERIAL_PROTOCOLLNPGM("Wrong working mode");
-          break;
-        default:
-          tp_disable_heater(TP_HEATER_0);
+          case 1:
           SET_OUTPUT(HEATER_0_PIN);
-          WRITE(HEATER_0_PIN, 1);
-      }
-      break;
-    }
-
-    case 719:// M719 - 24VDC head heater OFF
-    {
-      switch (working_mode) {
-        case WORKING_MODE_FFF:
-        case WORKING_MODE_HYBRID:
-          break;
-        default:
-          WRITE(HEATER_0_PIN, 0);
-      }
-      break;
-    }
-
-    case 720:// M720 - 24VDC head power ON
-    {
-      int servo_index = 0;
-      int servo_position = SERVO_SPINDLE_ZERO;
-        if ((servo_index >= 0) && (servo_index < NUM_SERVOS)) {
-	      servos[servo_index].attach(0);
-            servos[servo_index].write(servo_position);
+          WRITE(HEATER_0_PIN,1);
         }
-      MILL_MOTOR_ON();
-      SERVO1_ON();
+      }
+      else
+      {
+        int servo_index = 0;
+        int servo_position = SERVO_SPINDLE_ZERO;
+          if ((servo_index >= 0) && (servo_index < NUM_SERVOS)) {
+          servos[servo_index].attach(0);
+              servos[servo_index].write(servo_position);
+          }
+        MILL_MOTOR_ON();
+        SERVO1_ON();
+      }
+      break;
     }
-    break;
+
+    /*
+     * Command: M721
+     *
+     * Disable 24vdc power lines
+     *
+     * === Prototype ===
+     * M720 [H<0-1>]
+     * =================
+     *
+     * Parameters:
+     *  H - Disable heater line. Optional
+     *
+     * Description:
+     *
+     * When issued with no parameters, this command disabled the head's 24vdc
+     * power line (MILL MOTOR) and the head's SERVO +5V power line.
+     *
+     * When the 'H' parameter is specified instead, the corresponding heater
+     * line is set to low. In this case the relevant heater driver must be
+     * disabled for the command to take effect.
+     *
+     * See Also:
+     * <M720>
+     */
     case 721:// M721 - 24VDC head power OFF
     {
-      MILL_MOTOR_OFF();
-      SERVO1_OFF();
-    }
-    break;
+      if (code_seen('H'))
+      {
+        int heater = code_value_long();
+        switch (heater)
+        {
+          case 0:
+          SET_OUTPUT(HEATER_BED_PIN);
+          WRITE(HEATER_BED_PIN,0);
+          break;
 
+          case 1:
+          SET_OUTPUT(HEATER_0_PIN);
+          WRITE(HEATER_0_PIN,0);
+        }
+      }
+      else
+      {
+        MILL_MOTOR_OFF();
+        SERVO1_OFF();
+      }
+      break;
+    }
 
     case 722:// M722 - 5VDC SERVO_1 power ON
     {
