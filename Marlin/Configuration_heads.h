@@ -35,7 +35,9 @@
 
 #define FAB_HEADS_laser_pro_ID  7
 
-#define FAB_HEADS_digitizer_ID  8
+//#define FAB_TOOLS_prism_ID    8
+
+//#define FAB_HEADS_digitizer_ID 9
 
 // 100 ... are free for public use
 #define FAB_HEADS_thirdparty_ID 100

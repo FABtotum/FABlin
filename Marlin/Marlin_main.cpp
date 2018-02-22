@@ -963,10 +963,10 @@ void FabtotumHeads_init ()
   tools.factory[FAB_HEADS_laser_pro_ID].maxtemp = 80;
   tools.factory[FAB_HEADS_laser_pro_ID].mods = "M720 H1\n";
 
-  tools.factory[FAB_HEADS_digitizer_ID].mode = WORKING_MODE_SCAN;
+  /*tools.factory[FAB_HEADS_digitizer_ID].mode = WORKING_MODE_SCAN;
   tools.factory[FAB_HEADS_digitizer_ID].extruders = 1;
   tools.factory[FAB_HEADS_digitizer_ID].heaters = TP_SENSOR_BED;
-  tools.factory[FAB_HEADS_digitizer_ID].mintemp  = -1;
+  tools.factory[FAB_HEADS_digitizer_ID].mintemp  = -1;*/
 }
 
 /*

@@ -859,7 +859,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 //
 // Tool changer module
 //
-#define TOOLS_FACTORY_SIZE  9
+#define TOOLS_FACTORY_SIZE  8
 #define TOOLS_MAGAZINE_SIZE 3
 
 //
