@@ -219,8 +219,6 @@
 
 // M450 S<1-3> - Query or change working mode
 
-// M563 [Pn [D<0-2>] [S<0,1>]] - Edit tool definition or query defined tools
-
 // M700 S<0-255> - Laser Power Control
 // M701 S<0-255> - Ambient Light, Set Red
 // M702 S<0-255> - Ambient Light, Set Green
@@ -245,12 +243,14 @@
 // M727 - 5VDC RASPBERRY PI power OFF
 // M728	- RASPBERRY Alive Command
 // M729 - RASPBERRY Sleep                    //wait for the complete shutdown of raspberryPI
+
 // M730 - Read last error code
 // M731 - Disable kill on Door Open
 // M732 - Enable or disable the permanent door security switch (M732 S0 -> disable (unsafe), M732 S1 -> enable (safe))
+// M733 - Enable/disable homing check before z-probe
+// M734 - Enable /disable Endstop warnings
+// M735 - Enable /disable silent mode (sounds except for power-on)
 
-// M734   Enable /disable Endstop warnings
-// M735   Enable /disable silent mode (sounds except for power-on)
 // M740 - read WIRE_END sensor
 // M741 - read DOOR_OPEN sensor
 // M742 - read REEL_LENS_OPEN sensor
@@ -274,9 +274,6 @@
 // M765 - read FABtotum Personal Fabricator Firmware Version
 // M766 - read FABtotum Personal Fabricator Firmware Build Date and Time
 // M767 - read FABtotum Personal Fabricator Firmware Update Author
-
-// M785 - Turn Prism UV module On/off M785 S[0-1]
-// M786 - External Power OFF
 
 // M779 - force Head product ID reading (for testing purpose only)
 // [unimplemented] M780 - read Head Product Name
