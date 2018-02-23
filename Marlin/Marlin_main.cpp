@@ -203,16 +203,16 @@
 
 // Implemented code (RepRap compatible)
 // -----------------------------
+// M3 S[RPM] SPINDLE ON - Clockwise
+// M4 S[RPM] SPINDLE ON - CounterClockwise
+// M5        SPINDLE OFF
+
 // M563 [Pn [D<0-2>] [S<0,1>]] - Edit tool definition or query defined tools
 // M564 [X<max_x>] [Y<max_y>] [Z<max_z>] S<0,1> - Restrict axes movements to the set limits.
 // M575 [P<port number>] R<rx address> T<tx address> [B<baud rate>] [S<option mask>] - Set communication port parameters
 
 // FABtotum custom M codes
 //-----------------------
-// M3 S[RPM] SPINDLE ON - Clockwise
-// M4 S[RPM] SPINDLE ON - CounterClockwise
-// M5        SPINDLE OFF
-
 // M60 S<0-255> - Set laser level immediately
 // M61 S<0-255> - Finish moves and set laser level
 // M62 - Turn off laser
