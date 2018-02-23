@@ -3,10 +3,16 @@
 
 #include <stdint.h>
 #include "Configuration.h"
+//#include "temperature.h"
+typedef uint8_t tp_features_t;
 
 #define TOOL_SERIAL_NONE 0
 #define TOOL_SERIAL_SER  1
 #define TOOL_SERIAL_TWI  2
+
+#ifndef TOOLS_FACTORY_SIZE
+   #error "TOOLS_FACTORY_SIZE needs to be defined"
+#endif
 
 #ifndef TOOLS_MAGAZINE_SIZE
    #define TOOLS_MAGAZINE_SIZE EXTRUDERS
@@ -16,7 +22,7 @@ typedef struct tool_s {
    uint8_t mode = 0;
    uint8_t serial  = 0;
    uint8_t extruders:4;
-   uint8_t heaters = 0;
+   tp_features_t heaters = 0;
    uint8_t thtable = THERMISTOR_HOTSWAP_DEFAULT_INDEX;
    int16_t mintemp = HEATER_0_MINTEMP;  // °C
    int16_t maxtemp = HEATER_0_MAXTEMP;  // °C

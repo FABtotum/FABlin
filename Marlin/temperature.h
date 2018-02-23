@@ -26,28 +26,25 @@
 #ifdef PID_ADD_EXTRUSION_RATE
   #include "stepper.h"
 #endif
+//#include "fastio.h"
+//#include "pins.h"
 
 #define NOT_A_TEMPERATURE 0  // °C -- even though -274°C == <0K would be better if you ask me
 
 #define CtoK(x) (x + 274)
 #define KtoC(x) (x - 274)
 
-enum tp_features : uint8_t {
+enum tp_feature_t : uint8_t {
   TP_HEATERS=0x0f, TP_HEATER_0=0x01, TP_HEATER_1=0x02, TP_HEATER_2=0x04, TP_HEATER_BED=0x08,
   TP_SENSORS=0xf0, TP_SENSOR_0=0x10, TP_SENSOR_1=0x20, TP_SENSOR_2=0x40, TP_SENSOR_BED=0x80
 };
-//enum tp_heaters  : uint8_t { HEATER_BED=0x01, HEATER_0=0x02 };
-//enum tp_sensors  : uint8_t { TEMP_0=0x01, TEMP_1=0x02, TEMP_BED=0x02 };
 
-//typedef uint8_t tp_features_map;
+typedef uint8_t tp_features_t;
 
 // public functions
 void tp_init ();  //initialize the heating
 void tp_init (uint8_t);  //initialize the heating with selected features
 void manage_heater(); //it is critical that this is called periodically.  //IDEA: namespacing anyone?
-
-//void tp_enable_features (uint8_t);
-//void tp_disable_features (uint8_t);
 
 // low level conversion routines
 // do not use these routines and variables outside of temperature.cpp
@@ -237,8 +234,8 @@ FORCE_INLINE float MainCurrent() {
 
 //#define MAX_PWM    127
 
-void tp_init_mintemp (int8_t, tp_features=TP_HEATER_0);
-void tp_init_maxtemp (int16_t, tp_features=TP_HEATER_0);
+void tp_init_mintemp (int8_t, tp_feature_t=TP_HEATER_0);
+void tp_init_maxtemp (int16_t, tp_feature_t=TP_HEATER_0);
 int getHeaterPower(int heater);
 
 void disable_heater();

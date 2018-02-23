@@ -2342,6 +2342,36 @@ inline bool assert_home ()
   }
 }
 
+inline void power_enable_heater (uint8_t heater_id)
+{
+  switch (heater_id)
+  {
+    case GCODE_HEATER_BED:
+    SET_OUTPUT(HEATER_BED_PIN);
+    HEATER_BED_ON;//WRITE(HEATER_BED_PIN,1);
+    break;
+
+    case GCODE_HEATER_0:
+    SET_OUTPUT(HEATER_0_PIN);
+    WRITE(HEATER_0_PIN,1);
+  }
+}
+
+inline void power_disable_heater (uint8_t heater_id)
+{
+  switch (heater_id)
+  {
+    case GCODE_HEATER_BED:
+    SET_OUTPUT(HEATER_BED_PIN);
+    HEATER_BED_OFF;//WRITE(HEATER_BED_PIN,0);
+    break;
+
+    case GCODE_HEATER_0:
+    SET_OUTPUT(HEATER_0_PIN);
+    WRITE(HEATER_0_PIN,0);
+  }
+}
+
 void process_commands()
 {
   unsigned long codenum; //throw away variable
@@ -4544,7 +4574,7 @@ void process_commands()
       }
 
       // Assign heater
-      tp_features heaters = installed_head.heaters;
+      tp_features_t heaters = installed_head.heaters;
       if (code_seen('H'))
       {
         codes_seen = true;
@@ -5177,6 +5207,14 @@ void process_commands()
       break;
     }
 
+    case 718:
+    power_enable_heater(GCODE_HEATER_0);
+    break;
+
+    case 719:
+    power_disable_heater(GCODE_HEATER_0);
+    break;
+
     /*
      * Command: M720
      *
@@ -5213,19 +5251,8 @@ void process_commands()
       if (code_seen('H'))
       {
         if (IsStopped()) break;
-
         int heater = code_value_long();
-        switch (heater)
-        {
-          case 0:
-          SET_OUTPUT(HEATER_BED_PIN);
-          WRITE(HEATER_BED_PIN,1);
-          break;
-
-          case 1:
-          SET_OUTPUT(HEATER_0_PIN);
-          WRITE(HEATER_0_PIN,1);
-        }
+        power_enable_heater(heater);
       }
       else
       {
@@ -5265,22 +5292,12 @@ void process_commands()
      * See Also:
      * <M720>
      */
-    case 721:// M721 - 24VDC head power OFF
+    case 721:
     {
       if (code_seen('H'))
       {
         int heater = code_value_long();
-        switch (heater)
-        {
-          case 0:
-          SET_OUTPUT(HEATER_BED_PIN);
-          WRITE(HEATER_BED_PIN,0);
-          break;
-
-          case 1:
-          SET_OUTPUT(HEATER_0_PIN);
-          WRITE(HEATER_0_PIN,0);
-        }
+        power_disable_heater(heater);
       }
       else
       {

@@ -205,6 +205,9 @@ unsigned long watchmillis[HEATERS] = ARRAY_BY_EXTRUDERS(0,0,0);
 //=============================   functions      ============================
 //===========================================================================
 
+#define HEAT_HOTBED   do { if (enabled_features & TP_HEATER_BED) HEATER_BED_ON; }  while (0)
+#define CHILL_HOTBED  do { if (enabled_features & TP_HEATER_BED) HEATER_BED_OFF; } while (0)
+
 bool PID_autotune(float temp, int extruder, int ncycles)
 {
   float input = 0.0;
@@ -601,7 +604,7 @@ void manage_heater()
         else
         {
           soft_pwm_bed = 0;
-          WRITE(HEATER_BED_PIN,LOW);
+          CHILL_HOTBED;//WRITE(HEATER_BED_PIN,LOW);
         }
       }
     #else //#ifdef BED_LIMIT_SWITCHING
@@ -623,7 +626,7 @@ void manage_heater()
         else
         {
           soft_pwm_bed = 0;
-          WRITE(HEATER_BED_PIN,LOW);
+          CHILL_HOTBED;//WRITE(HEATER_BED_PIN,LOW);
         }
       }
     #endif
@@ -747,7 +750,7 @@ static void updateTemperaturesFromRawValues()
 }
 
 // TODO: make this dynamic by actually probing the configured ttable for the selected sensor
-bool ttable_sorting (tp_features sensor)
+bool ttable_sorting (tp_feature_t sensor)
 {
   // Treat heaters as their numerically matching sensors
   // e.g.: TP_HEATER_0 (0x01) >> TP_SENSOR_0 (0x10)
@@ -801,7 +804,7 @@ bool ttable_sorting (tp_features sensor)
  *  heater - the heater for which to set min temp, can be a bitmask of tp_features
  *
  */
-void tp_init_mintemp (int8_t value, tp_features heater)
+void tp_init_mintemp (int8_t value, tp_feature_t heater)
 {
   for (unsigned int h = 0; h < HEATERS; h++)
   {
@@ -839,7 +842,7 @@ SERIAL_DEBUG(minttemp_raw[h]);
  *  value - Max temp value (from 0 to 65535)
  *
  */
-void tp_init_maxtemp (int16_t value, tp_features heater)
+void tp_init_maxtemp (int16_t value, tp_feature_t heater)
 {
   for (unsigned int h = 0; h < HEATERS; h++)
   {
@@ -1115,9 +1118,9 @@ void tp_disable_heater (uint8_t heaters)
     setTargetBed(0);
     target_temperature_bed=0;
     soft_pwm_bed=0;
-  #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
-    WRITE(HEATER_BED_PIN,LOW);
-  #endif
+  //#if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
+    CHILL_HOTBED;//WRITE(HEATER_BED_PIN,LOW);
+  //#endif
   }
 #endif
 
@@ -1158,9 +1161,9 @@ void disable_heater()
   #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
     target_temperature_bed=0;
     soft_pwm_bed=0;
-    #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
-      WRITE(HEATER_BED_PIN,LOW);
-    #endif
+    //#if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
+      CHILL_HOTBED;//WRITE(HEATER_BED_PIN,LOW);
+    //#endif
   #endif
 }
 
@@ -1438,8 +1441,8 @@ ISR(TIMER0_COMPB_vect)
     if(soft_pwm_b > 0) {
       WRITE(HEATER_BED_PIN,1);
     } else {
-      if (enabled_features & TP_HEATER_BED)
-        WRITE(HEATER_BED_PIN,0);
+      CHILL_HOTBED;/*if (enabled_features & TP_HEATER_BED)
+        WRITE(HEATER_BED_PIN,0);*/
     }
     #endif
     #ifdef FAN_SOFT_PWM
@@ -1459,11 +1462,11 @@ ISR(TIMER0_COMPB_vect)
   #if HEATERS > 2
   if(soft_pwm_2 < pwm_count) WRITE(HEATER_2_PIN,0);
   #endif
-  #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
-  if (soft_pwm_b < pwm_count)
-  if (enabled_features & TP_HEATER_BED)
-    WRITE(HEATER_BED_PIN,0);
-  #endif
+  //#if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
+  if (soft_pwm_b < pwm_count) CHILL_HOTBED;
+  /*if (enabled_features & TP_HEATER_BED)
+    WRITE(HEATER_BED_PIN,0);*/
+  //#endif
   #ifdef FAN_SOFT_PWM
   if(soft_pwm_fan < pwm_count) WRITE(FAN_PIN,0);
   #endif
