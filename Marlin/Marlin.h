@@ -245,7 +245,12 @@ void manage_inactivity();
 #define INVALID_EXTRUDER_2 (INVALID_EXTRUDER | 2)
 #define INVALID_EXTRUDER_3 (INVALID_EXTRUDER | 3)
 
-// Heaters IO
+/*
+ * Macros: Heaters power lines
+ *
+ * HEATER_BED_ON  - Switch on heated bed power line, if defined
+ * HEATER_BED_OFF - Switch off heated bed power line, if defined
+ */
 #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
   #define HEATER_BED_ON   do { WRITE(HEATER_BED_PIN,HIGH); } while (0)
   #define HEATER_BED_OFF  do { WRITE(HEATER_BED_PIN,LOW); }  while (0)
@@ -580,6 +585,16 @@ extern uint8_t working_mode;
 #define COMMENT_SEPARATOR ';'
 #define VALUE_LIST_SEPARATOR ':'  // Separator for lists of values as parameter arguments
 
+/*
+ * Macros: G-code heater indexes
+ *
+ * Mnemonics for heater indexes recognized by some g-code commands.
+ *
+ * GCODE_HEATER_BED - 0
+ * GCODE_HEATER_0   - 1
+ * GCODE_HEATER_1   - 2
+ * GCODE_HEATER_2   - 3
+ */
 #define GCODE_HEATER_BED 0
 #define GCODE_HEATER_0   1
 #define GCODE_HEATER_1   2

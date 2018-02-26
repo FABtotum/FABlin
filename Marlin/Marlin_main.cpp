@@ -2342,6 +2342,11 @@ inline bool assert_home ()
   }
 }
 
+/*
+ * Function: power_enable_heater
+ *
+ * Turn on a heater line by numeric index
+ */
 inline void power_enable_heater (uint8_t heater_id)
 {
   switch (heater_id)
@@ -2357,6 +2362,11 @@ inline void power_enable_heater (uint8_t heater_id)
   }
 }
 
+/*
+ * Function: power_disable_heater
+ *
+ * Shut down a heater line by numeric index
+ */
 inline void power_disable_heater (uint8_t heater_id)
 {
   switch (heater_id)
