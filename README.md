@@ -1,3 +1,4 @@
+
 FABlin Firmware
 ===============
 FABtotum Marlin Derivate Firmware.
@@ -44,6 +45,11 @@ defintion, run:
 
 Latest Changes
 --------------
+
+#### Version 1.1.1.2
+
+- More stable temperature readings on edge and error conditions
+
 
 #### Version 1.1.1.1
 

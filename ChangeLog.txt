@@ -1,6 +1,10 @@
 Revision history
 ================
 
+Fix: 1.1.1.2 (2018-03-01)
+-------------------------
+- More stable temperature readings on edge and error conditions
+
 Fix: 1.1.1.1 (2018-01-23)
 -------------------------
 - Fix heaters not working inside PID tuning procedure (M303 command)
