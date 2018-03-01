@@ -6555,15 +6555,15 @@ void process_commands()
       {
         bool en_spreadCycle = code_seen('S')? (code_value_long()!=0) : true;
 
-        uint8_t i_hold = code_seen('H')? code_value_long() : 15;
+        uint8_t i_hold = code_seen('H')? code_value_long() : 16;
         uint8_t i_run = code_seen('I')? code_value_long() : 31;
-        uint8_t i_holdDelay = code_seen('J')? code_value_long() : 15;
+        uint8_t i_holdDelay = code_seen('J')? code_value_long() : 1;
 
         int8_t mres = code_seen('R')? code_value_long() : 8;
-        uint8_t tbl = code_seen('B')? code_value_long() : 1;
+        uint8_t tbl = code_seen('B')? code_value_long() : 2;
         uint8_t hend = code_seen('E')? code_value_long() : 0;
-        uint8_t hstart = code_seen('A')? code_value_long() : 0;
-        uint8_t toff = code_seen('O')? code_value_long() : 2;
+        uint8_t hstart = code_seen('A')? code_value_long() : 5;
+        uint8_t toff = code_seen('O')? code_value_long() : 3;
 
         if (tbl < 2 && toff == 1) toff = 2;
 
