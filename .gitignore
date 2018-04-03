@@ -9,4 +9,5 @@ applet/
 *.bak
 *.hex
 .piolibdeps
+/docs/
 /wiki/

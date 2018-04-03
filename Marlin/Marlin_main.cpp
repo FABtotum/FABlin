@@ -3474,7 +3474,20 @@ void process_commands()
     break;
 #endif
 
-    case 104: // M104
+    /**
+     * Command: M104
+     *
+     * Set Hotend Temperature
+     *
+     * --- Prototype ---
+     * M104 [T<tool>] [S<temp>]
+     * -----------------
+     *
+     * Parameters:
+     *  T<tool> - Select temperature sensor configured for <tool>
+     *  S<temp> - Set target temperature for selected tool's <heater>
+     */
+    case 104:
       if(setTargetedHotend(104)){
         break;
       }
@@ -3499,7 +3512,19 @@ void process_commands()
       if (code_seen('S')) setTargetBed(code_value());
       break;
 
-    case 105: // M105
+    /**
+     * Command: M105
+     *
+     * Report Temperatures
+     *
+     * --- Prototype ---
+     * M105 [T<tool>]
+     * -----------------
+     *
+     * Parameters:
+     *  T<tool> - Print temperatures from <tool>'s temperature sensor
+     */
+    case 105:
     {
       if(setTargetedHotend(105)){
         break;
@@ -4493,6 +4518,33 @@ void process_commands()
     }
     break;
 
+    /**
+     * Command: M450
+     *
+     * Set or report working mode
+     *
+     * --- Prototype ---
+     * M450 [S<mode>]
+     * -----------------
+     *
+     * Parameters:
+     *  S<mode> - Set new working mode
+     *
+     * Description:
+     * If no working mode is given, the current working mode is reported. The mode
+     * ise reported by name where defined. Defined working modes are:
+     *
+     *  0 - Hybrid
+     *  1 - FFF
+     *  2 - Laser
+     *  3 - CNC
+     *
+     * Compatibility:
+     * Repetier, RepRap 1.20+
+     *
+     * See Also:
+     * <M451>, <M452>, <M453>
+     */
     case 450:
     {
       if (code_seen('S')) {
