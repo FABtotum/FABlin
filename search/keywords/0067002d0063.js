@@ -1,0 +1,1 @@
+NDSearch.OnPrefixDataLoaded("g-c",["Macro"],[["G-code",,[[,"G-code heater indexes",,,0,"File:Marlin.h:G-code_heater_indexes"]]]]);

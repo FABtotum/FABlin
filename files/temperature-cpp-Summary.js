@@ -1,0 +1,1 @@
+NDFramePage.OnPageTitleLoaded("File:temperature.cpp","temperature.cpp");NDSummary.OnSummaryLoaded("File:temperature.cpp",[["C/C++","C"]],[["Functions","Function"],["Groups","Group"]],[[1,0,1,"Functions","Functions"],[2,0,0,"tp_init_mintemp","tp_init_mintemp"],[3,0,0,"heater_0_init_maxtemp","heater_0_init_maxtemp"]]);
