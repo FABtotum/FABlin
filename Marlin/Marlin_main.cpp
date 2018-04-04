@@ -3272,7 +3272,7 @@ void process_commands()
         if (pin_status < 0 || pin_status > 255) {
           SERIAL_ERROR_START;
           SERIAL_PROTOCOLLN_P(PERR_OUT_OF_BOUNDS);
-          return;
+          break;
         }
       }
 
@@ -3282,8 +3282,8 @@ void process_commands()
 
       if (check_sensitive_pins(pin_number)) {
         SERIAL_ERROR_START;
-        SERIAL_PROTOCOLLNPGM(": sensitive pin");
-        return;
+        SERIAL_PROTOCOLLNPGM("sensitive pin");
+        break;
       }
 
     #if defined(FAN_PIN) && FAN_PIN > -1
