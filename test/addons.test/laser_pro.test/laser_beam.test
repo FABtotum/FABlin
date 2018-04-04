@@ -1,0 +1,11 @@
+from boiler import fabui
+from time import sleep
+
+fabui.assertWorkingMode("Laser")
+fabui.assertHeadSoftId(7)
+
+fabui.assertOk('M61 S2')
+ok = raw_input("Is the laser beam visible? [Y/n] ")
+assert ok in ['', 'y', 'Y'], "Laser beam is not visible"
+
+fabui.assertOk('M62')
