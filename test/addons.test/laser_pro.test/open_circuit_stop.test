@@ -1,0 +1,27 @@
+# Scenario: open circuit stop
+
+from boiler import fabui
+from time import sleep, time
+
+# Given the laser PRO head is installed
+fabui.assertWorkingMode("Laser")
+fabui.assertHeadSoftId(7)
+
+# When the head is phisically removed from the carriage
+print("Do remove the head from the carriage")
+
+# Then an error is raised
+start = time()
+while True:
+  sleep(1)
+  try:
+    fabui.assertErrorCode(fabui.errors['ERROR_MIN_TEMP'])
+    #m730 = fabui.send('M730')
+    #print m730[0]
+    #assert m730[0] == '103', m730
+    break
+  except AssertionError:
+    if (time() - start) > 15: raise AssertionError("No error detected in 15 seconds")
+
+# And all outputs to the head are shut off
+# go test this

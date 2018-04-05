@@ -1,0 +1,7 @@
+export PYTHONPATH=${ROOT}/test/py:${PYTHONPATH}
+RUNNER=python
+BUFFER=''
+
+python ${ROOT}/test/py/rpc_reset.py
+
+python install_head.py

@@ -9,7 +9,7 @@
 #
 
 from os import environ
-from xmlrpclib import ServerProxy
+from fabui import Fabui
 
 #
 # Variable: RPC_HOST
@@ -36,6 +36,6 @@ try:
 except:
     rpc_port = 8000
 
-fabui = ServerProxy('http://{}:{}/FABUI'.format(rpc_host, rpc_port))
+fabui = Fabui(rpc_host, rpc_port)
 
 ### Insert test here ###

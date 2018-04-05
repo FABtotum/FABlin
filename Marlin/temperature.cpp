@@ -201,6 +201,20 @@ unsigned long watchmillis[HEATERS] = ARRAY_BY_EXTRUDERS(0,0,0);
 #define SOFT_PWM_SCALE 0
 #endif
 
+/**
+ * Variable: error_code
+ *
+ * Description:
+ *
+ * We store last temperature error code here, because `M999` (by a legacy
+ * implementation upon which FABuiOS relies) must be able to reset and ignore
+ * errors even when the error conditions are still present.
+ *
+ * When this is already set (!= 0) the same error code is not raised again. The
+ * only way to reset this is to reset the firmware!
+ */
+static uint8_t error_code = 0;
+
 //===========================================================================
 //=============================   functions      ============================
 //===========================================================================
@@ -1282,7 +1296,10 @@ void inline max_temp_error (uint8_t e)
 
 void min_temp_error (uint8_t e)
 {
-  // Only disable heater if the relevant TP_SENSOR_e was enabled
+  // Silently skip this error if it was already raised since last firmware boot
+  if (error_code == ERROR_MIN_TEMP) return;
+
+  // Only process error if the relevant TP_SENSOR_e was enabled
   if (!(enabled_features & TP_SENSOR_0<<e)) {
     return;
   }
@@ -1305,7 +1322,7 @@ void min_temp_error (uint8_t e)
 #endif
 
   RPI_ERROR_ACK_ON();
-  ERROR_CODE=ERROR_MIN_TEMP;
+  error_code = ERROR_CODE = ERROR_MIN_TEMP;
 }
 
 void bed_max_temp_error (void)
@@ -1426,7 +1443,9 @@ ISR(TIMER0_COMPB_vect)
       #ifdef HEATERS_PARALLEL
       WRITE(HEATER_1_PIN,1);
       #endif
-    } else if (enabled_features & TP_HEATER_0) WRITE(HEATER_0_PIN,0);
+    } else {
+      if (enabled_features & TP_HEATER_0) WRITE(HEATER_0_PIN,0);
+    }
 
     #if HEATERS > 1
     soft_pwm_1 = soft_pwm[1];

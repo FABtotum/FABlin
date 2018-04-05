@@ -1,0 +1,12 @@
+# Scenario: laser pointer off
+
+from boiler import fabui
+
+# Given the laser PRO head is installed
+
+# When issuing the `M723` command
+fabui.assertOk('M723')
+
+# Then the laser pointer is turned off
+ok = raw_input("Is the laser pointer off? [Y/n]")
+assert ok in ['', 'y', 'Y'], "Laser pointer is still on"

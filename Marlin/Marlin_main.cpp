@@ -29,7 +29,13 @@
 
 
 #include <errno.h>
+
 #include <Wire.h>
+#include <SoftwareSerial.h>
+
+#include <SmartComm.h>
+#include <TMC2208Stepper.h>
+
 #include "Marlin.h"
 
 #ifdef ENABLE_AUTO_BED_LEVELING
@@ -69,9 +75,6 @@
 #include "tools.h"
 //#include "modes.h"
 #include "Configuration_heads.h"
-
-#include <SoftwareSerial.h>
-#include <SmartComm.h>
 
 #ifdef ENABLE_LASER_MODE
   #include "Laser.h"
@@ -591,6 +594,7 @@ bool auto_fan_on_temp_change = true;
   // Smart Heads
   SoftwareSerial Serial4(RXD4, TXD4);
   SmartComm SmartHead(Serial4);
+  TMC2208Stepper TMC2208(&Serial4, false);	// Create driver that uses SoftwareSerial for communication
 
 #endif
 
@@ -6692,6 +6696,88 @@ void process_commands()
         restore_last_amb_color();
         RPI_ERROR_ACK_OFF();
         return;  // 'OK' is already printed from inside FlushSerialRequestResend()
+      }
+
+      /**
+       * Command: M2208
+       *
+       * Init TMC2208 driver
+       *
+       * --- Prototype ---
+       * M2208 [Rmres] [Sen_spreadCycle]
+       * -----------------
+       *
+       * Parameters:
+       *  R - Microstepping: 2^mres / 256. Default: 8.
+       *  S - Enable spreadCycle mode. 0: disabled, 1: enabled. Default: 1.
+       *
+       * Description:
+       * This is an experimental command for development purposes only.
+       *
+       */
+      case 2208:
+      {
+        bool en_spreadCycle = code_seen('S')? (code_value_long()!=0) : true;
+
+        uint8_t i_hold = code_seen('H')? code_value_long() : 16;
+        uint8_t i_run = code_seen('I')? code_value_long() : 31;
+        uint8_t i_holdDelay = code_seen('J')? code_value_long() : 1;
+
+        int8_t mres = code_seen('R')? code_value_long() : 8;
+        uint8_t tbl = code_seen('B')? code_value_long() : 2;
+        uint8_t hend = code_seen('E')? code_value_long() : 0;
+        uint8_t hstart = code_seen('A')? code_value_long() : 5;
+        uint8_t toff = code_seen('O')? code_value_long() : 3;
+
+        if (tbl < 2 && toff == 1) toff = 2;
+
+        // TMC UART is hardcoded for now
+        servo_detach(0);
+        Serial4 = SoftwareSerial(13, 11);
+        Serial4.begin(19200);
+        while (!Serial4);
+
+        delay(10);
+
+        // GCONF
+        //if (code_seen('R') || code_seen('S')) {
+          TMC2208.mstep_reg_select(true);
+          TMC2208.en_spreadCycle(en_spreadCycle);
+          delay(10);
+        //}
+
+        // IHOLD_IRUN
+        if (code_seen('H') || code_seen('I') || code_seen('J')) {
+          TMC2208.ihold(i_hold);
+          TMC2208.irun(i_run);
+          TMC2208.iholddelay(i_holdDelay);
+          delay(10);
+        }
+
+        // TPOWERDOWN
+        if (code_seen('D')) {
+          uint8_t t_powerDown = code_value_long();
+          TMC2208.TPOWERDOWN(t_powerDown);
+          delay(10);
+        }
+
+        // TPWMTHRS
+        if (code_seen('T')) {
+          uint32_t t_pwmThres = code_value_long();
+          TMC2208.TPWMTHRS(t_pwmThres);
+          delay(10);
+        }
+
+        // CHOPCONF
+        TMC2208.intpol(true);
+        TMC2208.mres(mres);
+        TMC2208.tbl(tbl);
+        TMC2208.hend(hend);
+        TMC2208.hstrt(hstart);
+        TMC2208.toff(toff);
+        delay(10);
+
+        break;
       }
     }
   }
