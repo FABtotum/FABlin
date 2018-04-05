@@ -1,0 +1,31 @@
+from boiler import fabui
+import re
+from time import sleep
+
+print "# Given the firmware is in FFF working mode"
+ok = fabui.send('M450 S1')
+assert ok[0] == 'Working Mode: FFF', ok
+assert ok[1] == 'ok', ok
+
+ok = fabui.send('M999')
+assert ok[-1] == 'ok', ok
+
+print "# Given a custom head with heater and thermistor is installed"
+ok = fabui.send('M793 S0')
+assert ok[0] == '0'
+assert ok[1] == 'ok', "Unable to disable the head"
+
+ok = fabui.send('M793 S100')
+assert ok[0] == '100', "Custom head ID incorrectly set"
+assert ok[1] == 'ok', "Unable to install custom head"
+
+print "# Given the head heater is enabled"
+ok = fabui.send('M563 H1')
+assert ok[-1] == 'ok', ok
+
+# Wait a little for temperatures to be read
+sleep(1)
+
+ok = fabui.send('M105')
+# Should obtain something similar "ok T: 23.3/0.0 B: 0.0/0.0 T0: 23.3/0.0 @: 0 B@: 0"
+assert re.compile('^ok\s+T\:\s*[1-9]+\.\d/0\.0\s+').match(ok[-1]) is not None, ok
