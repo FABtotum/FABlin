@@ -46,6 +46,12 @@ defintion, run:
 Latest Changes
 --------------
 
+#### Version 1.1.1.3
+
+- Fix power supply issues in Laser Heads
+- Fix `M999` behavior with pending temperature errors
+- Fix `M42` command output
+
 #### Version 1.1.1.2
 
 - More stable temperature readings on edge and error conditions
