@@ -1,10 +1,10 @@
 
-FABlin Firmware
-===============
-FABtotum Marlin Derivate Firmware.
+                        FABlin Firmware
+                        ===============
+for **FABtotum Personal Fabricator** and **FABtotum Core** platforms
 
-This is the FABlin, a Marlin Derivate Firmware. Marlin was originally
-created by Erik Zalm (https://github.com/ErikZalm/Marlin) The changes
+This is FABlin, a Marlin derivative firmware. Marlin was originally
+created by Erik Zalm (https://github.com/ErikZalm/Marlin). The changes
 made are focused on multipurpose personal fabrication and hardware
 characteristics of the FABtotum Personal Fabricator such as 3D/4 Axis
 milling, 3D/4 axis scanning, Touch-probing and the Totumduino Board
@@ -83,3 +83,17 @@ Latest Changes
 - Added support for a motor driver (drive n.3) through bed pins; no DIR pin available
 
 For the complete changelog, see [ChangeLog](ChangeLog.txt).
+
+
+Contributors
+------------
+
+FABlin is possible thanks to the contributions by:
+
+- Simone Cociancich
+- Marco Rizzuto
+- Daniel Kesler
+- imarin2
+- Krios Mane
+- Enrico Ambrosini
+- Wolfgang Meyerle
