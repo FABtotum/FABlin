@@ -1,8 +1,13 @@
 /* -*- c++ -*- */
 
 /*
-    Reprap firmware based on Sprinter and grbl.
+ Marlin - Reprap firmware based on Sprinter and grbl.
  Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+
+ FABlin - Modifications for FABtotum Personal Fabricator / FABtotum Core
+ Copyright (C) 2014-2018 Fabtotum S.r.l.
+
+ See "Contributors" in README.md for a list of all FABlin contributors.
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by

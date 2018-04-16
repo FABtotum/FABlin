@@ -1,6 +1,12 @@
 Revision history
 ================
 
+Fix: 1.1.1.3 (2018-04-04)
+-------------------------
+- Fix power supply issues in Laser Heads
+- Fix `M999` behavior with pending temperature errors
+- Fix `M42` command output
+
 Fix: 1.1.1.2 (2018-03-01)
 -------------------------
 - More stable temperature readings on edge and error conditions
