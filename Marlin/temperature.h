@@ -32,13 +32,33 @@
 #define CtoK(x) (x + 274)
 #define KtoC(x) (x - 274)
 
+/**
+ * Enums: tp_features
+ *
+ * A single perihperal managed by the temperatures module
+ *
+ * TP_HEATER_0 - Hot-end heater 0
+ * TP_HEATER_1 - Hot-end heater 1
+ * TP_HEATER_2 - Hot-end heater 2
+ * TP_HEATER_BED - Hotbed heater
+ * TP_HEATERS - All heaters
+ * TP_SENSOR_0 - Hot-end temperature sensor 0
+ * TP_SENSOR_1 - Hot-end temperature sensor 1
+ * TP_SENSOR_2 - Hot-end temperature sensor 2
+ * TP_SENSOR_BED - Hotbed temperature sensor
+ * TP_SENSORS - All temperature sensors
+ *
+ */
 enum tp_features : uint8_t {
   TP_HEATERS=0x0f, TP_HEATER_0=0x01, TP_HEATER_1=0x02, TP_HEATER_2=0x04, TP_HEATER_BED=0x08,
   TP_SENSORS=0xf0, TP_SENSOR_0=0x10, TP_SENSOR_1=0x20, TP_SENSOR_2=0x40, TP_SENSOR_BED=0x80
 };
-//enum tp_heaters  : uint8_t { HEATER_BED=0x01, HEATER_0=0x02 };
-//enum tp_sensors  : uint8_t { TEMP_0=0x01, TEMP_1=0x02, TEMP_BED=0x02 };
 
+/**
+ * Type: tp_features_map
+ *
+ * A bit-map of one or more <tp_features>
+ */
 typedef uint8_t tp_features_map;
 
 // public functions

@@ -201,18 +201,11 @@ unsigned long watchmillis[HEATERS] = ARRAY_BY_EXTRUDERS(0,0,0);
 #define SOFT_PWM_SCALE 0
 #endif
 
-/**
- * Variable: error_code
- *
- * Description:
- *
- * We store last temperature error code here, because `M999` (by a legacy
- * implementation upon which FABuiOS relies) must be able to reset and ignore
- * errors even when the error conditions are still present.
- *
- * When this is already set (!= 0) the same error code is not raised again. The
- * only way to reset this is to reset the firmware!
- */
+// We store last temperature error code here, because `M999` (by a legacy
+// implementation upon which FABuiOS relies) must be able to reset and ignore
+// errors even when the error conditions are still present.
+// When this is already set (!= 0) the same error code is not raised again. The
+// only way to reset this is to reset the firmware!
 static uint8_t error_code = 0;
 
 //===========================================================================
@@ -846,11 +839,14 @@ SERIAL_DEBUG(minttemp_raw[h]);
   }
 }
 
-/*
- * Function: heater_0_init_maxtemp
+/**
+ * Function: tp_init_maxtemp
+ *
+ * Set max temp for heater(s)
  *
  * Parameters:
- *  value - Max temp value (from 0 to 65535)
+ *  value - Max temp in °C (from 0 to 65535)
+ *  heater - Heater to for which to change max temp value
  *
  */
 void tp_init_maxtemp (int16_t value, tp_features heater)

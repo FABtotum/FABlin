@@ -4977,6 +4977,26 @@ void process_commands()
       #endif
     }
     break;
+
+    /**
+     * Command: M700
+     *
+     * Laser power control
+     *
+     * --- Prototype ---
+     * M700 S<power>
+     * -----------------
+     *
+     * Parameters:
+     *
+     *  S<power> - Set power level, from 0 to 255
+     *
+     * Description:
+     *
+     *  Set power level for the carraige-mounted pointing swipe laser, where
+     *  available.
+     *
+     */
     case 700: // // M700 S<0-255> - Laser Power Control
     {
       if(code_seen('S'))
