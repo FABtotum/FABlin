@@ -1,1 +1,0 @@
-NDSearch.OnPrefixDataLoaded("pow",["Macro","Function"],[["power",,[[,"Heaters power lines",,,0,"File:Marlin.h:Heaters_power_lines"]]],["power_disable_heater",,[[,,,,1,"File:Marlin_main.cpp:power_disable_heater"]]],["power_enable_heater",,[[,,,,1,"File:Marlin_main.cpp:power_enable_heater"]]]]);

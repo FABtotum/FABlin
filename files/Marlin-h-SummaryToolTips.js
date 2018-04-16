@@ -1,1 +1,0 @@
-NDSummary.OnToolTipsLoaded("File:Marlin.h",{8:"<div class=\"NDToolTip TMacro LC\"><div class=\"TTSummary\">Mnemonics for heater indexes recognized by some g-code commands.</div></div>"});
