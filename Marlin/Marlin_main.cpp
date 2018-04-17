@@ -1823,6 +1823,37 @@ static void set_bed_level_equation_3pts(float z_at_pt_1, float z_at_pt_2, float 
 
 #endif // AUTO_BED_LEVELING_GRID
 
+/**
+ * Function: verify_z_probed
+ *
+ * Verify the probe is engaged
+ *
+ * Description:
+ *
+ *  This function does multiple FSR probe readings to handle floating values. If
+ *  at least one reading out of 5 is positive than the probing is considered
+ *  positive.
+ *
+ * Returns:
+ *
+ *  bool - Whether the probe is positive
+ */
+inline bool verify_z_probed ()
+{
+  // Do more than one reading, as the probe pressure value may be oscillating
+  #define Z_PROBE_SAMPLES 5
+  unsigned int r = 0, s = 0;
+  for (s; s < Z_PROBE_SAMPLES; s++)
+  {
+    if (READ(Z_MIN_PIN) ^ Z_MIN_ENDSTOP_INVERTING) {
+      return true;
+      r++;
+    }
+  }
+  // At least on positve sample
+  return (r > 0);
+}
+
 static void run_z_probe() {
     plan_bed_level_matrix.set_to_identity();
     feedrate = homing_feedrate[Z_AXIS];
@@ -1852,6 +1883,25 @@ static void run_z_probe() {
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
 }
 
+/**
+ * Function: run_fast_z_probe
+ *
+ * Run a fast probe with the optional Z probe
+ *
+ * Description:
+ *
+ *  After a probe, current_position[Z_AXIS] is updated with the height at which
+ *  the probing took effect, or stopped. Whether the value is valid depends on the
+ *  return value of the function.
+ *
+ * Parameters:
+ *
+ *  feedrateProbing - Feedrate at which to do the probing (mm/min)
+ *
+ * Returns:
+ *
+ *  bool - wether the probing completed successfully
+ */
 static bool run_fast_z_probe(float feedrateProbing) {
     plan_bed_level_matrix.set_to_identity();
     feedrate = feedrateProbing; //homing_feedrate[Z_AXIS];
@@ -1862,16 +1912,20 @@ static bool run_fast_z_probe(float feedrateProbing) {
     plan_buffer_line(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS], feedrate/60, active_extruder);
     st_synchronize();
 
+    // In the suspect case where probe height is equal to the probe target height
+    // we take note of verifying it afterwards.
+    bool verify = ((st_get_position_mm(Z_AXIS) - zPosition) < 0.01);
+
     // we have to let the planner know where we are right now as it is not where we said to go.
     zPosition = st_get_position_mm(Z_AXIS);
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], zPosition, current_position[E_AXIS]);
     current_position[Z_AXIS] = zPosition;
 
-    // Verify if we actually stopped on an endstop
-    if (READ(Z_MIN_PIN) ^ Z_MIN_ENDSTOP_INVERTING) {
-      return true;
+    // Verify that we actually stopped on z_min_probe
+    if (verify) {
+      return verify_z_probed();
     } else {
-      return false;
+      return true;
     }
 }
 

@@ -1,0 +1,25 @@
+import os
+from boiler import fabui
+import re
+
+os.environ['GTRR_TEST_NAME'] = "G30 run many times"
+
+# Given the FAB is homed with G27
+fabui.assertOk('G27')
+fabui.assertOk('G90')
+fabui.assertOk('G0X100Y100Z50F5000')
+fabui.assertOk('M400')
+
+# When many fast probes are run on the same spot
+for run in range(1,3):
+    fabui.assertOk('M401')
+    g30 = fabui.send('G30')
+    fabui.assertOk('G91')
+    fabui.assertOk('G0Z25')
+    fabui.assertOk('M402')
+
+    # Then the commands says ok
+    assert g30[-1] == 'ok', "G30 not ok"
+
+    # And some coordinates are returned
+    assert re.compile('^X:\s*\d+\.\d+\s+Y:\s*\d+\.\d+\s+Z:\s*\d+\.\d+$').match(g30[-2]), g30
