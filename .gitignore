@@ -9,5 +9,7 @@ applet/
 *.bak
 *.hex
 .piolibdeps
+.gtrr_env
+.gtrr_out
 /docs/
 /wiki/

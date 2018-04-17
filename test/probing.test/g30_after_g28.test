@@ -1,0 +1,26 @@
+import os
+from boiler import fabui
+import re
+
+os.putenv('GTRR_TEST_NAME', "G30 after G28")
+
+# Given the FAB is homed with G28
+fabui.assertOk('G28')
+
+# And the head is in in the middle of nowhere
+fabui.assertOk('G90')
+fabui.assertOk('G0X100Y100Z50F5000')
+fabui.assertOk('M400')
+
+# When a fast probe is executed
+fabui.assertOk('M401')
+g30 = fabui.send('G30')
+fabui.assertOk('G91')
+fabui.assertOk('G0Z25')
+fabui.assertOk('M402')
+
+# Then the commands says ok
+assert g30[-1] == 'ok', "G30 not ok"
+
+# And some coordinates are returned
+assert re.compile('^X:\s*\d+\.\d+\s+Y:\s*\d+\.\d+\s+Z:\s*\d+\.\d+$').match(g30[-2]), g30

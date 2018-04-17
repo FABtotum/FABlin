@@ -1,0 +1,23 @@
+import os
+from boiler import fabui
+
+os.putenv('GTRR_TEST_NAME', "G30 with too long run")
+
+# Given the FAB is homed
+fabui.assertOk('G27')
+fabui.assertOk('G90')
+fabui.assertOk('G0X100Y100Z100F5000')
+fabui.assertOk('M400')
+
+# But the bed is farther than expected
+fabui.assertOk('G92Z50')
+
+# When a fast probe is executed
+fabui.assertOk('M401')
+g30 = fabui.send('G30')
+
+# Then a 'Probe failed' error is printed
+assert g30[-2] == 'E: Probe failed', g30
+
+# And the commands says ok
+assert g30[-1] == 'ok', "G30 not ok"

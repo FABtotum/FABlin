@@ -1,0 +1,5 @@
+export PYTHONPATH=${ROOT}/test/py:${PYTHONPATH}
+RUNNER=python
+
+#python ${ROOT}/test/py/rpc_reset.py
+python check_probe.py
