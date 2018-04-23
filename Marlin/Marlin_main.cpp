@@ -997,7 +997,10 @@ inline void StopTool ()
 
   // Disable all heaters for good measure
   tp_disable_heater(TP_HEATERS);
-  // Explicitely set heter outputs to low
+  // Explicitely set heater outputs to low
+#if defined(HEATER_BED_PIN) && (HEATER_BED_PIN > -1)
+   HEATER_BED_OFF;
+#endif
 #if defined(HEATER_0_PIN) && (HEATER_0_PIN > -1)
   WRITE(HEATER_0_PIN,0);
 #endif
