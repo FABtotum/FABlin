@@ -2518,6 +2518,19 @@ void process_commands()
       break;
       #endif //FWRETRACT
 
+    /**
+     * Command: G27
+     * 
+     * 	Home all Axis using z-axis MINZ endstop
+		 *
+     * Params:
+		 *  X - Home X axis if flag present
+     *  Y - Home Y axis if flag present
+     *  Z - Home Z axis if flag present
+     * 
+     * Compatibility:
+     *  FABlin
+     */
     case 27: //G27 Home all Axis one at a time explicit without Zprobe
       z_probe_activation=false;
       home_Z_reverse= true;
@@ -3073,7 +3086,23 @@ void process_commands()
       }
     }
 #endif // ENABLE_AUTO_BED_LEVELING
+
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
+    /**
+     * Command: G38
+     * 
+     *  Single Z probe at current XY location using external probe
+     *
+     * Description:
+     *  This command accepts target coordinates. Probing is attempted by moving in 
+     * the given direction.
+     * 
+     * See Also:
+     *  <M733>, <M746>
+     * 
+     * Compatibility:
+     *  FABlin
+     */
     case 38: // G38 endstop based z probe
       // Same behaviour as G30 but with an endstop external z probe connected as described in M746
       // It does nothing unless the probe is enabled first with M746 S1
@@ -5634,7 +5663,7 @@ void process_commands()
    *
    * Disable homing check
    *
-   * Description: This configutration command let you set the homing
+   * Description: This configuration command let you set the homing
    *  check status. Homing check is used in particular commands,
    *  such as G29 or G30: When homing check is on an all-axes homing
    *  must have been done before issuing the command and while motors
@@ -5937,24 +5966,36 @@ void process_commands()
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
     /**
-     * M746 [S<0-2>] - Set/get external probe source
+     * Command: M746
+     * 
+     * Set/get external probe source
+     * 
+     * --- Prototype ---
+     * M746 [S<0-2>]
+     * -----------------
      *
-     * 0 - disabled
-     * 1 - secure_sw pin
-     * 2 - i2c_scl   pin (head connector)
+     * Parameters:
+     *  0 - disabled
+     *  1 - secure_sw pin
+     *  2 - i2c_scl   pin (head connector)
      *
-     * The actual pin is provided by NOT_SECURE_SW_PIN macro, which is pin 71
+     * Description:
+     * 
+     *  The actual pin is provided by NOT_SECURE_SW_PIN macro, which is pin 71
      * (in totumduino's silk screen "Secure_sw", see also M743).
-     *
-     * If enabled you need to keep an external zprobe connected to this totumduino connector that makes the endstop read "open" in normal state or
+     * 
+     *  If enabled you need to keep an external zprobe connected to this totumduino connector that makes the endstop read "open" in normal state or
      * you will have undesirable behaviour (only during the time a Z probe is done, so during homing, G30 and G38).
      *
-     * A possible probe is an electrical continuity probe between a copper cad (for making PCBs) and the mill (that in the hybrid head is to GND), like this:
+     *  A possible probe is an electrical continuity probe between a copper cad (for making PCBs) and the mill (that in the hybrid head is to GND), like this:
      *
      * |  | (secure_sw)
      * |  \------------------------------+----- attach this to copper clad (via a metal washer to which the wire is soldered?)
-     * \-----------------------/\/\/\/---|
-     *                         1 kOhm
+     * \-----------------------/\/\/\/---| 
+     *                        1 kOhm
+     * 
+     * Compatibility:
+     * FABlin
      */
     case 746:
     {

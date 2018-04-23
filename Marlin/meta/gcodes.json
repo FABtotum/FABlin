@@ -249,6 +249,10 @@
 	"M17": {
 		"desc": "Enable power to all stepper motors"
 	},
+	"M18": {
+		"desc": "Disable steppers until next move. (Same as M84)",
+		"ref": "M84"
+	},
 	"M31": {
 		"desc": "Time since last M109"
 	},
@@ -262,8 +266,8 @@
 			},
 			"S": {
 				"desc": "Pin value",
-				"type": "bool",
-				"range": [0, 1]
+				"type": "number",
+				"range": [0, 255]
 			}
 		}
 	},
@@ -272,10 +276,6 @@
 	},
 	"M83": {
 		"desc": "Set extruder to relative mode"
-	},
-	"M18": {
-		"desc": "Disable steppers until next move. (Same as M84)",
-		"ref": "M84"
 	},
 	"M84": {
 		"desc" :"Disable steppers until next move",
