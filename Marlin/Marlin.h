@@ -567,6 +567,11 @@ extern uint8_t working_mode;
 #define ERROR_PWR_OFF    999
 
 //Head Serial ID
+/**
+ * Define: SERIAL_ID_ADDR
+ * 
+ * I²C address for factory heads
+ */
 #define SERIAL_ID_ADDR          80//(0x50)
 #define SERIAL_N_FAM_DEV_CODE  0
 #define SERIAL_N_0             1

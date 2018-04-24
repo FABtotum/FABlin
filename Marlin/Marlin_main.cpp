@@ -2451,6 +2451,99 @@ inline void power_disable_heater (uint8_t heater_id)
   }
 }
 
+void Read_Head_Info(bool force)
+{
+#if defined(SMART_COMM)
+  // Dummy heads can't be read...
+  if (tools.magazine[active_tool].serial == TOOL_SERIAL_NONE)
+  {
+    // ...unless you force it
+    if (force) {
+      // It's understood that SmartHead has been configured beforehand
+      SmartHead.begin();
+#else
+  // Dummy heads can't be read...
+  if (tools.magazine[active_tool].serial != TOOL_SERIAL_TWI)
+  {
+    // ...unless you force it
+    if (force) {
+      Wire.begin();
+#endif
+    } else {
+      head_placed = true;
+      return;
+    }
+  }
+
+  if (installed_head.serial == TOOL_SERIAL_TWI)
+  {
+    SERIAL_HEAD_0=I2C_read(SERIAL_N_FAM_DEV_CODE);
+    SERIAL_HEAD_1=I2C_read(SERIAL_N_0);
+    SERIAL_HEAD_2=I2C_read(SERIAL_N_1);
+    SERIAL_HEAD_3=I2C_read(SERIAL_N_2);
+    SERIAL_HEAD_4=I2C_read(SERIAL_N_3);
+    SERIAL_HEAD_5=I2C_read(SERIAL_N_4);
+    SERIAL_HEAD_6=I2C_read(SERIAL_N_5);
+    SERIAL_HEAD_7=I2C_read(SERIAL_N_CRC);
+
+    i2c_timeout=false;
+  }
+  // We don't have an identification protocol for the serial interface yet
+
+  if (installed_head_id <= 1)
+  {
+    if(SERIAL_HEAD_0==63 && SERIAL_HEAD_1==63 && SERIAL_HEAD_2==63 && SERIAL_HEAD_3==63 && SERIAL_HEAD_4==63 && SERIAL_HEAD_5==63 && SERIAL_HEAD_6==63 && SERIAL_HEAD_7==63)
+    {
+       head_placed=false;
+    }
+    else
+    {
+       head_placed=true;
+    }
+  }
+  else
+  {
+    head_placed=true;
+  }
+}
+
+/**
+ * Function: I2C_read
+ * 
+ * Read a byte from an I2C slave
+ * 
+ * Description:
+ *  The slave address is set in in SERIAL_ID_ADDR constant.
+ * 
+ * Parameters:
+ *  i2c_register - The slave's register to read from
+ * 
+ * Returns:
+ *  char - A character read from the salve. '?' in case of errors
+ * 
+ * See Also:
+ *  <SERIAL_ID_ADDR>
+ */
+char I2C_read(byte i2c_register)
+{
+  char byte_read;
+  Wire.beginTransmission(SERIAL_ID_ADDR); // setup communication
+  Wire.write(i2c_register);               // Load value into buffer
+  byte ret = Wire.endTransmission();      // The actual transaction is done here
+  // we check the outcome
+  if (ret > 0) {
+    return '?';
+  }
+
+  Wire.requestFrom(SERIAL_ID_ADDR, 1);    // request 1 bytes from slave device SERIAL_ID_ADDR
+  if (Wire.available() != 1) {
+    return '?';      // return a byte as character
+  } else {
+    byte_read = Wire.read();
+    return byte_read;      // return a byte as character
+  }
+}
+
 void process_commands()
 {
   unsigned long codenum; //throw away variable
@@ -7709,91 +7802,6 @@ void manage_amb_color_fading()
 }
 
 
-void Read_Head_Info(bool force)
-{
-#if defined(SMART_COMM)
-  // Dummy heads can't be read...
-  if (tools.magazine[active_tool].serial == TOOL_SERIAL_NONE)
-  {
-    // ...unless you force it
-    if (force) {
-      // It's understood that SmartHead has been configured beforehand
-      SmartHead.begin();
-#else
-  // Dummy heads can't be read...
-  if (tools.magazine[active_tool].serial != TOOL_SERIAL_TWI)
-  {
-    // ...unless you force it
-    if (force) {
-      Wire.begin();
-#endif
-    } else {
-      head_placed = true;
-      return;
-    }
-  }
-
-  if (installed_head.serial == TOOL_SERIAL_TWI)
-  {
-    SERIAL_HEAD_0=I2C_read(SERIAL_N_FAM_DEV_CODE);
-    SERIAL_HEAD_1=I2C_read(SERIAL_N_0);
-    SERIAL_HEAD_2=I2C_read(SERIAL_N_1);
-    SERIAL_HEAD_3=I2C_read(SERIAL_N_2);
-    SERIAL_HEAD_4=I2C_read(SERIAL_N_3);
-    SERIAL_HEAD_5=I2C_read(SERIAL_N_4);
-    SERIAL_HEAD_6=I2C_read(SERIAL_N_5);
-    SERIAL_HEAD_7=I2C_read(SERIAL_N_CRC);
-
-    i2c_timeout=false;
-  }
-  // We don't have an identification protocol for the serial interface yet
-
-  if (installed_head_id <= 1)
-  {
-    if(SERIAL_HEAD_0==63 && SERIAL_HEAD_1==63 && SERIAL_HEAD_2==63 && SERIAL_HEAD_3==63 && SERIAL_HEAD_4==63 && SERIAL_HEAD_5==63 && SERIAL_HEAD_6==63 && SERIAL_HEAD_7==63)
-    {
-       head_placed=false;
-    }
-    else
-    {
-       head_placed=true;
-    }
-  }
-  else
-  {
-    head_placed=true;
-  }
-}
-
-char I2C_read(byte i2c_register)
-{
-  char byte_read;
-  Wire.beginTransmission(SERIAL_ID_ADDR);      //starts communication
-  Wire.write(i2c_register);                         //Sends the register we wish to read
-  Wire.endTransmission();
-
-  Wire.requestFrom(SERIAL_ID_ADDR, 1);    // request 1 bytes from slave device SERIAL_ID_ADDR
-  i2c_pre_millis=millis();
-  while(Wire.available()==0 && !(i2c_timeout))
-    {
-         if((millis()-i2c_pre_millis)>I2C_MAX_TIMEOUT)
-           {
-             i2c_timeout=true;
-           }
-    }   // slave may send less than requested
-
-    if(i2c_timeout)
-      {
-        return('?');      // return a byte as character
-      }
-    else
-      {
-        byte_read=Wire.read();
-        return(byte_read);      // return a byte as character
-      }
-
-
-}
 
 void kill_by_door()
 {
