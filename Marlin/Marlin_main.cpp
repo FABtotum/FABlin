@@ -2307,8 +2307,10 @@ inline void forward_command (uint8_t interface, const char* line)
    {
       case 0:
         SERIAL_ERROR_START;
-         SERIAL_ERRORPGM("Cannot forward commands to interface #0");
-         return;
+        SERIAL_ERRORPGM(MSG_ERR_UNABLE_TO_FORWARD);
+        SERIAL_ERROR_P(PMSG_COMMA);
+        SERIAL_ERRORLN(interface);
+        return;
 
       case 4:
          if (!SmartHead.isListening()) {
@@ -2319,17 +2321,18 @@ inline void forward_command (uint8_t interface, const char* line)
          return;
 
       default:
-        SERIAL_ERROR_START;
-         SERIAL_ERRORPGM("Invalid interface #");
-         SERIAL_ECHO(interface);
-         return;
+        SERIAL_ASYNC_START;
+        SERIAL_ERRORPGM(MSG_ERR_INVALID_COMM_IF);
+        SERIAL_ERROR_P(PMSG_COMMA);
+        SERIAL_ERRORLN(interface);
+        return;
    }
 
    if (error) {
-      SERIAL_ERROR_START;
-      SERIAL_ERRORPGM("Comm interface ");
-      SERIAL_ECHO(interface);
-      SERIAL_ERRORLNPGM(" is not active");
+      SERIAL_ASYNC_START;
+      SERIAL_ERRORPGM(MSG_ERR_INACTIVE_COMM_IF);
+      SERIAL_ERROR_P(PMSG_COMMA);
+      SERIAL_ERROR(interface);
    }
 }
 
@@ -2356,7 +2359,7 @@ FORCE_INLINE void process_laser_power ()
 
   if (working_mode != WORKING_MODE_LASER || !Laser::isEnabled()) {
     SERIAL_ERROR_START;
-    SERIAL_ERRORLNPGM("Laser disabled (wrong mode or hardware fault)");
+    SERIAL_ERRORLNPGM(MSG_ERR_LASER_DISABLED);
     return;
   }
 
@@ -2399,7 +2402,7 @@ inline bool assert_home ()
   {
     LCD_MESSAGEPGM(MSG_ORIGIN_UNKNOWN);
     SERIAL_ERROR_START;
-    SERIAL_ECHOLNPGM(MSG_ORIGIN_UNKNOWN);
+    SERIAL_ERRORLNPGM(MSG_ORIGIN_UNKNOWN);
     return false; // abort G29, since we don't know where we are
   }
   else
@@ -3067,7 +3070,7 @@ void process_commands()
 
         if (!touched) {
           SERIAL_ERROR_START;
-          SERIAL_PROTOCOLLN_P(PERR_PROBE_FAILED);
+          SERIAL_ERRORLNPGM(MSG_ERR_PROBE_FAILED);
         } else {
           SERIAL_PROTOCOL_P(PMSG_X_OUT);
           SERIAL_PROTOCOL(current_position[X_AXIS]);
@@ -3424,9 +3427,9 @@ void process_commands()
       }
       if (pin_is_protected(pin_number)) {
         SERIAL_ERROR_START;
-        SERIAL_PROTOCOL_P(PERR_PROTECTED_PIN);
-        SERIAL_PROTOCOL_P(PMSG_COMMA);
-        SERIAL_PROTOCOLLN(pin_number);
+        SERIAL_ERROR_P(PERR_PROTECTED_PIN);
+        SERIAL_ERROR_P(PMSG_COMMA);
+        SERIAL_ERRORLN(pin_number);
         pin_number = -1;
         break;
       }
@@ -3435,7 +3438,7 @@ void process_commands()
         pin_status = code_value_long();
         if (pin_status < 0 || pin_status > 255) {
           SERIAL_ERROR_START;
-          SERIAL_PROTOCOLLN_P(PERR_OUT_OF_BOUNDS);
+          SERIAL_ERRORLNPGM(MSG_ERR_OUT_OF_BOUNDS);
           break;
         }
       }
@@ -4093,7 +4096,7 @@ void process_commands()
           auto_report_temp_interval = 0;
         } else if (value > 60) {
           SERIAL_ERROR_START;
-          SERIAL_PROTOCOLLN_P(PERR_OUT_OF_BOUNDS);
+          SERIAL_ERRORLNPGM(MSG_ERR_OUT_OF_BOUNDS);
           auto_report_temp_interval = 60;
         } else {
           auto_report_temp_interval = value;
@@ -6472,8 +6475,8 @@ void process_commands()
    case 790:
    {
        if (tools.magazine[active_tool].serial == TOOL_SERIAL_NONE) {
-         SERIAL_ERROR_START;
-          SERIAL_ERRORLNPGM("Smart head communication disabled by active tool definition");
+          SERIAL_ERROR_START;
+          SERIAL_ERRORLNPGM(MSG_ERR_DISABLED_COMM);
           break;
        }
 
@@ -6484,7 +6487,7 @@ void process_commands()
 
       if (port < 0) {
          SERIAL_ERROR_START;
-         SERIAL_ERRORLNPGM("Communication interface not specified");
+         SERIAL_ERRORLNPGM(MSG_ERR_UNSPECIFIED_COMM_IF);
          break;
       }
 
@@ -6515,7 +6518,7 @@ void process_commands()
         if (id < FAB_HEADS_thirdparty_ID)
         if (id >= TOOLS_FACTORY_SIZE) {
           SERIAL_ERROR_START;
-          SERIAL_ERRORLNPGM("Unsupported head ID");
+          SERIAL_ERRORLNPGM(MSG_ERR_UNSUPPORTED_HEAD_ID);
           break;
         }
 
@@ -7990,22 +7993,22 @@ bool setTargetedHotend(int code){
       SERIAL_ERROR_START;
       switch(code){
         case 104:
-          SERIAL_ECHO(MSG_M104_INVALID_EXTRUDER);
+          SERIAL_ERRORPGM(MSG_M104_INVALID_EXTRUDER);
           break;
         case 105:
-          SERIAL_ECHO(MSG_M105_INVALID_EXTRUDER);
+          SERIAL_ERRORPGM(MSG_M105_INVALID_EXTRUDER);
           break;
         case 109:
-          SERIAL_ECHO(MSG_M109_INVALID_EXTRUDER);
+          SERIAL_ERRORPGM(MSG_M109_INVALID_EXTRUDER);
           break;
         case 218:
-          SERIAL_ECHO(MSG_M218_INVALID_EXTRUDER);
+          SERIAL_ERRORPGM(MSG_M218_INVALID_EXTRUDER);
           break;
         case 221:
-          SERIAL_ECHO(MSG_M221_INVALID_EXTRUDER);
+          SERIAL_ERRORPGM(MSG_M221_INVALID_EXTRUDER);
           break;
       }
-      SERIAL_ECHOLN(tmp_extruder);
+      SERIAL_ERRORLN(tmp_extruder);
       return true;
     }
   return false;

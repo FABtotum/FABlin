@@ -1,0 +1,1358 @@
+{
+    "1": {
+        "id": "MSG_SD_INSERTED",
+        "translations": {
+            "en": "Card inserted",
+            "it": "SD Card inserita"
+        }
+    },
+    "2": {
+        "id": "MSG_SD_REMOVED",
+        "translations": {
+            "en": "Card removed",
+            "it": "SD Card rimossa"
+        }
+    },
+    "3": {
+        "id": "MSG_MAIN",
+        "translations": {
+            "en": "Main",
+            "it": "Menu principale"
+        }
+    },
+    "4": {
+        "id": "MSG_AUTOSTART",
+        "translations": {
+            "en": "Autostart",
+            "it": "Autostart"
+        }
+    },
+    "5": {
+        "id": "MSG_DISABLE_STEPPERS",
+        "translations": {
+            "en": "Disable steppers",
+            "it": "Disabilita Motori"
+        }
+    },
+    "6": {
+        "id": "MSG_AUTO_HOME",
+        "translations": {
+            "en": "Auto home",
+            "it": "Auto Home"
+        }
+    },
+    "7": {
+        "id": "MSG_SET_ORIGIN",
+        "translations": {
+            "en": "Set origin",
+            "it": "Imposta Origine"
+        }
+    },
+    "8": {
+        "id": "MSG_PREHEAT_PLA",
+        "translations": {
+            "en": "Preheat PLA",
+            "it": "Preriscalda PLA"
+        }
+    },
+    "9": {
+        "id": "MSG_PREHEAT_PLA0",
+        "translations": {
+            "en": "Preheat PLA 1",
+            "it": "Preriscalda PLA 1"
+        }
+    },
+    "10": {
+        "id": "MSG_PREHEAT_PLA1",
+        "translations": {
+            "en": "Preheat PLA 2",
+            "it": "Preriscalda PLA 2"
+        }
+    },
+    "11": {
+        "id": "MSG_PREHEAT_PLA2",
+        "translations": {
+            "en": "Preheat PLA 3",
+            "it": "Preriscalda PLA 3"
+        }
+    },
+    "12": {
+        "id": "MSG_PREHEAT_PLA012",
+        "translations": {
+            "en": "Preheat PLA All",
+            "it": "Preris. PLA Tutto"
+        }
+    },
+    "13": {
+        "id": "MSG_PREHEAT_PLA_BEDONLY",
+        "translations": {
+            "en": "Preheat PLA Bed",
+            "it": "Preri. PLA Piatto"
+        }
+    },
+    "14": {
+        "id": "MSG_PREHEAT_PLA_SETTINGS",
+        "translations": {
+            "en": "Preheat PLA conf",
+            "it": "Preris. PLA Conf"
+        }
+    },
+    "15": {
+        "id": "MSG_PREHEAT_ABS",
+        "translations": {
+            "en": "Preheat ABS",
+            "it": "Preriscalda ABS"
+        }
+    },
+    "16": {
+        "id": "MSG_PREHEAT_ABS0",
+        "translations": {
+            "en": "Preheat ABS 1",
+            "it": "Preriscalda ABS 1"
+        }
+    },
+    "17": {
+        "id": "MSG_PREHEAT_ABS1",
+        "translations": {
+            "en": "Preheat ABS 2",
+            "it": "Preriscalda ABS 2"
+        }
+    },
+    "18": {
+        "id": "MSG_PREHEAT_ABS2",
+        "translations": {
+            "en": "Preheat ABS 3",
+            "it": "Preriscalda ABS 3"
+        }
+    },
+    "19": {
+        "id": "MSG_PREHEAT_ABS012",
+        "translations": {
+            "en": "Preheat ABS All",
+            "it": "Preris. ABS Tutto"
+        }
+    },
+    "20": {
+        "id": "MSG_PREHEAT_ABS_BEDONLY",
+        "translations": {
+            "en": "Preheat ABS Bed",
+            "it": "Preri. ABS Piatto"
+        }
+    },
+    "21": {
+        "id": "MSG_PREHEAT_ABS_SETTINGS",
+        "translations": {
+            "en": "Preheat ABS conf",
+            "it": "Preris. ABS Conf"
+        }
+    },
+    "22": {
+        "id": "MSG_COOLDOWN",
+        "translations": {
+            "en": "Cooldown",
+            "it": "Raffredda"
+        }
+    },
+    "23": {
+        "id": "MSG_SWITCH_PS_ON",
+        "translations": {
+            "en": "Switch power on",
+            "it": "Switch Power On"
+        }
+    },
+    "24": {
+        "id": "MSG_SWITCH_PS_OFF",
+        "translations": {
+            "en": "Switch power off",
+            "it": "Switch Power Off"
+        }
+    },
+    "25": {
+        "id": "MSG_EXTRUDE",
+        "translations": {
+            "en": "Extrude",
+            "it": "Estrudi"
+        }
+    },
+    "26": {
+        "id": "MSG_RETRACT",
+        "translations": {
+            "en": "Retract",
+            "it": "Ritrai"
+        }
+    },
+    "27": {
+        "id": "MSG_MOVE_AXIS",
+        "translations": {
+            "en": "Move axis",
+            "it": "Muovi Asse"
+        }
+    },
+    "28": {
+        "id": "MSG_MOVE_X",
+        "translations": {
+            "en": "Move X",
+            "it": "Move X"
+        }
+    },
+    "29": {
+        "id": "MSG_MOVE_Y",
+        "translations": {
+            "en": "Move Y",
+            "it": "Move Y"
+        }
+    },
+    "30": {
+        "id": "MSG_MOVE_Z",
+        "translations": {
+            "en": "Move Z",
+            "it": "Move Z"
+        }
+    },
+    "31": {
+        "id": "MSG_MOVE_E",
+        "translations": {
+            "en": "Extruder",
+            "it": "Extruder"
+        }
+    },
+    "32": {
+        "id": "MSG_MOVE_E1",
+        "translations": {
+            "en": "Extruder2",
+            "it": "Extruder2"
+        }
+    },
+    "33": {
+        "id": "MSG_MOVE_E2",
+        "translations": {
+            "en": "Extruder3",
+            "it": "Extruder3"
+        }
+    },
+    "34": {
+        "id": "MSG_MOVE_01MM",
+        "translations": {
+            "en": "Move 0.1mm",
+            "it": "Move 0.1mm"
+        }
+    },
+    "35": {
+        "id": "MSG_MOVE_1MM",
+        "translations": {
+            "en": "Move 1mm",
+            "it": "Move 1mm"
+        }
+    },
+    "36": {
+        "id": "MSG_MOVE_10MM",
+        "translations": {
+            "en": "Move 10mm",
+            "it": "Move 10mm"
+        }
+    },
+    "37": {
+        "id": "MSG_SPEED",
+        "translations": {
+            "en": "Speed",
+            "it": "Velcit\u00e0"
+        }
+    },
+    "38": {
+        "id": "MSG_NOZZLE",
+        "translations": {
+            "en": "Nozzle",
+            "it": "Ugello"
+        }
+    },
+    "39": {
+        "id": "MSG_NOZZLE1",
+        "translations": {
+            "en": "Nozzle2",
+            "it": "Ugello2"
+        }
+    },
+    "40": {
+        "id": "MSG_NOZZLE2",
+        "translations": {
+            "en": "Nozzle3",
+            "it": "Ugello3"
+        }
+    },
+    "41": {
+        "id": "MSG_BED",
+        "translations": {
+            "en": "Bed",
+            "it": "Piatto"
+        }
+    },
+    "42": {
+        "id": "MSG_FAN_SPEED",
+        "translations": {
+            "en": "Fan speed",
+            "it": "Ventola"
+        }
+    },
+    "43": {
+        "id": "MSG_FLOW",
+        "translations": {
+            "en": "Flow",
+            "it": "Flusso"
+        }
+    },
+    "44": {
+        "id": "MSG_FLOW0",
+        "translations": {
+            "en": "Flow 0",
+            "it": "Flusso 0"
+        }
+    },
+    "45": {
+        "id": "MSG_FLOW1",
+        "translations": {
+            "en": "Flow 1",
+            "it": "Flusso 1"
+        }
+    },
+    "46": {
+        "id": "MSG_FLOW2",
+        "translations": {
+            "en": "Flow 2",
+            "it": "Flusso 2"
+        }
+    },
+    "47": {
+        "id": "MSG_CONTROL",
+        "translations": {
+            "en": "Control",
+            "it": "Controllo"
+        }
+    },
+    "48": {
+        "id": "MSG_MIN",
+        "translations": {
+            "en": " \\002 Min",
+            "it": " \\002 Min:"
+        }
+    },
+    "49": {
+        "id": "MSG_MAX",
+        "translations": {
+            "en": " \\002 Max",
+            "it": " \\002 Max:"
+        }
+    },
+    "50": {
+        "id": "MSG_FACTOR",
+        "translations": {
+            "en": " \\002 Fact",
+            "it": " \\002 Fact:"
+        }
+    },
+    "51": {
+        "id": "MSG_AUTOTEMP",
+        "translations": {
+            "en": "Autotemp",
+            "it": "Autotemp"
+        }
+    },
+    "52": {
+        "id": "MSG_ON",
+        "translations": {
+            "en": "On ",
+            "it": "On "
+        }
+    },
+    "53": {
+        "id": "MSG_OFF",
+        "translations": {
+            "en": "Off",
+            "it": "Off"
+        }
+    },
+    "54": {
+        "id": "MSG_PID_P",
+        "translations": {
+            "en": "PID-P",
+            "it": "PID-P"
+        }
+    },
+    "55": {
+        "id": "MSG_PID_I",
+        "translations": {
+            "en": "PID-I",
+            "it": "PID-I"
+        }
+    },
+    "56": {
+        "id": "MSG_PID_D",
+        "translations": {
+            "en": "PID-D",
+            "it": "PID-D"
+        }
+    },
+    "57": {
+        "id": "MSG_PID_C",
+        "translations": {
+            "en": "PID-C",
+            "it": "PID-C"
+        }
+    },
+    "58": {
+        "id": "MSG_ACC",
+        "translations": {
+            "en": "Accel",
+            "it": "Accel"
+        }
+    },
+    "59": {
+        "id": "MSG_VXY_JERK",
+        "translations": {
+            "en": "Vxy-jerk",
+            "it": "Vxy-jerk"
+        }
+    },
+    "60": {
+        "id": "MSG_VZ_JERK",
+        "translations": {
+            "en": "Vz-jerk",
+            "it": "Vz-jerk"
+        }
+    },
+    "61": {
+        "id": "MSG_VE_JERK",
+        "translations": {
+            "en": "Ve-jerk",
+            "it": "Ve-jerk"
+        }
+    },
+    "62": {
+        "id": "MSG_VMAX",
+        "translations": {
+            "en": "Vmax ",
+            "it": "Vmax"
+        }
+    },
+    "63": {
+        "id": "MSG_X",
+        "translations": {
+            "en": "x",
+            "it": "x"
+        }
+    },
+    "64": {
+        "id": "MSG_Y",
+        "translations": {
+            "en": "y",
+            "it": "y"
+        }
+    },
+    "65": {
+        "id": "MSG_Z",
+        "translations": {
+            "en": "z",
+            "it": "z"
+        }
+    },
+    "66": {
+        "id": "MSG_E",
+        "translations": {
+            "en": "e",
+            "it": "e"
+        }
+    },
+    "67": {
+        "id": "MSG_VMIN",
+        "translations": {
+            "en": "Vmin",
+            "it": "Vmin"
+        }
+    },
+    "68": {
+        "id": "MSG_VTRAV_MIN",
+        "translations": {
+            "en": "VTrav min",
+            "it": "VTrav min"
+        }
+    },
+    "69": {
+        "id": "MSG_AMAX",
+        "translations": {
+            "en": "Amax ",
+            "it": "Amax"
+        }
+    },
+    "70": {
+        "id": "MSG_A_RETRACT",
+        "translations": {
+            "en": "A-retract",
+            "it": "A-retract"
+        }
+    },
+    "71": {
+        "id": "MSG_XSTEPS",
+        "translations": {
+            "en": "Xsteps\/mm",
+            "it": "Xpassi\/mm"
+        }
+    },
+    "72": {
+        "id": "MSG_YSTEPS",
+        "translations": {
+            "en": "Ysteps\/mm",
+            "it": "Ypassi\/mm"
+        }
+    },
+    "73": {
+        "id": "MSG_ZSTEPS",
+        "translations": {
+            "en": "Zsteps\/mm",
+            "it": "Zpassi\/mm"
+        }
+    },
+    "74": {
+        "id": "MSG_ESTEPS",
+        "translations": {
+            "en": "Esteps\/mm",
+            "it": "Epassi\/mm"
+        }
+    },
+    "75": {
+        "id": "MSG_RECTRACT",
+        "translations": {
+            "en": "Rectract",
+            "it": "Ritrai"
+        }
+    },
+    "76": {
+        "id": "MSG_TEMPERATURE",
+        "translations": {
+            "en": "Temperature",
+            "it": "Temperatura"
+        }
+    },
+    "77": {
+        "id": "MSG_MOTION",
+        "translations": {
+            "en": "Motion",
+            "it": "Movimento"
+        }
+    },
+    "78": {
+        "id": "MSG_CONTRAST",
+        "translations": {
+            "en": "LCD contrast",
+            "it": "Contrast"
+        }
+    },
+    "79": {
+        "id": "MSG_STORE_EPROM",
+        "translations": {
+            "en": "Store memory",
+            "it": "Salva in EEPROM"
+        }
+    },
+    "80": {
+        "id": "MSG_LOAD_EPROM",
+        "translations": {
+            "en": "Load memory",
+            "it": "Carica da EEPROM"
+        }
+    },
+    "81": {
+        "id": "MSG_RESTORE_FAILSAFE",
+        "translations": {
+            "en": "Restore failsafe",
+            "it": "Impostaz. default"
+        }
+    },
+    "82": {
+        "id": "MSG_REFRESH",
+        "translations": {
+            "en": "Refresh",
+            "it": "Aggiorna"
+        }
+    },
+    "83": {
+        "id": "MSG_WATCH",
+        "translations": {
+            "en": "Info screen",
+            "it": "Guarda"
+        }
+    },
+    "84": {
+        "id": "MSG_PREPARE",
+        "translations": {
+            "en": "Prepare",
+            "it": "Prepara"
+        }
+    },
+    "85": {
+        "id": "MSG_TUNE",
+        "translations": {
+            "en": "Tune",
+            "it": "Adatta"
+        }
+    },
+    "86": {
+        "id": "MSG_PAUSE_PRINT",
+        "translations": {
+            "en": "Pause print",
+            "it": "Pausa"
+        }
+    },
+    "87": {
+        "id": "MSG_RESUME_PRINT",
+        "translations": {
+            "en": "Resume print",
+            "it": "Riprendi Stampa"
+        }
+    },
+    "88": {
+        "id": "MSG_STOP_PRINT",
+        "translations": {
+            "en": "Stop print",
+            "it": "Arresta Stampa"
+        }
+    },
+    "89": {
+        "id": "MSG_CARD_MENU",
+        "translations": {
+            "en": "Print from SD",
+            "it": "SD Card Menu"
+        }
+    },
+    "90": {
+        "id": "MSG_NO_CARD",
+        "translations": {
+            "en": "No SD card",
+            "it": "No SD Card"
+        }
+    },
+    "91": {
+        "id": "MSG_DWELL",
+        "translations": {
+            "en": "Sleep...",
+            "it": "Sospensione..."
+        }
+    },
+    "92": {
+        "id": "MSG_USERWAIT",
+        "translations": {
+            "en": "Wait for user...",
+            "it": "Attendi Utente..."
+        }
+    },
+    "93": {
+        "id": "MSG_RESUMING",
+        "translations": {
+            "en": "Resuming print",
+            "it": "Riprendi Stampa"
+        }
+    },
+    "94": {
+        "id": "MSG_NO_MOVE",
+        "translations": {
+            "en": "No move.",
+            "it": "Nessun Movimento."
+        }
+    },
+    "95": {
+        "id": "MSG_KILLED",
+        "translations": {
+            "en": "KILLED. ",
+            "it": "UCCISO. "
+        }
+    },
+    "96": {
+        "id": "MSG_STOPPED",
+        "translations": {
+            "en": "STOPPED. ",
+            "it": "ARRESTATO. "
+        }
+    },
+    "97": {
+        "id": "MSG_CONTROL_RETRACT",
+        "translations": {
+            "en": "Retract mm",
+            "it": "Ritrai mm"
+        }
+    },
+    "98": {
+        "id": "MSG_CONTROL_RETRACTF",
+        "translations": {
+            "en": "Retract  V",
+            "it": "Ritrai  V"
+        }
+    },
+    "99": {
+        "id": "MSG_CONTROL_RETRACT_ZLIFT",
+        "translations": {
+            "en": "Hop mm",
+            "it": "Salta mm"
+        }
+    },
+    "180": {
+        "id": "MSG_CONTROL_RETRACT_RECOVER",
+        "translations": {
+            "en": "UnRet +mm",
+            "it": "UnRet +mm"
+        }
+    },
+    "101": {
+        "id": "MSG_CONTROL_RETRACT_RECOVERF",
+        "translations": {
+            "en": "UnRet  V",
+            "it": "UnRet  V"
+        }
+    },
+    "102": {
+        "id": "MSG_AUTORETRACT",
+        "translations": {
+            "en": "AutoRetr.",
+            "it": "AutoArretramento"
+        }
+    },
+    "194": {
+        "id": "MSG_FILAMENTCHANGE",
+        "translations": {
+            "en": "Change filament",
+            "it": "Cambia filamento"
+        }
+    },
+    "195": {
+        "id": "MSG_INIT_SDCARD",
+        "translations": {
+            "it": "Iniz. SD-Card",
+            "en": "Init. SD card"
+        }
+    },
+    "196": {
+        "id": "MSG_CNG_SDCARD",
+        "translations": {
+            "it": "Cambia SD-Card",
+            "en": "Change SD card"
+        }
+    },
+    "106": {
+        "id": "MSG_ZPROBE_OUT",
+        "translations": {
+            "en": "Z probe out. bed",
+            "it": "Z probe out. bed"
+        }
+    },
+    "107": {
+        "id": "MSG_POSITION_UNKNOWN",
+        "translations": {
+            "en": "Home X\/Y before Z",
+            "it": "Home X\/Y before Z"
+        }
+    },
+    "108": {
+        "id": "MSG_ORIGIN_UNKNOWN",
+        "translations": {
+            "en": "Home all axes first"
+        }
+    },
+    "109": {
+        "id": "MSG_ZPROBE_ZOFFSET",
+        "translations": {
+            "en": "Z Offset",
+            "it": "Z Offset"
+        }
+    },
+    "110": {
+        "id": "MSG_BABYSTEP_X",
+        "translations": {
+            "en": "Babystep X",
+            "it": "Babystep X"
+        }
+    },
+    "111": {
+        "id": "MSG_BABYSTEP_Y",
+        "translations": {
+            "en": "Babystep Y",
+            "it": "Babystep Y"
+        }
+    },
+    "112": {
+        "id": "MSG_BABYSTEP_Z",
+        "translations": {
+            "en": "Babystep Z",
+            "it": "Babystep Z"
+        }
+    },
+    "113": {
+        "id": "MSG_ENDSTOP_ABORT",
+        "translations": {
+            "en": "Endstop abort",
+            "it": "Endstop abort"
+        }
+    },
+    "114": {
+        "id": "MSG_POWERUP",
+        "translations": {
+            "en": "PowerUp",
+            "it": "Accensione"
+        }
+    },
+    "115": {
+        "id": "MSG_EXTERNAL_RESET",
+        "translations": {
+            "en": " External Reset",
+            "it": " Reset Esterno"
+        }
+    },
+    "116": {
+        "id": "MSG_BROWNOUT_RESET",
+        "translations": {
+            "en": " Brown out Reset",
+            "it": " Brown out Reset"
+        }
+    },
+    "117": {
+        "id": "MSG_WATCHDOG_RESET",
+        "translations": {
+            "en": " Watchdog Reset",
+            "it": " Watchdog Reset"
+        }
+    },
+    "118": {
+        "id": "MSG_SOFTWARE_RESET",
+        "translations": {
+            "en": " Software Reset",
+            "it": " Software Reset"
+        }
+    },
+    "119": {
+        "id": "MSG_AUTHOR",
+        "translations": {
+            "en": " | Author: ",
+            "it": " | Autore: "
+        }
+    },
+    "120": {
+        "id": "MSG_CONFIGURATION_VER",
+        "translations": {
+            "en": " Last Updated: ",
+            "it": " Ultimo Aggiornamento: "
+        }
+    },
+    "121": {
+        "id": "MSG_FREE_MEMORY",
+        "translations": {
+            "en": " Free Memory: ",
+            "it": " Memoria Libera: "
+        }
+    },
+    "122": {
+        "id": "MSG_PLANNER_BUFFER_BYTES",
+        "translations": {
+            "en": "  PlannerBufferBytes: ",
+            "it": "  PlannerBufferBytes: "
+        }
+    },
+    "183": {
+        "id": "MSG_OK",
+        "translations": {
+            "en": "ok",
+            "it": "ok"
+        }
+    },
+    "184": {
+        "id": "MSG_FILE_SAVED",
+        "translations": {
+            "en": "Done saving file.",
+            "it": "File Salvato."
+        }
+    },
+    "125": {
+        "id": "MSG_FILE_PRINTED",
+        "translations": {
+            "en": "Done printing file",
+            "it": "File stampato"
+        }
+    },
+    "126": {
+        "id": "MSG_BEGIN_FILE_LIST",
+        "translations": {
+            "en": "Begin file list",
+            "it": "Inizio Lista File"
+        }
+    },
+    "127": {
+        "id": "MSG_END_FILE_LIST",
+        "translations": {
+            "en": "End file list",
+            "it": "Fine Lista File"
+        }
+    },
+    "128": {
+        "id": "MSG_M104_INVALID_EXTRUDER",
+        "translations": {
+            "en": "M104 Invalid extruder ",
+            "it": "M104 Estrusore non valido "
+        }
+    },
+    "129": {
+        "id": "MSG_M105_INVALID_EXTRUDER",
+        "translations": {
+            "en": "M105 Invalid extruder ",
+            "it": "M105 Estrusore non valido "
+        }
+    },
+    "130": {
+        "id": "MSG_M200_INVALID_EXTRUDER",
+        "translations": {
+            "en": "M200 Invalid extruder ",
+            "it": "M200 Estrusore non valido "
+        }
+    },
+    "131": {
+        "id": "MSG_M218_INVALID_EXTRUDER",
+        "translations": {
+            "en": "M218 Invalid extruder ",
+            "it": "M218 Estrusore non valido "
+        }
+    },
+    "132": {
+        "id": "MSG_M221_INVALID_EXTRUDER",
+        "translations": {
+            "en": "M221 Invalid extruder ",
+            "it": "M221 Estrusore non valido "
+        }
+    },
+    "133": {
+        "id": "MSG_M109_INVALID_EXTRUDER",
+        "translations": {
+            "en": "M109 Invalid extruder ",
+            "it": "M109 Estrusore non valido "
+        }
+    },
+    "134": {
+        "id": "MSG_HEATING",
+        "translations": {
+            "en": "Heating...",
+            "it": "Riscaldamento..."
+        }
+    },
+    "135": {
+        "id": "MSG_HEATING_COMPLETE",
+        "translations": {
+            "en": "Heating done.",
+            "it": "Stampante Calda."
+        }
+    },
+    "136": {
+        "id": "MSG_BED_HEATING",
+        "translations": {
+            "en": "Bed Heating.",
+            "it": "Riscaldamento Piatto."
+        }
+    },
+    "137": {
+        "id": "MSG_BED_DONE",
+        "translations": {
+            "en": "Bed done.",
+            "it": "Piatto Pronto."
+        }
+    },
+    "138": {
+        "id": "MSG_COUNT_X",
+        "translations": {
+            "en": " Count X: ",
+            "it": " Calcola X: "
+        }
+    },
+    "139": {
+        "id": "MSG_COUNT_A",
+        "translations": {
+            "en": " Count A: "
+        }
+    },
+    "140": {
+        "id": "MSG_RESEND",
+        "translations": {
+            "en": "Resend: ",
+            "it": "Reinviato:"
+        }
+    },
+    "141": {
+        "id": "MSG_ACTIVE_EXTRUDER",
+        "translations": {
+            "en": "Active Extruder: ",
+            "it": "Attiva Estrusore: "
+        }
+    },
+    "142": {
+        "id": "MSG_INVALID_EXTRUDER",
+        "translations": {
+            "en": "Invalid extruder",
+            "it": "Estrusore non valido"
+        }
+    },
+    "143": {
+        "id": "MSG_X_MIN",
+        "translations": {
+            "en": "x_min: ",
+            "it": "x_min: "
+        }
+    },
+    "144": {
+        "id": "MSG_X_MAX",
+        "translations": {
+            "en": "x_max: ",
+            "it": "x_max: "
+        }
+    },
+    "145": {
+        "id": "MSG_Y_MIN",
+        "translations": {
+            "en": "y_min: ",
+            "it": "y_min: "
+        }
+    },
+    "146": {
+        "id": "MSG_Y_MAX",
+        "translations": {
+            "en": "y_max: ",
+            "it": "y_max: "
+        }
+    },
+    "147": {
+        "id": "MSG_Z_MIN",
+        "translations": {
+            "en": "z_min: ",
+            "it": "z_min: "
+        }
+    },
+    "148": {
+        "id": "MSG_Z_MAX",
+        "translations": {
+            "en": "z_max: ",
+            "it": "z_max: "
+        }
+    },
+    "149": {
+        "id": "MSG_M119_REPORT",
+        "translations": {
+            "en": "Reporting endstop status",
+            "it": "Segnalazione stato degli endstop"
+        }
+    },
+    "150": {
+        "id": "MSG_ENDSTOP_HIT",
+        "translations": {
+            "en": "TRIGGERED",
+            "it": "INNESCATO"
+        }
+    },
+    "151": {
+        "id": "MSG_ENDSTOP_OPEN",
+        "translations": {
+            "en": "open",
+            "it": "aperto"
+        }
+    },
+    "152": {
+        "id": "MSG_HOTEND_OFFSET",
+        "translations": {
+            "en": "Hotend offsets:",
+            "it": "Hotend offsets:"
+        }
+    },
+    "153": {
+        "id": "MSG_INVALID_PARAMETER",
+        "translations": {
+            "en": "Invalid parameter"
+        }
+    },
+    "154": {
+        "id": "MSG_SD_CANT_OPEN_SUBDIR",
+        "translations": {
+            "en": "Cannot open subdir",
+            "it": "Impossibile aprire sottocartella"
+        }
+    },
+    "155": {
+        "id": "MSG_SD_INIT_FAIL",
+        "translations": {
+            "en": "SD init fail",
+            "it": "Fallita Inizializzazione SD"
+        }
+    },
+    "156": {
+        "id": "MSG_SD_VOL_INIT_FAIL",
+        "translations": {
+            "en": "volume.init failed",
+            "it": "Fallito il montaggio del Volume"
+        }
+    },
+    "157": {
+        "id": "MSG_SD_OPENROOT_FAIL",
+        "translations": {
+            "en": "openRoot failed",
+            "it": "Fallita l'apertura Cartella Principale"
+        }
+    },
+    "158": {
+        "id": "MSG_SD_CARD_OK",
+        "translations": {
+            "en": "SD card ok",
+            "it": "SD card ok"
+        }
+    },
+    "159": {
+        "id": "MSG_SD_WORKDIR_FAIL",
+        "translations": {
+            "en": "workDir open failed",
+            "it": "Fallita l'apertura Cartella di Lavoro"
+        }
+    },
+    "160": {
+        "id": "MSG_SD_OPEN_FILE_FAIL",
+        "translations": {
+            "en": "open failed, File: ",
+            "it": "Fallita l'apertura del File: "
+        }
+    },
+    "161": {
+        "id": "MSG_SD_FILE_OPENED",
+        "translations": {
+            "en": "File opened: ",
+            "it": "File aperto: "
+        }
+    },
+    "162": {
+        "id": "MSG_SD_SIZE",
+        "translations": {
+            "en": " Size: ",
+            "it": " Dimensione: "
+        }
+    },
+    "163": {
+        "id": "MSG_SD_FILE_SELECTED",
+        "translations": {
+            "en": "File selected",
+            "it": "File selezionato"
+        }
+    },
+    "164": {
+        "id": "MSG_SD_WRITE_TO_FILE",
+        "translations": {
+            "en": "Writing to file: ",
+            "it": "Scrittura su file: "
+        }
+    },
+    "165": {
+        "id": "MSG_SD_PRINTING_BYTE",
+        "translations": {
+            "en": "SD printing byte ",
+            "it": "Si sta scrivendo il byte su SD "
+        }
+    },
+    "166": {
+        "id": "MSG_SD_NOT_PRINTING",
+        "translations": {
+            "en": "Not SD printing",
+            "it": "Non si sta scrivendo su SD"
+        }
+    },
+    "167": {
+        "id": "MSG_SD_ERR_WRITE_TO_FILE",
+        "translations": {
+            "en": "error writing to file",
+            "it": "Errore nella scrittura su file"
+        }
+    },
+    "168": {
+        "id": "MSG_SD_CANT_ENTER_SUBDIR",
+        "translations": {
+            "en": "Cannot enter subdir: ",
+            "it": "Impossibile entrare nella sottocartella: "
+        }
+    },
+    "169": {
+        "id": "MSG_STEPPER_TOO_HIGH",
+        "translations": {
+            "en": "Steprate too high: ",
+            "it": "Steprate troppo alto: "
+        }
+    },
+    "170": {
+        "id": "MSG_ENDSTOPS_HIT",
+        "translations": {
+            "en": "endstops hit: ",
+            "it": "Raggiunto il fondo carrello: "
+        }
+    },
+    "171": {
+        "id": "MSG_BABYSTEPPING_X",
+        "translations": {
+            "en": "Babystepping X",
+            "it": "Babystepping X"
+        }
+    },
+    "172": {
+        "id": "MSG_BABYSTEPPING_Y",
+        "translations": {
+            "en": "Babystepping Y",
+            "it": "Babystepping Y"
+        }
+    },
+    "173": {
+        "id": "MSG_BABYSTEPPING_Z",
+        "translations": {
+            "en": "Babystepping Z",
+            "it": "Babystepping Z"
+        }
+    },
+    "174": {
+        "id": "MSG_SERIAL_ERROR_MENU_STRUCTURE",
+        "translations": {
+            "en": "Error in menu structure",
+            "it": "Qualcosa non va in MenuStructure."
+        }
+    },
+    "175": {
+        "id": "MSG_ERR_LINE_NO",
+        "translations": {
+            "en": "Line Number is not Last Line Number+1, Last Line: ",
+            "it": "Il Numero della Linea non corrisponde al Numero dell'Ultima Linea+1, Ultima Linea: "
+        }
+    },
+    "176": {
+        "id": "MSG_ERR_CHECKSUM_MISMATCH",
+        "translations": {
+            "en": "checksum mismatch, Last Line: ",
+            "it": "checksum non corrispondente, Ultima Linea: "
+        }
+    },
+    "177": {
+        "id": "MSG_ERR_NO_CHECKSUM",
+        "translations": {
+            "en": "No Checksum with line number, Last Line: ",
+            "it": "Nessun Checksum con Numero di Linea, Ultima Linea: "
+        }
+    },
+    "178": {
+        "id": "MSG_ERR_NO_LINENUMBER_WITH_CHECKSUM",
+        "translations": {
+            "en": "No Line Number with checksum, Last Line: ",
+            "it": "Nessun Numero di Linea con Checksum, Ultima Linea: "
+        }
+    },
+    "179": {
+        "id": "MSG_ERR_NO_THERMISTORS",
+        "translations": {
+            "en": "No thermistors - no temperature",
+            "it": "Nessun Termistore - nessuna temperatura"
+        }
+    },
+    "100": {
+        "id": "MSG_ERR_KILLED",
+        "translations": {
+            "en": "Printer halted. kill() called!",
+            "it": "Stampante Calda. kill() chiamata !!"
+        }
+    },
+    "181": {
+        "id": "MSG_ERR_PROBE_FAILED",
+        "translations": {
+            "en": "Probe failed"
+        }
+    },
+    "182": {
+        "id": "MSG_ERR_STOPPED",
+        "translations": {
+            "en": "Printer stopped due to errors. Fix the error and use M999 to restart. (Temperature is reset. Set it after restarting)",
+            "it": "Stampante fermata a causa di errori. Risolvi l'errore e usa M999 per ripartire!. (Reset temperatura. Impostala prima di ripartire)"
+        }
+    },
+    "123": {
+        "id": "MSG_ERR_COLD_EXTRUDE_STOP",
+        "translations": {
+            "en": " cold extrusion prevented",
+            "it": " prevenuta estrusione fredda"
+        }
+    },
+    "124": {
+        "id": "MSG_ERR_LONG_EXTRUDE_STOP",
+        "translations": {
+            "en": " too long extrusion prevented",
+            "it": " prevenuta estrusione troppo lunga"
+        }
+    },
+    "185": {
+        "id": "MSG_ERR_OUT_OF_BOUNDS",
+        "translations": {
+            "en": "Value out of bounds"
+        }
+    },
+    "186": {
+        "id": "MSG_ERR_PROTECTED_PIN",
+        "translations": {
+            "en": "Protected pin"
+        }
+    },
+    "187": {
+        "id": "MSG_ERR_UNSUPPORTED_HEAD_ID",
+        "translations": {
+            "en": "Unsupported head ID"
+        }
+    },
+    "188": {
+        "id": "MSG_ERR_LASER_DISABLED",
+        "translations": {
+            "en": "Laser disabled (wrong mode or hardware fault)"
+        }
+    },
+    "189": {
+        "id": "MSG_ERR_UNABLE_TO_FORWARD",
+        "translations": {
+            "en": "Cannot forward commands to interface #0"
+        }
+    },
+    "190": {
+        "id": "MSG_ERR_INVALID_COMM_IF",
+        "translations": {
+            "en": "Invalid interface #"
+        }
+    },
+    "191": {
+        "id": "MSG_ERR_INACTIVE_COMM_IF",
+        "translations": {
+            "en": "Comm interface {} is not active"
+        }
+    },
+    "192": {
+        "id": "MSG_ERR_UNSPECIFIED_COMM_IF",
+        "translations": {
+            "en": "Communication interface not specified"
+        }
+    },
+    "193": {
+        "id": "MSG_ERR_DISABLED_COMM",
+        "translations": {
+            "en": "Smart head communication disabled by active tool definition"
+        }
+    },
+    "103": {
+        "id": "MSG_ERR_MIN_TEMP",
+        "translations": {
+            "en": "Extruder switched off. MINTEMP triggered!"
+        }
+    },
+    "104": {
+        "id": "MSG_ERR_MAX_TEMP",
+        "translations": {
+            "en": "Extruder switched off. MAXTEMP triggered!"
+        }
+    },
+    "105": {
+        "id": "MSG_ERR_MAX_BED_TEMP",
+        "translations": {
+            "en": "Temperature heated bed switched off. MAXTEMP triggered !!"
+        }
+    }
+}

@@ -238,7 +238,7 @@ bool PID_autotune(float temp, int extruder, int ncycles)
   #endif
        ){
          SERIAL_ERROR_START;
-         SERIAL_ERRORLNPGM("PID Autotune failed. Bad extruder number.");
+         SERIAL_PROTOCOLLNPGM("PID Autotune failed. Bad extruder number.");
           return false;
         }
 
@@ -536,7 +536,7 @@ void manage_heater()
         disable_heater();
         if(IsStopped() == false) {
           SERIAL_ERROR_START;
-          SERIAL_ERRORLNPGM("Extruder switched off. Temperature difference between temp sensors is too high !");
+          SERIAL_PROTOCOLLNPGM("Extruder switched off. Temperature difference between temp sensors is too high !");
           LCD_ALERTMESSAGEPGM("Err: REDUNDANT TEMP ERROR");
         }
         #ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
@@ -652,7 +652,7 @@ static float analog2temp(int raw, uint8_t e) {
   {
       SERIAL_ERROR_START;
       SERIAL_ERROR((int)e);
-      SERIAL_ERRORLNPGM(" - Invalid extruder number !");
+      SERIAL_ERRORLNPGM(MSG_ERR_INVALID_EXTRUDER);
       kill();
   }
   #ifdef HEATER_0_USES_MAX6675
@@ -1281,8 +1281,8 @@ void inline max_temp_error (uint8_t e)
     RPI_ERROR_ACK_ON();
     ERROR_CODE=ERROR_MAX_TEMP;
     SERIAL_ASYNC_START;
+    SERIAL_ERRORLNPGM(MSG_ERR_MAX_TEMP);
     SERIAL_ERRORLN((int)e);
-    SERIAL_ERRORLNPGM(": Extruder switched off. MAXTEMP triggered !");
     LCD_ALERTMESSAGEPGM("Err: MAXTEMP");
 #ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
   Stop(ERROR_MAX_TEMP);
@@ -1309,8 +1309,9 @@ void min_temp_error (uint8_t e)
   if (IsStopped() == false)
   {
     SERIAL_ASYNC_START;
+    SERIAL_ERRORLNPGM(MSG_ERR_MIN_TEMP);
+    SERIAL_PROTOCOL_P(PMSG_COMMA);
     SERIAL_ERRORLN((int)e);
-    SERIAL_ERRORLNPGM(": Extruder switched off. MINTEMP triggered !");
     LCD_ALERTMESSAGEPGM("Err: MINTEMP");
   }
 #ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
@@ -1333,7 +1334,7 @@ void bed_max_temp_error (void)
     RPI_ERROR_ACK_ON();
     ERROR_CODE=ERROR_MAX_BED_TEMP;
     SERIAL_ASYNC_START;
-    SERIAL_ERRORLNPGM("Temperature heated bed switched off. MAXTEMP triggered !!");
+    SERIAL_ERRORLNPGM(MSG_ERR_MAX_BED_TEMP);
     LCD_ALERTMESSAGEPGM("Err: MAXTEMP BED");
 #ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
     Stop();

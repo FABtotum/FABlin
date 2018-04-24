@@ -521,4 +521,18 @@ const unsigned int dropsegments=5; //everything with less than this number of st
 #define TP_ISR_PROFILE_PIN 51
 #define IDLE_PROFILE_PIN   52
 
+/**
+ * Define: NUMERIC_ERROR_MESSAGES
+ * 
+ * Enable substitution of error messages with numeric codes
+ * 
+ * Description:
+ * 
+ *  For this to work, a file named `message_ids.` must be present in the source directory.
+ * For each MSG_* string defined in the firmware, the file must define a corresponding
+ * numeric code as MSG_*_ID.
+ * 
+ */
+//#define NUMERIC_ERROR_MESSAGES
+
 #endif //__CONFIGURATION_ADV_H

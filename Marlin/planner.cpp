@@ -561,7 +561,7 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
     {
       position[E_AXIS]=target[E_AXIS]; //behave as if the move really took place, but ignore E part
       SERIAL_ASYNC_START;
-      SERIAL_ECHOLNPGM(MSG_ERR_COLD_EXTRUDE_STOP);
+      SERIAL_ERRORLNPGM(MSG_ERR_COLD_EXTRUDE_STOP);
       RPI_ERROR_ACK_ON();
       ERROR_CODE=ERROR_EXTRUDE_MINTEMP;
     }
@@ -571,7 +571,7 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
     {
       position[E_AXIS]=target[E_AXIS]; //behave as if the move really took place, but ignore E part
       SERIAL_ASYNC_START;
-      SERIAL_ECHOLNPGM(MSG_ERR_LONG_EXTRUDE_STOP);
+      SERIAL_ERRORLNPGM(MSG_ERR_LONG_EXTRUDE_STOP);
       RPI_ERROR_ACK_ON();
       ERROR_CODE=ERROR_LONG_EXTRUSION;
     }

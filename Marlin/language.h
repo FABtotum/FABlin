@@ -286,6 +286,19 @@
 	#define MSG_BABYSTEPPING_Z "Babystepping Z"
 	#define MSG_SERIAL_ERROR_MENU_STRUCTURE "Error in menu structure"
 
+	#define MSG_ERR_UNSUPPORTED_HEAD_ID "Unsupported head ID"
+	#define MSG_ERR_LASER_DISABLED "Laser disabled (wrong mode or hardware fault)"
+
+	#define MSG_ERR_UNABLE_TO_FORWARD "Cannot forward commands to interface #0"
+	#define MSG_ERR_INVALID_COMM_IF "Invalid interface #"
+	#define MSG_ERR_INACTIVE_COMM_IF "Comm interface {} is not active"
+	#define MSG_ERR_DISABLED_COMM "Smart head communication disabled by active tool definition"
+	#define MSG_ERR_UNSPECIFIED_COMM_IF "Communication interface not specified"
+
+	#define MSG_ERR_INVALID_EXTRUDER "Invalid extruder number !"
+	#define MSG_ERR_MIN_TEMP "Extruder switched off. MINTEMP triggered !"
+	#define MSG_ERR_MAX_TEMP "Extruder switched off. MAXTEMP triggered !"
+	#define MSG_ERR_MAX_BED_TEMP "Temperature heated bed switched off. MAXTEMP triggered !!"
 	#define MSG_ERR_LINE_NO "Line Number is not Last Line Number+1, Last Line: "
 	#define MSG_ERR_CHECKSUM_MISMATCH "checksum mismatch, Last Line: "
 	#define MSG_ERR_NO_CHECKSUM "No Checksum with line number, Last Line: "
@@ -2709,6 +2722,10 @@
 	#define MSG_BABYSTEPPING_Z "Babystepping Z"
 	#define MSG_SERIAL_ERROR_MENU_STRUCTURE "Akatsak menu-an"
 
+#endif
+
+#if defined(NUMERIC_ERROR_MESSAGES)
+	#include "message_ids.h"
 #endif
 
 // The following redefinitions are optimized for minimal program space waste
