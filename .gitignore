@@ -1,6 +1,13 @@
 .pioenvs
+.piolibdeps
+
 .clang_complete
 .gcc-flags.json
+.vscode/
+
+*.geany
+
+*.asm
 *.o
 applet/
 *~
@@ -8,8 +15,10 @@ applet/
 *.rej
 *.bak
 *.hex
-.piolibdeps
+*.sha2
+
 .gtrr_env
 .gtrr_out
+
 /docs/
 /wiki/
