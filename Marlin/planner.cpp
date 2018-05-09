@@ -482,27 +482,41 @@ void check_axes_activity()
     disable_e2();
     disable_e3();
   }
-#if defined(FAN_PIN) && FAN_PIN > -1
-  #ifdef FAN_KICKSTART_TIME
-    static unsigned long fan_kick_end;
-    if (tail_fan_speed) {
-      if (fan_kick_end == 0) {
-        // Just starting up fan - run at full power.
-        fan_kick_end = millis() + FAN_KICKSTART_TIME;
-        tail_fan_speed = 255;
-      } else if (fan_kick_end > millis())
-        // Fan still spinning up.
-        tail_fan_speed = 255;
-    } else {
-      fan_kick_end = 0;
-    }
-  #endif//FAN_KICKSTART_TIME
-  #ifdef FAN_SOFT_PWM
-  fanSpeedSoftPwm = tail_fan_speed;
-  #else
-  analogWrite(FAN_PIN,tail_fan_speed);
-  #endif//!FAN_SOFT_PWM
-#endif//FAN_PIN > -1
+
+  #if defined(FAN_PIN) && FAN_PIN > -1
+
+    #if FAN_KICKSTART_TIME > 0
+
+      static unsigned long fan_kick_end;
+
+      if (tail_fan_speed) {
+        if (fan_kick_end == 0) {
+          // Just starting up fan - run at full power.
+          fan_kick_end = millis() + FAN_KICKSTART_TIME;
+          tail_fan_speed = 255;
+        } else if (fan_kick_end > millis())
+          // Fan still spinning up.
+          tail_fan_speed = 255;
+      } else {
+        fan_kick_end = 0;
+      }
+
+    #endif // FAN_KICKSTART_TIME > 0
+
+    #ifdef FAN_MIN_PWM
+      #define CALC_FAN_SPEED (tail_fan_speed ? ( FAN_MIN_PWM + (tail_fan_speed * (255 - FAN_MIN_PWM)) / 255 ) : 0)
+    #else
+      #define CALC_FAN_SPEED tail_fan_speed
+    #endif
+
+    #ifdef FAN_SOFT_PWM
+      fanSpeedSoftPwm = CALC_FAN_SPEED;
+    #else
+      analogWrite(FAN_PIN,CALC_FAN_SPEED);
+    #endif
+
+  #endif // FAN_PIN > -1
+
 #ifdef AUTOTEMP
   getHighESpeed();
 #endif

@@ -101,7 +101,28 @@ void plan_set_position(const float &x, const float &y, const float &z, const flo
 void plan_set_e_position(const float &e);
 
 
-
+/**
+ * Function: check_axes_activity
+ * 
+ * Take conditional actions based on queued blocks
+ * 
+ * Description:
+ * 
+ *  This function enforces the following features, depending on
+ * the planner blocks in queue:
+ * 
+ *  - Disabling inactive axes, according to the *DISABLE_* macros
+ *  - Set tail fan speed according to fan kickstart and min PWM features
+ *  - Gauge the max E feedrate in queued blocks for the _AUTOTEMP_ feature
+ *  - Set tail valve pressures for _BARICUDA_ extension
+ * 
+ *  For values requiring some of time to settle (like fan speed and valve pressure)
+ * the value is set according to the latest block queued.
+ *
+ * See Also:
+ * 
+ *  <DISABLE_>, <FAN_KICKSTART_TIME>, <FAN_MIN_PWM>
+ */
 void check_axes_activity();
 uint8_t movesplanned(); //return the nr of buffered moves
 

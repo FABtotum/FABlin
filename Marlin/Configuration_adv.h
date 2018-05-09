@@ -65,10 +65,33 @@
 #define CONTROLLERFAN_SECS 60 //How many seconds, after all motors were disabled, the fan should run
 #define CONTROLLERFAN_SPEED 255  // == full speed
 
+// Define: FAN_KICKSTART_TIME
+//
+// --- Prototype ---
+// #define FAN_KICKSTART_TIME <msecs>
+// -----------------
+//
+// Set fan kickstart time
+//
+// Description:
 // When first starting the main fan, run it at full speed for the
 // given number of milliseconds.  This gets the fan spinning reliably
 // before setting a PWM value. (Does not work with software PWM for fan on Sanguinololu)
 #define FAN_KICKSTART_TIME 50
+
+// Define: FAN_MIN_PWM
+//
+// --- Prototype ---
+// #define FAN_MIN_PWM {1-255}
+// -----------------
+//
+// Set minimum fan PWM level
+//
+// Description:
+// This defines the minimal speed for the main fan, run in PWM mode
+// to enable uncomment and set minimal PWM speed for reliable running (1-255)
+// if fan speed is [1 - (FAN_MIN_PWM-1)] it is set to FAN_MIN_PWM
+#define FAN_MIN_PWM 60
 
 // Extruder cooling fans
 // Configure fan pin outputs to automatically turn on/off when the associated
