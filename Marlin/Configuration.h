@@ -399,7 +399,13 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 #define E2_ENABLE_ON 1
 #define E3_ENABLE_ON 1
 
-// Disables axis when it's not being used.
+// Macros: DISABLE_
+//
+// --- Prototype ---
+// #define DISABLE_{X|Y|Z|E} {true|false}
+// -----------------
+//
+// Disables axis when it's not being used
 #define DISABLE_X false
 #define DISABLE_Y false
 #define DISABLE_Z false

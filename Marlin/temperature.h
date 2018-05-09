@@ -256,7 +256,30 @@ FORCE_INLINE float MainCurrent() {
 
 //#define MAX_PWM    127
 
+/**
+ * Function: tp_init_mintemp
+ *
+ * Set min temp limit for the given heater(s). Only available for head
+ * heaters; not for the bed heater.
+ *
+ * Parameters:
+ *
+ *  value - min temp value in °C to set for the given heater(s). Valid values go from -127 to +127
+ *  heater - the heater for which to set min temp, can be a bitmask of tp_features
+ *
+ */
 void tp_init_mintemp (int8_t, tp_feature_t=TP_HEATER_0);
+
+/**
+ * Function: tp_init_maxtemp
+ *
+ * Set max temp for heater(s)
+ *
+ * Parameters:
+ *  value - Max temp in °C (from 0 to 65535)
+ *  heater - Heater to for which to change max temp value
+ *
+ */
 void tp_init_maxtemp (int16_t, tp_feature_t=TP_HEATER_0);
 int getHeaterPower(int heater);
 
