@@ -1,6 +1,6 @@
 
-                        FABlin Firmware
-                        ===============
+   FABlin Firmware
+=====================
 for **FABtotum Personal Fabricator** and **FABtotum Core** platforms
 
 This is FABlin, a Marlin derivative firmware. Marlin was originally
@@ -16,8 +16,8 @@ Compiling
 
 ### with Arduino IDE
 
-To correctly compile the firmware with Arduino you must set the folder
-where this repository is checked out as Arduino's *sketchbook folder*
+To correctly compile the firmware with Arduino you must set the
+repository root foler as Arduino's *sketchbook folder*
 inside Arduino's preferences. Alternatively you can manually copy the
 [FABlin/libraries/SmartComm](libraries/SmartComm) folder into your
 current sketchbook's *libraries* folder.
@@ -31,7 +31,7 @@ https://www.arduino.cc/en/Guide/Environment#toc7.
 A default `platformio.ini` file with correct directories definitions is
 now included in the repository. To compile the firmware simply run:
 
-  platformio run
+    platformio run
 
 inside this repository's root folder. To upload the firmware on the board
 or flash it directly into it refer to
@@ -40,7 +40,7 @@ or flash it directly into it refer to
 programmer. To directly flash the firmware onto TOTUMduino using that
 defintion, run:
 
-  platformio run -t program
+    platformio run -t program
 
 
 Latest Changes
@@ -88,7 +88,7 @@ For the complete changelog, see [ChangeLog](ChangeLog.txt).
 Contributors
 ------------
 
-FABlin is possible thanks to the contributions by:
+FABlin is possible thanks to work and contributions by:
 
 - Simone Cociancich
 - Marco Rizzuto

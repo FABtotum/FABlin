@@ -3971,6 +3971,24 @@ void process_commands()
         }
       }
       break;
+
+    /**
+     * Command: M85
+     * 
+     * Set max inactivity timeout
+     * 
+     * --- Prototype ---
+     * M85 S<max_inactive_time_s>
+     * -----------------
+     * 
+     * Parameters:
+     *  max_inactive_time_s - Inactivity timout in seconds
+     * 
+     * Description:
+     *  Sets the inactivity timeout. If no command is received during
+     * this lapse of time, various outputs are disabled.
+     * 
+     */
     case 85: // M85
       if (code_seen('S')) {
         max_inactive_time = code_value() * 1000;
@@ -7494,6 +7512,9 @@ void manage_inactivity()
           // Disable laser subsystem
           Laser::disable();
 #endif
+
+          // Store current color to flush the default white from popping up after reactivation
+          store_last_amb_color();
 
           // warning
           RPI_ERROR_ACK_ON();
