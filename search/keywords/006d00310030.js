@@ -1,0 +1,1 @@
+NDSearch.OnPrefixDataLoaded("m10",["Command"],[["M104",,[[,,,,0,"File:Marlin_main.cpp:M104"]]],["M105",,[[,,,,0,"File:Marlin_main.cpp:M105"]]]]);

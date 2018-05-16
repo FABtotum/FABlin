@@ -1,0 +1,1 @@
+NDFramePage.OnPageTitleLoaded("File:Configuration_adv.h","Configuration_adv.h");NDSummary.OnSummaryLoaded("File:Configuration_adv.h",[["C/C++","C"]],[["Groups","Group"],["Macros","Macro"]],[[44,0,0,"Macros","Macros"],[45,0,1,"FAN_KICKSTART_TIME","FAN_KICKSTART_TIME"],[46,0,1,"FAN_MIN_PWM","FAN_MIN_PWM"],[47,0,1,"NUMERIC_ERROR_MESSAGES","NUMERIC_ERROR_MESSAGES"]]);

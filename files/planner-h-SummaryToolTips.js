@@ -1,0 +1,1 @@
+NDSummary.OnToolTipsLoaded("File:planner.h",{27:"<div class=\"NDToolTip TFunction LC\"><div id=\"NDPrototype27\" class=\"NDPrototype NoParameterForm\"><span class=\"SHKeyword\">void</span> check_axes_activity()</div><div class=\"TTSummary\">Take conditional actions based on queued blocks</div></div>"});

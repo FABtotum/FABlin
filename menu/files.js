@@ -1,1 +1,1 @@
-NDMenu.OnSectionLoaded("files.js",[[1,"Marlin_main.cpp"],[1,"temperature.cpp"],[1,"temperature.h"]]);
+NDMenu.OnSectionLoaded("files.js",[[1,"Configuration.h"],[1,"Configuration_adv.h"],[1,"Marlin.h"],[1,"Marlin_main.cpp"],[1,"planner.h"],[1,"temperature.h"]]);

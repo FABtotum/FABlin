@@ -1,0 +1,1 @@
+NDSearch.OnPrefixDataLoaded("fan",["Macro"],[["FAN_KICKSTART_TIME",,[[,,,,0,"File:Configuration_adv.h:FAN_KICKSTART_TIME"]]],["FAN_MIN_PWM",,[[,,,,0,"File:Configuration_adv.h:FAN_MIN_PWM"]]]]);

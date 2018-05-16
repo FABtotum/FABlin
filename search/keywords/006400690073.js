@@ -1,0 +1,1 @@
+NDSearch.OnPrefixDataLoaded("dis",["Macro"],[["DISABLE_",,[[,,,,0,"File:Configuration.h:DISABLE_"]]]]);

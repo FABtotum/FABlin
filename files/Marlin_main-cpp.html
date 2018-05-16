@@ -8,80 +8,201 @@
 
 <body onload="NDLoader.OnLoad('Content');" class="NDPage NDContentPage">
 
-<a name="Functions"></a><a name="Topic13"></a><div class="CTopic TGroup LC first">
+<a name="Functions"></a><a name="Topic4"></a><div class="CTopic TGroup LC first">
  <div class="CTitle">Functions</div>
 </div>
 
-<a name="init"></a><a name="Topic14"></a><div class="CTopic TFunction LC">
+<a name="init"></a><a name="Topic5"></a><div class="CTopic TFunction LC">
  <div class="CTitle">init</div>
- <div id="NDPrototype14" class="NDPrototype NoParameterForm">FORCE_INLINE <span class="SHKeyword">void</span> init ()</div>
+ <div id="NDPrototype5" class="NDPrototype NoParameterForm">FORCE_INLINE <span class="SHKeyword">void</span> init ()</div>
  <div class="CBody"><p>Initialize data structures</p><div class="CHeading">Description</div><p>This function is called at the start of `setup`. Here you can put complex initialization code required by the firmware's logic.</p></div>
 </div>
 
-<a name="print_heaterstates"></a><a name="Topic15"></a><div class="CTopic TFunction LC">
+<a name="print_heaterstates"></a><a name="Topic6"></a><div class="CTopic TFunction LC">
  <div class="CTitle">print_heaterstates (tp_report_t format)</div>
- <div id="NDPrototype15" class="NDPrototype WideForm CStyle"><table><tr><td class="PBeforeParameters"><span class="SHKeyword">void</span> print_heaterstates (</td><td class="PParametersParentCell"><table class="PParameters"><tr><td class="PType first">tp_report_t&nbsp;</td><td class="PName last">format</td></tr></table></td><td class="PAfterParameters">)</td></tr></table></div>
+ <div id="NDPrototype6" class="NDPrototype WideForm CStyle"><table><tr><td class="PBeforeParameters"><span class="SHKeyword">void</span> print_heaterstates (</td><td class="PParametersParentCell"><table class="PParameters"><tr><td class="PType first">tp_report_t&nbsp;</td><td class="PName last">format</td></tr></table></td><td class="PAfterParameters">)</td></tr></table></div>
  <div class="CBody"><p>Prints a report of heater(s) state and temperature(s) level</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">format<div class="CDLParameterType">tp_report_t</div></td><td class="CDLDefinition"><p>Select the output format: TP_REPORT_FULL prints the full format, used e.g. in M105 command. TP_REPORT_AUTO or TP_REPORT_NONE prints the short format where only the active heater and bed temperatures are printed</p></td></tr></table></div>
 </div>
 
-<a name="Commands"></a><a name="Topic18"></a><div class="CTopic TGroup LC">
+<a name="verify_z_probed"></a><a name="Topic50"></a><div class="CTopic TFunction LC">
+ <div class="CTitle">verify_z_probed</div>
+ <div id="NDPrototype50" class="NDPrototype NoParameterForm"><span class="SHKeyword">inline</span> <span class="SHKeyword">bool</span> verify_z_probed ()</div>
+ <div class="CBody"><p>Verify the probe is engaged</p><div class="CHeading">Description</div><p>This function does multiple FSR probe readings to handle floating values. If at least one reading out of 5 is positive than the probing is considered positive.</p><div class="CHeading">Returns</div><table class="CDefinitionList"><tr><td class="CDLEntry">bool</td><td class="CDLDefinition"><p>Whether the probe is positive</p></td></tr></table></div>
+</div>
+
+<a name="run_fast_z_probe"></a><a name="Topic51"></a><div class="CTopic TFunction LC">
+ <div class="CTitle">run_fast_z_probe</div>
+ <div id="NDPrototype51" class="NDPrototype WideForm CStyle"><table><tr><td class="PBeforeParameters"><span class="SHKeyword">static</span> <span class="SHKeyword">bool</span> run_fast_z_probe(</td><td class="PParametersParentCell"><table class="PParameters"><tr><td class="PType first"><span class="SHKeyword">float</span>&nbsp;</td><td class="PName last">feedrateProbing</td></tr></table></td><td class="PAfterParameters">)</td></tr></table></div>
+ <div class="CBody"><p>Run a fast probe with the optional Z probe</p><div class="CHeading">Description</div><p>After a probe, current_position[Z_AXIS] is updated with the height at which the probing took effect, or stopped. Whether the value is valid depends on the return value of the function.</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">feedrateProbing<div class="CDLParameterType"><span class="SHKeyword">float</span></div></td><td class="CDLDefinition"><p>Feedrate at which to do the probing (mm/min)</p></td></tr></table><div class="CHeading">Returns</div><table class="CDefinitionList"><tr><td class="CDLEntry">bool</td><td class="CDLDefinition"><p>wether the probing completed successfully</p></td></tr></table></div>
+</div>
+
+<a name="power_enable_heater"></a><a name="Topic52"></a><div class="CTopic TFunction LC">
+ <div class="CTitle">power_enable_heater</div>
+ <div id="NDPrototype52" class="NDPrototype WideForm CStyle"><table><tr><td class="PBeforeParameters"><span class="SHKeyword">inline</span> <span class="SHKeyword">void</span> power_enable_heater (</td><td class="PParametersParentCell"><table class="PParameters"><tr><td class="PType first">uint8_t&nbsp;</td><td class="PName last">heater_id</td></tr></table></td><td class="PAfterParameters">)</td></tr></table></div>
+ <div class="CBody"><p>Turn on a heater line by numeric index</p></div>
+</div>
+
+<a name="power_disable_heater"></a><a name="Topic53"></a><div class="CTopic TFunction LC">
+ <div class="CTitle">power_disable_heater</div>
+ <div id="NDPrototype53" class="NDPrototype WideForm CStyle"><table><tr><td class="PBeforeParameters"><span class="SHKeyword">inline</span> <span class="SHKeyword">void</span> power_disable_heater (</td><td class="PParametersParentCell"><table class="PParameters"><tr><td class="PType first">uint8_t&nbsp;</td><td class="PName last">heater_id</td></tr></table></td><td class="PAfterParameters">)</td></tr></table></div>
+ <div class="CBody"><p>Shut down a heater line by numeric index</p></div>
+</div>
+
+<a name="I2C_read"></a><a name="Topic54"></a><div class="CTopic TFunction LC">
+ <div class="CTitle">I2C_read</div>
+ <div id="NDPrototype54" class="NDPrototype WideForm CStyle"><table><tr><td class="PBeforeParameters"><span class="SHKeyword">char</span> I2C_read(</td><td class="PParametersParentCell"><table class="PParameters"><tr><td class="PType first"><span class="SHKeyword">byte</span>&nbsp;</td><td class="PName last">i2c_register</td></tr></table></td><td class="PAfterParameters">)</td></tr></table></div>
+ <div class="CBody"><p>Read a byte from an I2C slave</p><div class="CHeading">Description</div><p>The slave address is set in in SERIAL_ID_ADDR constant.</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">i2c_register<div class="CDLParameterType"><span class="SHKeyword">byte</span></div></td><td class="CDLDefinition"><p>The slave's register to read from</p></td></tr></table><div class="CHeading">Returns</div><table class="CDefinitionList"><tr><td class="CDLEntry">char</td><td class="CDLDefinition"><p>A character read from the salve. '?' in case of errors</p></td></tr></table><div class="CHeading">See Also</div><p><a href="../index.html#File:Marlin.h:SERIAL_ID_ADDR" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,20);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >SERIAL_ID_ADDR</a></p></div>
+</div>
+
+<a name="Commands"></a><a name="Topic7"></a><div class="CTopic TGroup LC">
  <div class="CTitle">Commands</div>
 </div>
 
-<a name="M43"></a><a name="Topic20"></a><div class="CTopic TCommand LC">
+<a name="G27"></a><a name="Topic55"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">G27</div>
+ <div class="CBody"><p>Home all Axis using z-axis MINZ endstop</p><div class="CHeading">Params</div><table class="CDefinitionList"><tr><td class="CDLEntry">X</td><td class="CDLDefinition"><p>Home X axis if flag present</p></td></tr><tr><td class="CDLEntry">Y</td><td class="CDLDefinition"><p>Home Y axis if flag present</p></td></tr><tr><td class="CDLEntry">Z</td><td class="CDLDefinition"><p>Home Z axis if flag present</p></td></tr></table><div class="CHeading">Compatibility</div><p>FABlin</p></div>
+</div>
+
+<a name="G30"></a><a name="Topic70"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">G30</div>
+ <div id="NDPrototype70" class="NDPrototype NoParameterForm">G30 [U&lt;feedrate_up&gt;]</div>
+ <div class="CBody"><p>Single Z-Probe</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">U</td><td class="CDLDefinition"><p>Feedrate for upward movement, in mm/min</p></td></tr></table><div class="CHeading">Description</div><p>The axis must have been homed before this command. Homing check can be skipped by using <a href="../index.html#File:Marlin_main.cpp:M733" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,65);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M733</a>.</p><div class="CHeading">Output</div><p>The coordinates of the probing point if the probe succeeded, in the following format:</p><pre>X: &lt;x_pos&gt; Y: &lt;y_pos&gt; Z: &lt;z_pos&gt;</pre><p>Otherwise an error message, like:</p><pre>E: Probe failed</pre><div class="CHeading">Compatibility</div><p>Marlin 1.0.x, with modifications</p></div>
+</div>
+
+<a name="G38"></a><a name="Topic56"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">G38</div>
+ <div class="CBody"><p>Single Z probe at current XY location using external probe</p><div class="CHeading">Description</div><p>This command accepts target coordinates. Probing is attempted by moving in the given direction.</p><div class="CHeading">See Also</div><p><a href="../index.html#File:Marlin_main.cpp:M733" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,65);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M733</a>, <a href="../index.html#File:Marlin_main.cpp:M746" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,66);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M746</a></p><div class="CHeading">Compatibility</div><p>FABlin</p></div>
+</div>
+
+<a name="M42"></a><a name="Topic57"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">M42</div>
+ <div id="NDPrototype57" class="NDPrototype NoParameterForm">M42 [P&lt;pin_n&gt;] [S0-<span class="SHNumber">1</span>]</div>
+ <div class="CBody"><p>Switch or read I/O pin</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">P</td><td class="CDLDefinition"><p>pin number: 2,3,4,...; optional, default: 13</p></td></tr><tr><td class="CDLEntry">S</td><td class="CDLDefinition"><p>pin status: 0-255; optional</p></td></tr></table><div class="CHeading">Description</div><p>If no pin number is specified the default pin is 13 (LED). When a value is specified for the pin, that pin is forced into output mode; if value is in the range 1-255 the firmware tries to set the pin as an analog output though PWM.</p><p>If no value is given the current pin value is read and reported.&nbsp; In this case the pin is always treated as digital.</p><div class="CHeading">Output</div><p>The current pin value.</p><div class="CHeading">See Also</div><p><a href="../index.html#File:Marlin_main.cpp:M43" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,8);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M43</a></p></div>
+</div>
+
+<a name="M43"></a><a name="Topic8"></a><div class="CTopic TCommand LC">
  <div class="CTitle">M43</div>
  <div class="CBody"><p>Configure debug output(s)</p></div>
 </div>
 
-<a name="M60"></a><a name="Topic21"></a><div class="CTopic TCommand LC">
+<a name="M60"></a><a name="Topic9"></a><div class="CTopic TCommand LC">
  <div class="CTitle">M60</div>
- <div class="CBody"><p>Set laser power immediately.</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">S&lt;0-255&gt;</td><td class="CDLDefinition"><p>laser power level, optional, defaults to 255</p></td></tr></table><p>If no power lavel specified laser will be set to max.</p><p>See also: <a href="../index.html#File:Marlin_main.cpp:M61" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,22);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M61</a></p></div>
+ <div class="CBody"><p>Set laser power immediately.</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">S&lt;0-255&gt;</td><td class="CDLDefinition"><p>laser power level, optional, defaults to 255</p></td></tr></table><p>If no power lavel specified laser will be set to max.</p><p>See also: <a href="../index.html#File:Marlin_main.cpp:M61" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,10);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M61</a></p></div>
 </div>
 
-<a name="M61"></a><a name="Topic22"></a><div class="CTopic TCommand LC">
+<a name="M61"></a><a name="Topic10"></a><div class="CTopic TCommand LC">
  <div class="CTitle">M61</div>
- <div class="CBody"><p>Finish moves and set laser power</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">S&lt;0-255&gt;</td><td class="CDLDefinition"><p>laser power level, optional, defaults to 255</p></td></tr></table><div class="CHeading">Description</div><p>Any machine movement is finished, and then laser level is set.&nbsp; If no power level is specified level is set to maximum (255).</p><p>See also: <a href="../index.html#File:Marlin_main.cpp:M60" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,21);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M60</a></p></div>
+ <div class="CBody"><p>Finish moves and set laser power</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">S&lt;0-255&gt;</td><td class="CDLDefinition"><p>laser power level, optional, defaults to 255</p></td></tr></table><div class="CHeading">Description</div><p>Any machine movement is finished, and then laser level is set.&nbsp; If no power level is specified level is set to maximum (255).</p><p>See also: <a href="../index.html#File:Marlin_main.cpp:M60" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,9);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M60</a></p></div>
 </div>
 
-<a name="M62"></a><a name="Topic23"></a><div class="CTopic TCommand LC">
+<a name="M62"></a><a name="Topic11"></a><div class="CTopic TCommand LC">
  <div class="CTitle">M62</div>
  <div class="CBody"><p>Turn off laser</p><div class="CHeading">Description</div><p>Laser power is set to 0. Whether to wait for queued moves to finish depends on whether M60 or M61 was issued last.</p></div>
 </div>
 
-<a name="M852"></a><a name="Topic26"></a><div class="CTopic TCommand LC">
- <div class="CTitle">M852</div>
- <div class="CBody"><p>Set laser security timeout</p><div class="CHeading">Description</div><p>This command sets or resets laser security timeout. When using M60 commands, after no movement is done for more then the defined amount of time, the laser is automatically turned down. For M61, security timeout is the same as the stepper drivers' timeout (~20 secs).</p><p>If the <b>S</b> parameter is not specified the command outputs the currently set value.</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">S&lt;timeout&gt;</td><td class="CDLDefinition"><p>timeout in seconds; 0 disables timeout</p></td></tr></table><p>See also: <a href="../index.html#File:Marlin_main.cpp:M60" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,21);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M60</a> <a href="../index.html#File:Marlin_main.cpp:M62" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,23);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M62</a></p></div>
+<a name="M104"></a><a name="Topic58"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">M104</div>
+ <div id="NDPrototype58" class="NDPrototype NoParameterForm">M104 [T&lt;tool&gt;] [S&lt;temp&gt;]</div>
+ <div class="CBody"><p>Set Hotend Temperature</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">T&lt;tool&gt;</td><td class="CDLDefinition"><p>Select temperature sensor configured for &lt;tool&gt;</p></td></tr><tr><td class="CDLEntry">S&lt;temp&gt;</td><td class="CDLDefinition"><p>Set target temperature for selected tool's &lt;heater&gt;</p></td></tr></table></div>
 </div>
 
-<a name="M155"></a><a name="Topic27"></a><div class="CTopic TCommand LC">
+<a name="M105"></a><a name="Topic59"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">M105</div>
+ <div id="NDPrototype59" class="NDPrototype NoParameterForm">M105 [T&lt;tool&gt;]</div>
+ <div class="CBody"><p>Report Temperatures</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">T&lt;tool&gt;</td><td class="CDLDefinition"><p>Print temperatures from &lt;tool&gt;'s temperature sensor</p></td></tr></table></div>
+</div>
+
+<a name="M85"></a><a name="Topic60"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">M85</div>
+ <div id="NDPrototype60" class="NDPrototype NoParameterForm">M85 S&lt;max_inactive_time_s&gt;</div>
+ <div class="CBody"><p>Set max inactivity timeout</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">max_inactive_time_s</td><td class="CDLDefinition"><p>Inactivity timout in seconds</p></td></tr></table><div class="CHeading">Description</div><p>Sets the inactivity timeout. If no command is received during this lapse of time, various outputs are disabled.</p></div>
+</div>
+
+<a name="M852"></a><a name="Topic12"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">M852</div>
+ <div class="CBody"><p>Set laser security timeout</p><div class="CHeading">Description</div><p>This command sets or resets laser security timeout. When using M60 commands, after no movement is done for more then the defined amount of time, the laser is automatically turned down. For M61, security timeout is the same as the stepper drivers' timeout (~20 secs).</p><p>If the <b>S</b> parameter is not specified the command outputs the currently set value.</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">S&lt;timeout&gt;</td><td class="CDLDefinition"><p>timeout in seconds; 0 disables timeout</p></td></tr></table><p>See also: <a href="../index.html#File:Marlin_main.cpp:M60" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,9);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M60</a> <a href="../index.html#File:Marlin_main.cpp:M62" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,11);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M62</a></p></div>
+</div>
+
+<a name="M155"></a><a name="Topic13"></a><div class="CTopic TCommand LC">
  <div class="CTitle">M155</div>
  <div class="CBody"><p>Automatically send temperatures</p><div class="CHeading">Description</div><p>Enable or disable automatic temperature reporting. When this is enabled temperature readings are automatically appendend to the response of movement commands at regular intervals of time.</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">S&lt;interval&gt;</td><td class="CDLDefinition"><p>The interval in seconds between sends. If &lt;interval&gt; &lt; 1 disable sends. Max accepted value for &lt;interval&gt; is 60.</p></td></tr></table></div>
 </div>
 
-<a name="M564"></a><a name="Topic30"></a><div class="CTopic TCommand LC">
- <div class="CTitle">M564</div>
- <div class="CBody"><p>Restrict axes movements to the set limits</p><div class="CHeading">Description</div><p>This command let you set max coordinates for axes (the minimum is always 0) and optionally restrict movements inside those limits.</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">X&lt;max_x&gt;</td><td class="CDLDefinition"><p>Set X max coordinate</p></td></tr><tr><td class="CDLEntry">Y&lt;max_y&gt;</td><td class="CDLDefinition"><p>Set Y max coordinate</p></td></tr><tr><td class="CDLEntry">Z&lt;max_z&gt;</td><td class="CDLDefinition"><p>Set Z max coordinate</p></td></tr><tr><td class="CDLEntry">S&lt;restrict&gt;</td><td class="CDLDefinition"><p>Set whether to restrict movements between 0 and the axis' maximum: &lt;restrict&gt; = 0 disable limits; &lt;restrict&gt; = 1 enable limits.</p></td></tr></table><p>See also: <a href="../index.html#File:Marlin_main.cpp:M734" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,34);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M734</a></p></div>
+<a name="M450"></a><a name="Topic61"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">M450</div>
+ <div id="NDPrototype61" class="NDPrototype NoParameterForm">M450 [S&lt;mode&gt;]</div>
+ <div class="CBody"><p>Set or report working mode</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">S&lt;mode&gt;</td><td class="CDLDefinition"><p>Set new working mode</p></td></tr></table><div class="CHeading">Description</div><p>If no working mode is given, the current working mode is reported. The mode ise reported by name where defined. Defined working modes are:</p><table class="CDefinitionList"><tr><td class="CDLEntry">0</td><td class="CDLDefinition"><p>Hybrid</p></td></tr><tr><td class="CDLEntry">1</td><td class="CDLDefinition"><p>FFF</p></td></tr><tr><td class="CDLEntry">2</td><td class="CDLDefinition"><p>Laser</p></td></tr><tr><td class="CDLEntry">3</td><td class="CDLDefinition"><p>CNC</p></td></tr></table><div class="CHeading">Compatibility</div><p>Repetier, RepRap 1.20+</p><div class="CHeading">See Also</div><p>&lt;M451&gt;, &lt;M452&gt;, &lt;M453&gt;</p></div>
 </div>
 
-<a name="M700"></a><a name="Topic5"></a><div class="CTopic TCommand LC">
+<a name="M564"></a><a name="Topic14"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">M564</div>
+ <div class="CBody"><p>Restrict axes movements to the set limits</p><div class="CHeading">Description</div><p>This command let you set max coordinates for axes (the minimum is always 0) and optionally restrict movements inside those limits.</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">X&lt;max_x&gt;</td><td class="CDLDefinition"><p>Set X max coordinate</p></td></tr><tr><td class="CDLEntry">Y&lt;max_y&gt;</td><td class="CDLDefinition"><p>Set Y max coordinate</p></td></tr><tr><td class="CDLEntry">Z&lt;max_z&gt;</td><td class="CDLDefinition"><p>Set Z max coordinate</p></td></tr><tr><td class="CDLEntry">S&lt;restrict&gt;</td><td class="CDLDefinition"><p>Set whether to restrict movements between 0 and the axis' maximum: &lt;restrict&gt; = 0 disable limits; &lt;restrict&gt; = 1 enable limits.</p></td></tr></table><p>See also: <a href="../index.html#File:Marlin_main.cpp:M734" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,16);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M734</a></p></div>
+</div>
+
+<a name="M700"></a><a name="Topic62"></a><div class="CTopic TCommand LC">
  <div class="CTitle">M700</div>
- <div id="NDPrototype5" class="NDPrototype NoParameterForm">M700 S&lt;power&gt;</div>
+ <div id="NDPrototype62" class="NDPrototype NoParameterForm">M700 S&lt;power&gt;</div>
  <div class="CBody"><p>Laser power control</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">S&lt;power&gt;</td><td class="CDLDefinition"><p>Set power level, from 0 to 255</p></td></tr></table><div class="CHeading">Description</div><p>Set power level for the carraige-mounted pointing swipe laser, where available.</p></div>
 </div>
 
-<a name="M733"></a><a name="Topic33"></a><div class="CTopic TCommand LC">
+<a name="M720"></a><a name="Topic63"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">M720</div>
+ <div id="NDPrototype63" class="NDPrototype NoParameterForm">M720 [H&lt;<span class="SHNumber">0</span>-<span class="SHNumber">1</span>&gt;]</div>
+ <div class="CBody"><p>24VDC power ON</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">H</td><td class="CDLDefinition"><p>Enable heater line. Optional</p></td></tr></table><div class="CHeading">Description</div><p>When issued with no parameters, this command enables the head's MILL MOTOR (24VDC) and SERVO +5V power lines. It also reset servo 0 to the idle position.</p><p>When the 'H' parameter is specified instead, the corresponding heater line is set to high. The available values are:</p><table class="CDefinitionList"><tr><td class="CDLEntry">H0</td><td class="CDLDefinition"><p>BED HEATER</p></td></tr><tr><td class="CDLEntry">H1</td><td class="CDLDefinition"><p>HEATER E0</p></td></tr></table><p>Powering heater lines this way does not disables the heaters driver.&nbsp; When using this form the relevant heater driver needs to be disabled for the change to have any appreciable effect.</p><div class="CHeading">See Also</div><p><a href="../index.html#File:Marlin_main.cpp:M721" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,64);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M721</a></p></div>
+</div>
+
+<a name="M721"></a><a name="Topic64"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">M721</div>
+ <div id="NDPrototype64" class="NDPrototype NoParameterForm">M720 [H&lt;<span class="SHNumber">0</span>-<span class="SHNumber">1</span>&gt;]</div>
+ <div class="CBody"><p>Disable 24vdc power lines</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">H</td><td class="CDLDefinition"><p>Disable heater line. Optional</p></td></tr></table><div class="CHeading">Description</div><p>When issued with no parameters, this command disabled the head's 24vdc power line (MILL MOTOR) and the head's SERVO +5V power line.</p><p>When the 'H' parameter is specified instead, the corresponding heater line is set to low. In this case the relevant heater driver must be disabled for the command to take effect.</p><div class="CHeading">See Also</div><p><a href="../index.html#File:Marlin_main.cpp:M720" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,63);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M720</a></p></div>
+</div>
+
+<a name="M728"></a><a name="Topic19"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">M728</div>
+ <div class="CBody"><p>Raspberry alive</p><div class="CHeading">Description</div><p>This command lets the firmware know the operating system is fully booted up. If the firmware is not in silent mode a jolly sequence of beeps is emitted to salute the event.</p><div class="CHeading">See Also</div><p><a href="../index.html#File:Marlin_main.cpp:M729" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,67);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M729</a>, <a href="../index.html#File:Marlin_main.cpp:M735" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,68);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M735</a></p><div class="CHeading">Compatiblity</div><p>FABlin</p></div>
+</div>
+
+<a name="M729"></a><a name="Topic67"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">M729</div>
+ <div class="CBody"><p>Raspberry sleep</p><div class="CHeading">Description</div><p>This command lets the firmware know the operating system is shutting down.&nbsp; If not in silent mode, a sequence of beeps is emitted to bid farewell.</p><div class="CHeading">See Also</div><p><a href="../index.html#File:Marlin_main.cpp:M728" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,19);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M728</a>, <a href="../index.html#File:Marlin_main.cpp:M735" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,68);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M735</a></p><div class="CHeading">Compatibility</div><p>FABlin</p></div>
+</div>
+
+<a name="M733"></a><a name="Topic65"></a><div class="CTopic TCommand LC">
  <div class="CTitle">M733</div>
- <div class="CBody"><p>Disable homing check</p><p>Description: This configutration command let you set the homing check status. Homing check is used in particular commands, such as G29 or G30: When homing check is on an all-axes homing must have been done before issuing the command and while motors remain on. By default, the homing check is enabled.</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">S&lt;enable&gt;</td><td class="CDLDefinition"><p>If &lt;enable&gt; != 0 homing check is enable, othervwise it is disabled.</p></td></tr></table></div>
+ <div id="NDPrototype65" class="NDPrototype NoParameterForm">M733 S&lt;enable&gt;</div>
+ <div class="CBody"><p>Configure homing check</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">S</td><td class="CDLDefinition"><p>A value of 0 disables homing check, any other value enables it.</p></td></tr></table><div class="CHeading">Description</div><p>This configuration command let you set the homing check status. Homing check is used in particular commands, such as G29 or <a href="../index.html#File:Marlin_main.cpp:G30" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,70);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >G30</a>: When homing check is on an all-axes homing must have been done before issuing the command and while motors remain on. By default, the homing check is enabled.</p></div>
 </div>
 
-<a name="M734"></a><a name="Topic34"></a><div class="CTopic TCommand LC">
+<a name="M734"></a><a name="Topic16"></a><div class="CTopic TCommand LC">
  <div class="CTitle">M734</div>
- <div class="CBody"><p>Monitor warning settings</p><div class="CHeading">Description</div><p>This command let you enable or disable warning when hardware endstops are hit. <b>Use with care!!!</b></p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">S&lt;enable&gt;</td><td class="CDLDefinition"><p>&lt;enable&gt; = 1 for enabling warning, 0 for disabling.</p></td></tr></table><div class="CHeading">See Also</div><p><a href="../index.html#File:Marlin_main.cpp:M564" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,30);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M564</a></p></div>
+ <div class="CBody"><p>Monitor warning settings</p><div class="CHeading">Description</div><p>This command let you enable or disable warning when hardware endstops are hit. <b>Use with care!!!</b></p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">S&lt;enable&gt;</td><td class="CDLDefinition"><p>&lt;enable&gt; = 1 for enabling warning, 0 for disabling.</p></td></tr></table><div class="CHeading">See Also</div><p><a href="../index.html#File:Marlin_main.cpp:M564" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,14);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M564</a></p></div>
 </div>
 
-<a name="M2208"></a><a name="Topic2"></a><div class="CTopic TCommand LC last">
+<a name="M735"></a><a name="Topic68"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">M735</div>
+ <div id="NDPrototype68" class="NDPrototype NoParameterForm">M735 S&lt;<span class="SHNumber">0</span>,<span class="SHNumber">1</span>&gt;</div>
+ <div class="CBody"><p>Enable/disable silent mode (sounds except for power-on)</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">S</td><td class="CDLDefinition"><p>1 to enable silent mode; any other value disables it.</p></td></tr></table><div class="CHeading">Compatibility</div><p>FABlin</p></div>
+</div>
+
+<a name="M743"></a><a name="Topic15"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">M743</div>
+ <div class="CBody"><p>Read SECURE_SWITCH sensor</p><div class="CHeading">Compatibility</div><p>FABlin</p></div>
+</div>
+
+<a name="M746"></a><a name="Topic66"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">M746</div>
+ <div id="NDPrototype66" class="NDPrototype NoParameterForm">M746 [S&lt;<span class="SHNumber">0</span>-<span class="SHNumber">2</span>&gt;]</div>
+ <div class="CBody"><p>Set/get external probe source</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">0</td><td class="CDLDefinition"><p>disabled</p></td></tr><tr><td class="CDLEntry">1</td><td class="CDLDefinition"><p>secure_sw pin</p></td></tr><tr><td class="CDLEntry">2</td><td class="CDLDefinition"><p>i2c_scl&nbsp; pin (head connector)</p></td></tr></table><div class="CHeading">Description</div><p>The actual pin is provided by NOT_SECURE_SW_PIN macro, which is pin 71 (in totumduino's silk screen &quot;Secure_sw&quot;, see also <a href="../index.html#File:Marlin_main.cpp:M743" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,15);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M743</a>).</p><p>If enabled you need to keep an external zprobe connected to this totumduino connector that makes the endstop read &quot;open&quot; in normal state or you will have undesirable behaviour (only during the time a Z probe is done, so during homing, G30 and G38).</p><p>A possible probe is an electrical continuity probe between a copper cad (for making PCBs) and the mill (that in the hybrid head is to GND), like this:</p><pre>|   | (secure_sw)                        attach this to copper clad<br />|   \-----------------------------+----- (via a metal washer to which<br />|                                /        the wire is soldered?)<br />\---------------------/\/\/\/---+<br />                      1 kOhm</pre><div class="CHeading">See Also</div><p><a href="../index.html#File:Marlin_main.cpp:M743" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,15);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >M743</a></p><div class="CHeading">Compatibility</div><p>FABlin</p></div>
+</div>
+
+<a name="M999"></a><a name="Topic71"></a><div class="CTopic TCommand LC">
+ <div class="CTitle">M999</div>
+ <div class="CBody"><p>STOP Restart</p><div class="CHeading">Compatibility</div><p>Marlin 1.0.x</p></div>
+</div>
+
+<a name="M2208"></a><a name="Topic18"></a><div class="CTopic TCommand LC last">
  <div class="CTitle">M2208</div>
- <div id="NDPrototype2" class="NDPrototype NoParameterForm">M2208 [Rmres] [Sen_spreadCycle]</div>
+ <div id="NDPrototype18" class="NDPrototype NoParameterForm">M2208 [Rmres] [Sen_spreadCycle]</div>
  <div class="CBody"><p>Init TMC2208 driver</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">R</td><td class="CDLDefinition"><p>Microstepping: 2^mres / 256. Default: 8.</p></td></tr><tr><td class="CDLEntry">S</td><td class="CDLDefinition"><p>Enable spreadCycle mode. 0: disabled, 1: enabled. Default: 1.</p></td></tr></table><div class="CHeading">Description</div><p>This is an experimental command for development purposes only.</p></div>
 </div>
 

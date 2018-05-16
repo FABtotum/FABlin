@@ -1,0 +1,1 @@
+NDFramePage.OnPageTitleLoaded("File:planner.h","planner.h");NDSummary.OnSummaryLoaded("File:planner.h",[["C/C++","C"]],[["Functions","Function"],["Groups","Group"]],[[26,0,1,"Functions","Functions"],[27,0,0,"check_axes_activity","check_axes_activity"]]);

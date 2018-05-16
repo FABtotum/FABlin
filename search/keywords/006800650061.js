@@ -1,0 +1,1 @@
+NDSearch.OnPrefixDataLoaded("hea",["Macro"],[["heater",,[[,"G-code heater indexes",,,0,"File:Marlin.h:G-code_heater_indexes"]]],["HEATER_BED_OFF",,[[,,,,0,"File:Marlin.h:HEATER_BED_OFF"]]],["HEATER_BED_ON",,[[,,,,0,"File:Marlin.h:HEATER_BED_ON"]]],["Heaters",,[[,"Heaters power lines",,,0,"File:Marlin.h:Heaters_power_lines"]]]]);

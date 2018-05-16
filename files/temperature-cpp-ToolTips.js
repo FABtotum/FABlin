@@ -1,1 +1,0 @@
-NDContentPage.OnToolTipsLoaded({3:"<div class=\"NDToolTip TEnumeration LC\"><div class=\"TTSummary\">A single perihperal managed by the temperatures module</div></div>"});

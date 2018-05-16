@@ -1,0 +1,1 @@
+NDSearch.OnPrefixDataLoaded("num",["Macro"],[["NUMERIC_ERROR_MESSAGES",,[[,,,,0,"File:Configuration_adv.h:NUMERIC_ERROR_MESSAGES"]]]]);

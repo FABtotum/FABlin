@@ -1,0 +1,1 @@
+NDSummary.OnToolTipsLoaded("File:Marlin.h",{20:"<div class=\"NDToolTip TMacro LC\"><div class=\"TTSummary\">I²C address for factory heads</div></div>",21:"<div class=\"NDToolTip TMacro LC\"><div class=\"TTSummary\">Mnemonics for heater indexes recognized by some g-code commands.</div></div>"});

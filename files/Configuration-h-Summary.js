@@ -1,0 +1,1 @@
+NDFramePage.OnPageTitleLoaded("File:Configuration.h","Configuration.h");NDSummary.OnSummaryLoaded("File:Configuration.h",[["C/C++","C"]],[["Groups","Group"],["Macros","Macro"]],[[48,0,0,"Macros","Macros"],[49,0,1,"DISABLE_","DISABLE_"]]);

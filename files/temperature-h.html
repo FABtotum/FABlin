@@ -8,18 +8,34 @@
 
 <body onload="NDLoader.OnLoad('Content');" class="NDPage NDContentPage">
 
-<a name="Types"></a><a name="Topic7"></a><div class="CTopic TGroup LC first">
+<a name="Types"></a><a name="Topic28"></a><div class="CTopic TGroup LC first">
  <div class="CTitle">Types</div>
 </div>
 
-<a name="tp_features"></a><a name="Topic3"></a><div class="CTopic TEnumeration LC">
- <div class="CTitle">tp_features</div>
- <div class="CBody"><p>A single perihperal managed by the temperatures module</p><table class="CDefinitionList"><tr><td class="CDLEntry"><a name="TP_HEATER_0"></a><a name="Topic9"></a>TP_HEATER_0</td><td class="CDLDefinition"><p>Hot-end heater 0</p></td></tr><tr><td class="CDLEntry"><a name="TP_HEATER_1"></a><a name="Topic10"></a>TP_HEATER_1</td><td class="CDLDefinition"><p>Hot-end heater 1</p></td></tr><tr><td class="CDLEntry"><a name="TP_HEATER_2"></a><a name="Topic11"></a>TP_HEATER_2</td><td class="CDLDefinition"><p>Hot-end heater 2</p></td></tr><tr><td class="CDLEntry"><a name="TP_HEATER_BED"></a><a name="Topic12"></a>TP_HEATER_BED</td><td class="CDLDefinition"><p>Hotbed heater</p></td></tr><tr><td class="CDLEntry"><a name="TP_HEATERS"></a><a name="Topic16"></a>TP_HEATERS</td><td class="CDLDefinition"><p>All heaters</p></td></tr><tr><td class="CDLEntry"><a name="TP_SENSOR_0"></a><a name="Topic17"></a>TP_SENSOR_0</td><td class="CDLDefinition"><p>Hot-end temperature sensor 0</p></td></tr><tr><td class="CDLEntry"><a name="TP_SENSOR_1"></a><a name="Topic19"></a>TP_SENSOR_1</td><td class="CDLDefinition"><p>Hot-end temperature sensor 1</p></td></tr><tr><td class="CDLEntry"><a name="TP_SENSOR_2"></a><a name="Topic24"></a>TP_SENSOR_2</td><td class="CDLDefinition"><p>Hot-end temperature sensor 2</p></td></tr><tr><td class="CDLEntry"><a name="TP_SENSOR_BED"></a><a name="Topic29"></a>TP_SENSOR_BED</td><td class="CDLDefinition"><p>Hotbed temperature sensor</p></td></tr><tr><td class="CDLEntry"><a name="TP_SENSORS"></a><a name="Topic25"></a>TP_SENSORS</td><td class="CDLDefinition"><p>All temperature sensors</p></td></tr></table></div>
+<a name="tp_feature_t"></a><a name="Topic29"></a><div class="CTopic TEnumeration LC">
+ <div class="CTitle">tp_feature_t</div>
+ <div class="CBody"><p>A single perihperal managed by the temperatures module</p><table class="CDefinitionList"><tr><td class="CDLEntry"><a name="TP_HEATER_0"></a><a name="Topic30"></a>TP_HEATER_0</td><td class="CDLDefinition"><p>Hot-end heater 0</p></td></tr><tr><td class="CDLEntry"><a name="TP_HEATER_1"></a><a name="Topic31"></a>TP_HEATER_1</td><td class="CDLDefinition"><p>Hot-end heater 1</p></td></tr><tr><td class="CDLEntry"><a name="TP_HEATER_2"></a><a name="Topic32"></a>TP_HEATER_2</td><td class="CDLDefinition"><p>Hot-end heater 2</p></td></tr><tr><td class="CDLEntry"><a name="TP_HEATER_BED"></a><a name="Topic33"></a>TP_HEATER_BED</td><td class="CDLDefinition"><p>Hotbed heater</p></td></tr><tr><td class="CDLEntry"><a name="TP_HEATERS"></a><a name="Topic34"></a>TP_HEATERS</td><td class="CDLDefinition"><p>All heaters</p></td></tr><tr><td class="CDLEntry"><a name="TP_SENSOR_0"></a><a name="Topic35"></a>TP_SENSOR_0</td><td class="CDLDefinition"><p>Hot-end temperature sensor 0</p></td></tr><tr><td class="CDLEntry"><a name="TP_SENSOR_1"></a><a name="Topic36"></a>TP_SENSOR_1</td><td class="CDLDefinition"><p>Hot-end temperature sensor 1</p></td></tr><tr><td class="CDLEntry"><a name="TP_SENSOR_2"></a><a name="Topic37"></a>TP_SENSOR_2</td><td class="CDLDefinition"><p>Hot-end temperature sensor 2</p></td></tr><tr><td class="CDLEntry"><a name="TP_SENSOR_BED"></a><a name="Topic38"></a>TP_SENSOR_BED</td><td class="CDLDefinition"><p>Hotbed temperature sensor</p></td></tr><tr><td class="CDLEntry"><a name="TP_SENSORS"></a><a name="Topic39"></a>TP_SENSORS</td><td class="CDLDefinition"><p>All temperature sensors</p></td></tr></table></div>
 </div>
 
-<a name="tp_features_map"></a><a name="Topic31"></a><div class="CTopic TType LC last">
+<a name="tp_features_map"></a><a name="Topic40"></a><div class="CTopic TType LC">
  <div class="CTitle">tp_features_map</div>
- <div class="CBody"><p>A bit-map of one or more <a href="../index.html#File:temperature.h:tp_features" target="_top" onmouseover="NDContentPage.OnLinkMouseOver(event,3);" onmouseout="NDContentPage.OnLinkMouseOut(event);" >tp_features</a></p></div>
+ <div class="CBody"><p>A bit-map of one or more &lt;tp_features&gt;</p></div>
+</div>
+
+<a name="Functions"></a><a name="Topic41"></a><div class="CTopic TGroup LC">
+ <div class="CTitle">Functions</div>
+</div>
+
+<a name="tp_init_mintemp"></a><a name="Topic42"></a><div class="CTopic TFunction LC">
+ <div class="CTitle">tp_init_mintemp</div>
+ <div id="NDPrototype42" class="NDPrototype WideForm CStyle"><table><tr><td class="PBeforeParameters"><span class="SHKeyword">void</span> tp_init_mintemp (</td><td class="PParametersParentCell"><table class="PParameters"><tr><td class="PName first">int8_t,</td><td></td><td class="last"></td></tr><tr><td class="PName first">tp_feature_t</td><td class="PDefaultValueSeparator">=&nbsp;</td><td class="PDefaultValue last">TP_HEATER_0</td></tr></table></td><td class="PAfterParameters">)</td></tr></table></div>
+ <div class="CBody"><p>Set min temp limit for the given heater(s). Only available for head heaters; not for the bed heater.</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">value</td><td class="CDLDefinition"><p>min temp value in °C to set for the given heater(s). Valid values go from -127 to +127</p></td></tr><tr><td class="CDLEntry">heater</td><td class="CDLDefinition"><p>the heater for which to set min temp, can be a bitmask of tp_features</p></td></tr></table></div>
+</div>
+
+<a name="tp_init_maxtemp"></a><a name="Topic43"></a><div class="CTopic TFunction LC last">
+ <div class="CTitle">tp_init_maxtemp</div>
+ <div id="NDPrototype43" class="NDPrototype WideForm CStyle"><table><tr><td class="PBeforeParameters"><span class="SHKeyword">void</span> tp_init_maxtemp (</td><td class="PParametersParentCell"><table class="PParameters"><tr><td class="PName first">int16_t,</td><td></td><td class="last"></td></tr><tr><td class="PName first">tp_feature_t</td><td class="PDefaultValueSeparator">=&nbsp;</td><td class="PDefaultValue last">TP_HEATER_0</td></tr></table></td><td class="PAfterParameters">)</td></tr></table></div>
+ <div class="CBody"><p>Set max temp for heater(s)</p><div class="CHeading">Parameters</div><table class="CDefinitionList"><tr><td class="CDLEntry">value</td><td class="CDLDefinition"><p>Max temp in °C (from 0 to 65535)</p></td></tr><tr><td class="CDLEntry">heater</td><td class="CDLDefinition"><p>Heater to for which to change max temp value</p></td></tr></table></div>
 </div>
 
 </body></html>
