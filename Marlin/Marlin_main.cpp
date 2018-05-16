@@ -5633,7 +5633,23 @@ void process_commands()
     }
     break;
 
-    case 728:// M728 - RASPI ALIVE
+    /**
+     * Command: M728
+     * 
+     * Raspberry alive
+     * 
+     * Description:
+     *  This command lets the firmware know the operating system is fully
+     * booted up. If the firmware is not in silent mode a jolly sequence
+     * of beeps is emitted to salute the event.
+     * 
+     * See Also:
+     *  <M729>, <M735>
+     * 
+     * Compatiblity:
+     *  FABlin
+     */
+    case 728:
     {
       //Stopped = false;
       set_amb_color(255,255,255);
@@ -5674,6 +5690,21 @@ void process_commands()
     }
     break;
 
+    /**
+     * Command: M729
+     * 
+     * Raspberry sleep
+     * 
+     * Description:
+     *  This command lets the firmware know the operating system is shutting down.
+     * If not in silent mode, a sequence of beeps is emitted to bid farewell.
+     * 
+     * See Also:
+     *  <M728>, <M735>
+     * 
+     * Compatibility:
+     *  FABlin
+     */
     case 729: // M729 - RASPBERRY SLEEP
     {
       Stopped = true;
@@ -5840,6 +5871,21 @@ void process_commands()
     }
     break;
 
+    /**
+     * Command: M735
+     * 
+     *  Enable/disable silent mode (sounds except for power-on)
+     * 
+     * --- prototype ---
+     * M735 S<0,1>
+     * -----------------
+     *
+     * Parameters:
+     *  S - 1 to enable silent mode; any other value disables it.
+     * 
+     * Compatibility:
+     *  FABlin
+     */
     case 735:  //M735 S1-0 enable /disable silent mode (sounds except for power-on)
     {
     int value;
@@ -6051,7 +6097,15 @@ void process_commands()
       }
       break;
 
-   case 743: // M743 - read SECURE_SWITCH sensor
+    /**
+     * Command: M743
+     * 
+     * Read SECURE_SWITCH sensor
+     * 
+     * Compatibility:
+     *  FABlin
+     */
+    case 743: // M743 - read SECURE_SWITCH sensor
       {
         //SERIAL_PROTOCOLPGM(MSG_SECURE_SWITCH);
         SERIAL_PROTOCOLLN((SECURE_SW_STATUS()?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
@@ -6096,20 +6150,30 @@ void process_commands()
      * Description:
      * 
      *  The actual pin is provided by NOT_SECURE_SW_PIN macro, which is pin 71
-     * (in totumduino's silk screen "Secure_sw", see also M743).
+     * (in totumduino's silk screen "Secure_sw", see also <M743>).
      * 
-     *  If enabled you need to keep an external zprobe connected to this totumduino connector that makes the endstop read "open" in normal state or
-     * you will have undesirable behaviour (only during the time a Z probe is done, so during homing, G30 and G38).
+     *  If enabled you need to keep an external zprobe connected to this totumduino
+     * connector that makes the endstop read "open" in normal state or
+     * you will have undesirable behaviour (only during the time a Z probe is done,
+     * so during homing, G30 and G38).
      *
-     *  A possible probe is an electrical continuity probe between a copper cad (for making PCBs) and the mill (that in the hybrid head is to GND), like this:
+     *  A possible probe is an electrical continuity probe between a copper cad
+     * (for making PCBs) and the mill (that in the hybrid head is to GND), like this:
      *
-     * |  | (secure_sw)
-     * |  \------------------------------+----- attach this to copper clad (via a metal washer to which the wire is soldered?)
-     * \-----------------------/\/\/\/---| 
-     *                        1 kOhm
+     * --- text ---
+     * 
+     *    |   | (secure_sw)                        attach this to copper clad
+     *    |   \-----------------------------+----- (via a metal washer to which
+     *    |                                /        the wire is soldered?)
+     *    \---------------------/\/\/\/---+ 
+     *                          1 kOhm
+     * ------------
+     * 
+     * See Also:
+     *  <M743>
      * 
      * Compatibility:
-     * FABlin
+     *  FABlin
      */
     case 746:
     {

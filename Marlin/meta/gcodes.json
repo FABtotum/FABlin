@@ -906,6 +906,13 @@
 			}
 		}
 	},
+
+	"M728": {
+		"desc": "Raspberry alive"
+	},
+	"M729": {
+		"desc": "Raspberry sleep"
+	},
 	"M730": {
 		"desc": "Read last error code"
 	},
@@ -919,26 +926,21 @@
 			}
 		}
 	},
-	"M756": {
-		"desc" : "Error generator",
-		"params": {
-			"E" : {
-				"desc": "Error number",
-				"type": "number",
-				"range": [100,125],
-				"opt": true
-			}
-		}
-	},
-
 	"M734": {
 		"desc": "Enable/Disable endstop warnings",
 		"ref": "M804"
 	},
 	"M735": {
-		"desc": "Enable/Disable silent mode (sound only on power-on)",
-		"ref": "M804"
+		"desc": "Enable/disable silent mode (sound only on power-on)",
+		"params": {
+			"S": {
+				"desc": "Enable silent mode",
+				"type": "bool",
+				"range": [0,1]
+			}
+		}
 	},
+
 	"M739": {
 		"desc": "Read/Write installed head soft ID",
 		"params": {
@@ -974,6 +976,16 @@
 		"desc": "Read HEAD in place",
 		"reply": "<strong>True</strong> -> TRIGGERED, <strong>False</strong> -> open"
 	},
+	"M746": {
+		"desc": "Set/get external probe source",
+		"params": {
+			"S": {
+				"desc": "Probe pin selection: 0=none; 1=secure_sw, 2=i2c_scl",
+				"type": "number",
+				"range": [0,1,2]
+			}
+		}
+	},
 
 	"M750": {
 		"desc": "Read pressure sensor (analog 0-1023)"
@@ -989,6 +1001,18 @@
 	},
 	"M754": {
 		"desc": "Read raw temperature values"
+	},
+
+	"M756": {
+		"desc" : "Error generator",
+		"params": {
+			"E" : {
+				"desc": "Error number",
+				"type": "number",
+				"range": [100,125],
+				"opt": true
+			}
+		}
 	},
 
 	"M760": {
