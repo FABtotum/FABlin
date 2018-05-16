@@ -496,7 +496,7 @@ static unsigned long max_steppers_inactive_time = DEFAULT_STEPPERS_DEACTIVE_TIME
 
 #if defined (AUTO_REPORT_TEMPERATURES)
 
-tp_report_t report_temp_status = TP_REPORT_NONE;
+uint8_t report_temp_status = TP_REPORT_NONE;
 
 static uint8_t auto_report_temp_interval = 0;
 static unsigned long next_temp_report_ms;
@@ -1483,7 +1483,7 @@ FORCE_INLINE void auto_report_temperatures ()
       next_temp_report_ms = millis() + 1000UL * auto_report_temp_interval;
       // Report with the verboseness of the 'once' setting (full report)
       SERIAL_PROTOCOLPGM(" ");
-      print_heaterstates(report_temp_status & TP_REPORT_FULL);
+      print_heaterstates((tp_report_t)(report_temp_status & TP_REPORT_FULL));
       // Only remember the 'auto' setting
       report_temp_status &= TP_REPORT_AUTO;
     }
@@ -3133,6 +3133,35 @@ void process_commands()
         }
         break;
 
+    /**
+     * Command: G30
+     * 
+     * Single Z-Probe
+     * 
+     * --- prototype ---
+     * G30 [U<feedrate_up>]
+     * -----------------
+     * 
+     * Parameters:
+     *  U - Feedrate for upward movement, in mm/min
+     * 
+     * Description:
+     *  The axis must have been homed before this command. Homing check
+     * can be skipped by using <M733>.
+     * 
+     * Output:
+     *  The coordinates of the probing point if the probe succeeded, in
+     * the following format:
+     * 
+     * >  X: <x_pos> Y: <y_pos> Z: <z_pos>
+     * 
+     *  Otherwise an error message, like:
+     * 
+     * > E: Probe failed
+     * 
+     * Compatibility:
+     *  Marlin 1.0.x, with modifications 
+     */
     case 30: // G30 Single Z Probe
     {
       if (!Stopped)
@@ -5806,18 +5835,23 @@ void process_commands()
   /*
    * Command: M733
    *
-   * Disable homing check
-   *
-   * Description: This configuration command let you set the homing
-   *  check status. Homing check is used in particular commands,
-   *  such as G29 or G30: When homing check is on an all-axes homing
-   *  must have been done before issuing the command and while motors
-   *  remain on. By default, the homing check is enabled.
+   * Configure homing check
+   * 
+   * --- prototype ---
+   * M733 S<enable>
+   * -----------------
    *
    * Parameters:
    *
-   *  S<enable> - If <enable> != 0 homing check is enable, othervwise
-   *    it is disabled.
+   *  S - A value of 0 disables homing check, any other value enables it.
+   *
+   * Description:
+   *  This configuration command let you set the homing
+   * check status. Homing check is used in particular commands,
+   * such as G29 or <G30>: When homing check is on an all-axes homing
+   * must have been done before issuing the command and while motors
+   * remain on. By default, the homing check is enabled.
+   *
    */
     case 733:
     {
@@ -6755,7 +6789,7 @@ void process_commands()
 
       if (code_seen('P'))
       {
-        heater = code_value_long();
+        uint8_t heater = code_value_long() & 0xff;
       }
 
       if (code_seen('R'))
@@ -6769,7 +6803,7 @@ void process_commands()
 
         minttemp[heater-1] = mintemp;
         CRITICAL_SECTION_START
-        tp_init_mintemp(mintemp, heater);
+        tp_init_mintemp(mintemp, (tp_feature_t)heater);
         CRITICAL_SECTION_END
         notset = false;
       }
@@ -6781,7 +6815,7 @@ void process_commands()
         {
           maxttemp[heater-1] = value;
           CRITICAL_SECTION_START
-          tp_init_maxtemp(value, heater);
+          tp_init_maxtemp(value, (tp_feature_t)heater);
           CRITICAL_SECTION_END
         }
         notset = false;
@@ -6987,6 +7021,14 @@ void process_commands()
         return;  // 'OK' is already printed from inside FlushSerialRequestResend()
       }
 
+      /**
+       * Command: M999
+       * 
+       * STOP Restart
+       * 
+       * Compatibility:
+       *  Marlin 1.0.x
+       */
       case 999: // M999: Restart after being stopped
       {
         ERROR_CODE = 0;
