@@ -1,1 +1,1 @@
-NDContentPage.OnToolTipsLoaded({});
+NDContentPage.OnToolTipsLoaded({72:"<div class=\"NDToolTip TCommand LC\"><div id=\"NDPrototype72\" class=\"NDPrototype NoParameterForm\">M790 P&lt;<span class=\"SHKeyword\">if</span>&gt; [<span class=\"SHString\">&quot;&lt;text&gt;&quot;</span>]</div><div class=\"TTSummary\">Send text to communication interface</div></div>"});

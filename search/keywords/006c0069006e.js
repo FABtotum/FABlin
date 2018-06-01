@@ -1,1 +1,1 @@
-NDSearch.OnPrefixDataLoaded("lin",["Macro"],[["lines",,[[,"Heaters power lines",,,0,"File:Marlin.h:Heaters_power_lines"]]]]);
+NDSearch.OnPrefixDataLoaded("lin",["Macro"],[["LINE_FORWARDING_ENCLOSING_CHAR",,[[,,,,0,"File:Configuration_adv.h:LINE_FORWARDING_ENCLOSING_CHAR"]]],["LINE_FORWARDING_TERMINATION_CHAR",,[[,,,,0,"File:Configuration_adv.h:LINE_FORWARDING_TERMINATION_CHAR"]]],["lines",,[[,"Heaters power lines",,,0,"File:Marlin.h:Heaters_power_lines"]]]]);

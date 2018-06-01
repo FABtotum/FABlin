@@ -1,1 +1,1 @@
-NDSearch.OnPrefixIndexLoaded(["che","dis","fan","g-c","g27","g30","g38","gco","hea","i2c","ind","ini","lin","m10","m15","m22","m42","m43","m45","m56","m60","m61","m62","m70","m72","m73","m74","m85","m99","num","pow","pri","run","ser","tp_","ver"]);
+NDSearch.OnPrefixIndexLoaded(["cha","che","del","dis","fan","for","g-c","g27","g30","g38","gco","hea","i2c","ind","ini","lin","m10","m15","m22","m42","m43","m45","m56","m57","m60","m61","m62","m70","m72","m73","m74","m79","m85","m99","num","pow","pri","run","ser","t","tex","tp_","ver"]);
