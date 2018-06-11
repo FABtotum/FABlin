@@ -1,0 +1,1 @@
+NDSearch.OnPrefixDataLoaded("cha",["Macro"],[["characters",,[[,"Text forwarding delimiter characters",,,0,"File:Configuration_adv.h:Text_forwarding_delimiter_characters"]]]]);

@@ -20,4 +20,6 @@ body.NDHomePage {
 #NDHeader { min-height:70px; background:white url(fabtotum_logo-300x89.png) 0 50% no-repeat; border-color:#109bc5;
 	padding-left:300px; }
 
+#NDSearchField { border:1px solid grey; }
+
 @import url("fonts.googleapis.com/css?family=Quicksand%7COpen+Sans:400,600");

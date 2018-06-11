@@ -1,0 +1,1 @@
+NDSearch.OnPrefixDataLoaded("tex",["Macro"],[["Text",,[[,"Text forwarding delimiter characters",,,0,"File:Configuration_adv.h:Text_forwarding_delimiter_characters"]]]]);
