@@ -1,0 +1,19 @@
+# Scenario: max temp
+
+from boiler import fabui
+from time import sleep
+
+# Given the laser PRO head is installed
+fabui.assertWorkingMode("Laser")
+fabui.assertHeadSoftId(7)
+
+# When the observed temperature rises above maxtemp
+fabui.send('M999')
+fabui.send('M801 R0 S10')
+sleep(1)
+
+# Then an error is raised
+fabui.assertErrorCode(104)
+
+fabui.send('M801 R10 S80')
+fabui.send('M999')

@@ -218,6 +218,11 @@
 #define Z_HOME_RETRACT_MM 2
 //#define QUICK_HOME  //if this is defined, if both x and y are to be homed, a diagonal move will be performed initially.
 
+// move away from endstop position to park position that does not trigger the endstop
+#define X_HOME_PARK_OFFSET 2
+#define Y_HOME_PARK_OFFSET 2
+#define Z_HOME_PARK_OFFSET 0
+
 #define AXIS_RELATIVE_MODES {false, false, false, false}
 
 #define MAX_STEP_FREQUENCY 40000 // Max step frequency for Ultimaker (5000 pps / half step)
@@ -227,6 +232,10 @@
 #define INVERT_Y_STEP_PIN false
 #define INVERT_Z_STEP_PIN false
 #define INVERT_E_STEP_PIN false
+#define INVERT_E0_STEP_PIN INVERT_E_STEP_PIN
+#define INVERT_E1_STEP_PIN INVERT_E_STEP_PIN
+#define INVERT_E2_STEP_PIN INVERT_E_STEP_PIN
+#define INVERT_E3_STEP_PIN true
 
 //default idle for totumduino
 #define DEFAULT_DEACTIVE_TIME 600 //600 =10 minutes and shutting down everything
@@ -494,13 +503,22 @@ const unsigned int dropsegments=5; //everything with less than this number of st
   #undef BED_MAXTEMP
 #endif
 
+/**
+ * Auto-report temperatures with M155 S<seconds>
+ */
+#define AUTO_REPORT_TEMPERATURES
+#define AUTO_REPORT_TEMPERATURES_DEFAULT_INTERVAL 5 // secs
+
 #if defined(SMART_COMM)
    #define LINE_FORWARDING_ENCLOSING_CHAR   '"'
    #define LINE_FORWARDING_TERMINATION_CHAR '.'  // This character alone on an input line is used to escape from input echoing to the head
 
-   #define SMART_HEAD_RX_PIN 11
-   #define SMART_HEAD_TX_PIN 57
+   #define SMART_HEAD_RX_PIN RXD4
+   #define SMART_HEAD_TX_PIN TXD4
 #endif
 
+#define ST_ISR_PROFILE_PIN 50
+#define TP_ISR_PROFILE_PIN 51
+#define IDLE_PROFILE_PIN   52
 
 #endif //__CONFIGURATION_ADV_H

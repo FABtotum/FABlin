@@ -2,6 +2,7 @@
 #define _LASER_H_
 
 #include <stdint.h>
+#include "Marlin.h"
 
 namespace Laser
 {
@@ -13,7 +14,13 @@ namespace Laser
 	void enable  (void);
 	void disable (void);
 
-	bool isEnabled (void);
+	inline bool isEnabled (void)
+	{
+#if defined(MOTHERBOARD) && (MOTHERBOARD == 25)
+		enabled = READ(HEATER_0_PIN);
+#endif
+		return enabled;
+	}
 
 	void setPower (uint16_t);
 }

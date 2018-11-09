@@ -27,26 +27,47 @@
   #include "stepper.h"
 #endif
 
+#define NOT_A_TEMPERATURE 0  // °C -- even though -274°C == <0K would be better if you ask me
+
+#define CtoK(x) (x + 274)
+#define KtoC(x) (x - 274)
+
+/**
+ * Enums: tp_features
+ *
+ * A single perihperal managed by the temperatures module
+ *
+ * TP_HEATER_0 - Hot-end heater 0
+ * TP_HEATER_1 - Hot-end heater 1
+ * TP_HEATER_2 - Hot-end heater 2
+ * TP_HEATER_BED - Hotbed heater
+ * TP_HEATERS - All heaters
+ * TP_SENSOR_0 - Hot-end temperature sensor 0
+ * TP_SENSOR_1 - Hot-end temperature sensor 1
+ * TP_SENSOR_2 - Hot-end temperature sensor 2
+ * TP_SENSOR_BED - Hotbed temperature sensor
+ * TP_SENSORS - All temperature sensors
+ *
+ */
+enum tp_features : uint8_t {
+  TP_HEATERS=0x0f, TP_HEATER_0=0x01, TP_HEATER_1=0x02, TP_HEATER_2=0x04, TP_HEATER_BED=0x08,
+  TP_SENSORS=0xf0, TP_SENSOR_0=0x10, TP_SENSOR_1=0x20, TP_SENSOR_2=0x40, TP_SENSOR_BED=0x80
+};
+
+/**
+ * Type: tp_features_map
+ *
+ * A bit-map of one or more <tp_features>
+ */
+typedef uint8_t tp_features_map;
+
 // public functions
-void tp_init();  //initialize the heating
-void manage_heater(); //it is critical that this is called periodically.
+void tp_init ();  //initialize the heating
+void tp_init (uint8_t);  //initialize the heating with selected features
+void manage_heater(); //it is critical that this is called periodically.  //IDEA: namespacing anyone?
 
-/*void write_LaserSoftPwm_t(unsigned int LaserSoftPwm_value);
-void write_HeadLightSoftPwm_t(unsigned int HeadLightSoftPwm_value);
-void write_RedSoftPwm_t(unsigned int RedSoftPwm_value);
-void write_GreenSoftPwm_t(unsigned int GreenSoftPwm_value);
-void write_BlueSoftPwm_t(unsigned int BlueSoftPwm_value);
-void write_red_fading(bool red_fading_value);
-void write_green_fading(bool green_fading_value);
-void write_blue_fading(bool blue_fading_value);
-
-void write_fading_speed(unsigned int fading_speed_value);
-
-bool red_fading_read();
-bool green_fading_read();
-bool blue_fading_read();*/
-
-
+//void tp_enable_features (uint8_t);
+//void tp_disable_features (uint8_t);
 
 // low level conversion routines
 // do not use these routines and variables outside of temperature.cpp
@@ -104,8 +125,20 @@ extern int maxttemp[HEATERS];
 
 #define EtoH(ext) extruder_heater_mapping[ext]
 
-FORCE_INLINE float degHotend(uint8_t extruder) {
-  return current_temperature[EtoH(extruder)];
+FORCE_INLINE float degHotend(int8_t extruder) {
+  if (extruder >= 0) {
+    return current_temperature[EtoH(extruder)];
+  } else {
+    return NOT_A_TEMPERATURE;
+  }
+};
+
+FORCE_INLINE float degTool(uint8_t tool) {
+  if (tool_heater_mapping[tool] >= 0) {
+    return current_temperature[tool_heater_mapping[tool]];
+  } else {
+    return NOT_A_TEMPERATURE;
+  }
 };
 
 #ifdef SHOW_TEMP_ADC_VALUES
@@ -122,8 +155,12 @@ FORCE_INLINE float degBed() {
   return current_temperature_bed;
 };
 
-FORCE_INLINE float degTargetHotend(uint8_t extruder) {
+FORCE_INLINE float degTargetHotend(int8_t extruder) {
   return target_temperature[EtoH(extruder)];
+};
+
+FORCE_INLINE float degTargetTool(uint8_t tool) {
+  return target_temperature[tool_heater_mapping[tool]];
 };
 
 FORCE_INLINE float degTargetBed() {
@@ -220,10 +257,16 @@ FORCE_INLINE float MainCurrent() {
 
 //#define MAX_PWM    127
 
-void init_mintemp (int8_t, uint8_t=1);
-void heater_0_init_maxtemp (int16_t, uint8_t=1);
+void tp_init_mintemp (int8_t, tp_features=TP_HEATER_0);
+void tp_init_maxtemp (int16_t, tp_features=TP_HEATER_0);
 int getHeaterPower(int heater);
+
 void disable_heater();
+void tp_enable_heater  (uint8_t=TP_HEATERS);
+void tp_enable_sensor  (uint8_t=TP_SENSORS);
+void tp_disable_heater (uint8_t=TP_HEATERS);
+void tp_disable_sensor (uint8_t=TP_HEATERS);
+
 void setWatch();
 void updatePID();
 
@@ -238,6 +281,6 @@ FORCE_INLINE void autotempShutdown(){
  #endif
 }
 
-void PID_autotune(float temp, int extruder, int ncycles);
+bool PID_autotune(float temp, int extruder, int ncycles);
 
 #endif

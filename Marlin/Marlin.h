@@ -49,6 +49,10 @@
 
 #include "WString.h"
 
+#ifdef IRSD
+#include "irsd.h"
+#endif
+
 #ifdef AT90USB
    #ifdef BTENABLED
          #define MYSERIAL bt
@@ -65,6 +69,13 @@
   #include <SmartComm.h>
 #endif
 
+#ifndef CRITICAL_SECTION_START
+  #define CRITICAL_SECTION_START  unsigned char _sreg = SREG; cli();
+  #define CRITICAL_SECTION_END    SREG = _sreg;
+#endif //CRITICAL_SECTION_START
+
+enum tp_report_t:uint8_t { TP_REPORT_NONE=0, TP_REPORT_AUTO=1, TP_REPORT_FULL=2 };
+
 #define SERIAL_PROTOCOL(x) (MYSERIAL.print(x))
 #define SERIAL_PROTOCOL_F(x,y) (MYSERIAL.print(x,y))
 #define SERIAL_PROTOCOL_P(x) do { serialprintPGM(x); } while (0)
@@ -75,15 +86,28 @@
 #define SERIAL_PROTOCOLLNPGM(x) (serialprintPGM(PSTR(x)),MYSERIAL.write('\n'))
 
 
-const char errormagic[] PROGMEM ="Error:";
-const char echomagic[] PROGMEM ="echo:";
-#define SERIAL_ERROR_START (serialprintPGM(errormagic))
-#define SERIAL_ERROR(x) SERIAL_PROTOCOL(x)
-#define SERIAL_ERRORPGM(x) SERIAL_PROTOCOLPGM(x)
-#define SERIAL_ERRORLN(x) SERIAL_PROTOCOLLN(x)
+const char errormagic[]   PROGMEM = "E: ";
+const char asyncmagic[]   PROGMEM = "A: ";
+const char echomagic[]    PROGMEM = "";
+const char commentmagic[] PROGMEM = "// ";
+
+#define SERIAL_ERROR_START  (serialprintPGM(errormagic))
+#define SERIAL_ERROR(x)      SERIAL_PROTOCOL(x)
+#define SERIAL_ERRORPGM(x)   SERIAL_PROTOCOLPGM(x)
+#define SERIAL_ERRORLN(x)    SERIAL_PROTOCOLLN(x)
+#define SERIAL_ERRORLN_P(x)  SERIAL_PROTOCOLLN_P(x)
 #define SERIAL_ERRORLNPGM(x) SERIAL_PROTOCOLLNPGM(x)
 
-#define SERIAL_ECHO_START (serialprintPGM(echomagic))
+#define _ERROR_STOPPED     101
+
+#define SERIAL_ASYNC_START  (serialprintPGM(asyncmagic))
+#define SERIAL_ASYNCLN       SERIAL_PROTOCOLLN(x)
+#define SERIAL_ASYNCLN_P     SERIAL_PROTOCOLLN_P(x)
+#define SERIAL_ASYNCLNPGM(x) SERIAL_PROTOCOLLNPGM(x)
+
+#define SERIAL_COMMENT_START  (serialprintPGM(commentmagic))
+
+#define SERIAL_ECHO_START //(serialprintPGM(echomagic))
 #define SERIAL_ECHO(x) SERIAL_PROTOCOL(x)
 #define SERIAL_ECHOPGM(x) SERIAL_PROTOCOLPGM(x)
 #define SERIAL_ECHOLN(x) SERIAL_PROTOCOLLN(x)
@@ -189,17 +213,59 @@ void manage_inactivity();
 #endif
 
 #if (EXTRUDERS > 2) && defined(E2_ENABLE_PIN) && (E2_ENABLE_PIN > -1)
-  #define enable_e2() WRITE(E2_ENABLE_PIN, E2_ENABLE_ON)
-  #define disable_e2() WRITE(E2_ENABLE_PIN,!E2_ENABLE_ON)
+  #if defined(HEAD_DRIVE_INDEX) && HEAD_DRIVE_INDEX > -1
+	#define enable_e2()  do { if (active_extruder==HEAD_DRIVE_INDEX) WRITE(E2_ENABLE_PIN, E2_ENABLE_ON); } while (0)
+	#define disable_e2() do { if (active_extruder==HEAD_DRIVE_INDEX) WRITE(E2_ENABLE_PIN,!E2_ENABLE_ON); } while (0)
+  #else
+    #define enable_e2()  WRITE(E2_ENABLE_PIN, E2_ENABLE_ON)
+	#define disable_e2() WRITE(E2_ENABLE_PIN,!E2_ENABLE_ON)
+  #endif
 #else
   #define enable_e2()  /* nothing */
   #define disable_e2() /* nothing */
 #endif
 
+#if (EXTRUDERS > 3) && defined(E3_ENABLE_PIN) && (E3_ENABLE_PIN > -1)
+  #if defined(BED_DRIVE_INDEX) && BED_DRIVE_INDEX > -1
+    #define enable_e3()  do { if (active_extruder==BED_DRIVE_INDEX) WRITE(E3_ENABLE_PIN, E3_ENABLE_ON); } while (0)
+    #define disable_e3() do { if (active_extruder==BED_DRIVE_INDEX) WRITE(E3_ENABLE_PIN,!E3_ENABLE_ON); } while (0)
+  #else
+    #define enable_e3()  WRITE(E3_ENABLE_PIN, E3_ENABLE_ON)
+	#define disable_e3() WRITE(E3_ENABLE_PIN,!E3_ENABLE_ON)
+  #endif
+#else
+  #define enable_e3()  /* nothing */
+  #define disable_e3() /* nothing */
+#endif
+
+#define disable_e_steppers() do { disable_e0(); disable_e1(); disable_e2(); disable_e3(); } while (0)
+
 #define INVALID_EXTRUDER 252
 #define INVALID_EXTRUDER_1 (INVALID_EXTRUDER | 1)
 #define INVALID_EXTRUDER_2 (INVALID_EXTRUDER | 2)
+#define INVALID_EXTRUDER_3 (INVALID_EXTRUDER | 3)
 
+// Macros for driving various external probes
+#ifdef EXTERNAL_ENDSTOP_Z_PROBING
+
+   #define ENABLE_SECURE_SWITCH_ZPROBE() do { enable_secure_switch_zprobe=true; } while (0)
+   #define DISABLE_SECURE_SWITCH_ZPROBE() do { enable_secure_switch_zprobe=false; } while (0)
+
+   #if defined(IRSD)
+      #undef ENABLE_SECURE_SWITCH_ZPROBE
+      #define ENABLE_SECURE_SWITCH_ZPROBE() do { \
+         irsd_enable(); \
+         enable_secure_switch_zprobe=true; \
+      } while (0)
+
+      #undef DISABLE_SECURE_SWITCH_ZPROBE
+      #define DISABLE_SECURE_SWITCH_ZPROBE() do { \
+         enable_secure_switch_zprobe=false; \
+         irsd_disable(); \
+      } while (0)
+   #endif
+
+#endif
 
 enum AxisEnum {X_AXIS=0, Y_AXIS=1, Z_AXIS=2, E_AXIS=3};
 
@@ -214,7 +280,7 @@ extern float delta[3];
 #endif
 void prepare_move();
 void kill();
-void Stop();
+void Stop(uint8_t=_ERROR_STOPPED);
 
 void kill_by_door();
 
@@ -248,10 +314,10 @@ void servo_detach (uint8_t);
 void setPwmFrequency(uint8_t pin, int val);
 #endif
 
-#ifndef CRITICAL_SECTION_START
-  #define CRITICAL_SECTION_START  unsigned char _sreg = SREG; cli();
-  #define CRITICAL_SECTION_END    SREG = _sreg;
-#endif //CRITICAL_SECTION_START
+void print_heaterstates (tp_report_t format=TP_REPORT_FULL);
+
+extern bool min_software_endstops;
+extern bool max_software_endstops;
 
 extern float homing_feedrate[];
 extern bool axis_relative_modes[];
@@ -275,7 +341,7 @@ extern float zprobe_zoffset;
 extern int fanSpeed;
 
 #ifdef SERVO_ENDSTOPS
-extern int servo_endstops[];
+extern const int servo_endstops[];
 extern int servo_endstop_angles[];
 #endif
 
@@ -300,11 +366,10 @@ extern unsigned long stoptime;
 
 extern unsigned int ERROR_CODE;
 
-extern bool head_is_dummy;
 extern bool head_placed;
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
-extern bool enable_secure_switch_zprobe;
+extern volatile bool enable_secure_switch_zprobe;
 #endif
 
 #ifdef THERMISTOR_HOTSWAP
@@ -331,14 +396,13 @@ extern uint8_t extruder_0_thermistor_input_index;
 
 // Handling multiple extruders pins
 extern uint8_t active_tool;     // Active logical tool
-extern uint8_t active_extruder;
-extern uint8_t extruder_heater_mapping[EXTRUDERS];
+extern int8_t active_extruder;
+extern int8_t extruder_heater_mapping[EXTRUDERS];
 
 void StopTool();
-extern bool head_is_dummy;
-extern uint8_t tool_extruder_mapping[EXTRUDERS];
-extern int8_t tool_heater_mapping[EXTRUDERS];
-extern bool    tool_twi_support[EXTRUDERS];
+//extern bool head_is_dummy;
+extern int8_t tool_extruder_mapping[TOOLS_MAGAZINE_SIZE];
+extern bool    tool_twi_support[TOOLS_MAGAZINE_SIZE];
 
 #ifdef DIGIPOT_I2C
 extern void digipot_i2c_set_current( int channel, float current );
@@ -361,7 +425,7 @@ extern unsigned int hotplate_board_version;
 extern unsigned int general_assembly_version;
 extern unsigned int installed_head_id;
 
-extern tool_t* installed_head;
+extern tool_t installed_head;
 
 #ifdef SMART_COMM
 
@@ -392,11 +456,11 @@ extern uint8_t working_mode;
 #define LASER_GATE_OFF()	WRITE(LASER_GATE_PIN,HIGH)
 
 #define MILL_MOTOR_ON()	 WRITE(MILL_MOTOR_ON_PIN,HIGH)
-#define MILL_MOTOR_OFF() if (IsStopped() || active_extruder!=2) WRITE(MILL_MOTOR_ON_PIN,LOW)
+#define MILL_MOTOR_OFF() if (active_extruder!=2 || IsStopped()) WRITE(MILL_MOTOR_ON_PIN,LOW)
 
 #define MILL_MOTOR_STATUS()  READ(MILL_MOTOR_ON_PIN)
 
-#define SERVO1_ON()	if (IsStopped() || active_extruder!=2) WRITE(NOT_SERVO1_ON_PIN,LOW)
+#define SERVO1_ON()	if (active_extruder!=2 || IsStopped()) WRITE(NOT_SERVO1_ON_PIN,LOW)
 #define SERVO1_OFF()	if (active_extruder!=2) WRITE(NOT_SERVO1_ON_PIN,HIGH)
 #define SERVO1_STATUS()   !READ(NOT_SERVO1_ON_PIN)
 
@@ -422,8 +486,8 @@ extern uint8_t working_mode;
 #define RPI_ERROR_STATUS()       READ(RPI_RECOVERY_PIN)
 #define RASPI_MAX_TURN_OFF_DELAY  3000  //30 seconds, value in tens of ms
 
-#define BEEP_ON()  TCCR0B = TCCR0B & 0b11111000 | 0x02; analogWrite(BEEPER, 127);
-#define BEEP_OFF()  TCCR0B = TCCR0B & 0b11111000 | 0x03; analogWrite(BEEPER, 255);
+#define BEEP_ON()  TCCR0B = (TCCR0B & 0b11111000) | 0x02; analogWrite(BEEPER, 127);
+#define BEEP_OFF() TCCR0B = (TCCR0B & 0b11111000) | 0x03; analogWrite(BEEPER, 255);
 
 #define SERVO_SPINDLE_MAX  1832    //(MILL MOTOR input: 1060 us equal to Full CCW, 1460us equal to zero, 1860us equal to Full CW)
 #define SERVO_SPINDLE_MIN  1148
@@ -449,7 +513,7 @@ extern uint8_t working_mode;
 
 //error codes
 #define ERROR_KILLED      100
-#define ERROR_STOPPED     101
+#define ERROR_STOPPED    _ERROR_STOPPED  // 101
 #define ERROR_DOOR_OPEN   102
 #define ERROR_MIN_TEMP    103
 #define ERROR_MAX_TEMP    104
@@ -459,6 +523,7 @@ extern uint8_t working_mode;
 #define ERROR_Y_MAX_ENDSTOP  108
 #define ERROR_Y_MIN_ENDSTOP  109
 #define ERROR_IDLE_SAFETY    110
+#define ERROR_WIRE_END       111
 
 //error codes for FABUI configurable functionalities
 #define ERROR_Y_BOTH_TRIGGERED   120
@@ -469,6 +534,14 @@ extern uint8_t working_mode;
 #define ERROR_EXTRUDE_MINTEMP   123
 #define ERROR_LONG_EXTRUSION   124
 #define ERROR_HEAD_ABSENT    125
+
+#define ERROR_INVALID_EXTRUDER 252
+#if (EXTRUDERS > 1)
+  #define ERROR_INVALID_EXTRUDER_1 (ERROR_INVALID_EXTRUDER | 1)
+#endif
+#if (EXTRUDERS > 2)
+  #define ERROR_INVALID_EXTRUDER_2 (ERROR_INVALID_EXTRUDER | 2)
+#endif
 
 //POWER SHUTDOWN REQUEST:
 #define ERROR_PWR_OFF    999
@@ -494,5 +567,8 @@ extern uint8_t working_mode;
 #define WORKING_MODE_CNC    3
 #define MACHINE_MODE_SCAN   4
 #define MACHINE_MODE_SLA    5
+
+#define COMMENT_SEPARATOR ';'
+#define VALUE_LIST_SEPARATOR ':'  // Separator for lists of values as parameter arguments
 
 #endif

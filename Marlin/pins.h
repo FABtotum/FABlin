@@ -886,10 +886,19 @@
 #define E1_DIR_PIN         34
 #define E1_ENABLE_PIN      30
 
-// 3rd drive: directdrive feeder
+// 3rd drive (logical): head
 #define E2_STEP_PIN        21
 #define E2_DIR_PIN         20
 #define E2_ENABLE_PIN      23
+
+// 4th drive (logical): bed
+#define E3_STEP_PIN        53
+#define E3_DIR_PIN         34
+#define E3_ENABLE_PIN      8//68
+
+#define SCAN_STEP_PIN      E3_STEP_PIN
+#define SCAN_ENABLE_PIN    E3_ENABLE_PIN
+#define SCAN_BED_ON_PIN    68
 
 #define LED_PIN            13
 
@@ -898,8 +907,8 @@
 #define HEATER_0_PIN       10
 #define HEATER_1_PIN       -1
 #define HEATER_2_PIN       -1
-#define HEATER_BED_PIN   8
-#define FAN_PIN            9
+#define HEATER_BED_PIN      8
+#define FAN_PIN             9
 
 #define TEMP_0_PIN         13   // ANALOG NUMBERING
 #define TEMP_BED_PIN       14   // ANALOG NUMBERING
@@ -929,8 +938,8 @@
 #define	DOOR_OPEN_PIN	49
 #define	HEAD_LIGHT_PIN	45
 #define	LASER_GATE_PIN	44
-//#define	SCL	21
-//#define	SDA	20
+#define	I2C_SCL	21
+#define	I2C_SDA	20
 #define	MILL_MOTOR_ON_PIN	41
 #define NOT_SERVO1_ON_PIN       23
 #define	NOT_SERVO2_ON_PIN	25
@@ -948,8 +957,9 @@
 #define SERVO1_PIN         6
 
 // Default pins for additional serial ports (may be reconfigured at run-time)
-#define RX4 67
-#define TX4 11
+// (unsued pins to not interfere during startup)
+#define RXD4 43
+#define TXD4 42
 
 #endif //MOTHERBOARD == 25
 

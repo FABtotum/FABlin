@@ -1,0 +1,42 @@
+#
+# When an (min) temp error is raised, the error is silently silenced until next
+# firmware reset. Engaged sensors should remain active and functional. Relevant
+# heaters should be disabled.
+#
+
+from boiler import fabui
+from time import sleep
+
+# Given a printing head is configured
+m793 = fabui.send('M793')
+assert m793[0] in ['1', '2', '6'], m793
+
+# and the carriage is homed
+fabui.assertOk('G28 X Y')
+sleep(1)
+
+# Given the error condition is raised 103
+# (we force error condition by rasing min temp to make it more real)
+fabui.send('M999')
+fabui.send('M801 S255 R254')
+sleep(1)
+
+m730 = fabui.send('M730')
+assert m730[0] == '103', m730
+
+# When M999 is issued
+fabui.send('M999')
+sleep(1)
+
+# Then the error code is 0
+fabui.assertErrorCode(0)
+
+#  And carriage can be moved
+fabui.send('G90')
+fabui.assertOk('G0 X100 Y100 F5000')
+
+#  And leds can be set
+fabui.assertOk('M703 S255')
+
+# Moreover, the temperature are still enabled
+fabui.assertExtTemp()

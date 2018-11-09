@@ -1,6 +1,61 @@
 Revision history
 ================
 
+Fix: 1.1.1.3 (2018-04-04)
+-------------------------
+- Fix power supply issues in Laser Heads
+- Fix `M999` behavior with pending temperature errors
+- Fix `M42` command output
+
+Fix: 1.1.1.2 (2018-03-01)
+-------------------------
+- More stable temperature readings on edge and error conditions
+
+Fix: 1.1.1.1 (2018-01-23)
+-------------------------
+- Fix heaters not working inside PID tuning procedure (M303 command)
+- Fix missing bed temperature readings with some toolheads
+- Better stability when reconfiguring tools and installing new heads
+- Fix M563 output when the bed's thermistor is active without the bed heater being so
+
+Rev: 1.1.1 (2018-01-11)
+-----------------------
+- Add support functions for Fabtotum Laser Head PRO
+- Added support for head-installed _external probe_, `M746 S2` selects it
+- Expanded `G38` for external-probing with movement on all the three axes
+- Better emergency stop in case of head faults
+- `M793 S0` can be issued to shut-down all head lines and functions
+- Changes in tool configuration
+  - `M563` accepts multiple values per parameter, e.g. `M563 P0 D0 H0:1`
+  - Revised heaters numbering:
+    - 0: bed heater
+    - 1: head heater
+    - 4: bed temp sensor with disabled heater
+    - 5: head temp sensor with disabled heater
+  - Revised `M563` command output
+- Added support for a motor driver (drive n.3) through bed pins; no DIR pin available
+
+Fix: 1.1.0.2 (2017-06-29)
+-------------------------
+- Improvements in homing procedure
+- Make stepper motor's idle hold timout configurable with `M84`
+- Fix temperature readings
+- Fix parameter parsing inside `M85`
+- Fix parsing of line number words (N's can now be used inside `M790`...)
+
+Min: 1.1.0 (2017-05-29)
+-------------------------
+- Corrected and normalized command output format:
+  - 'echo:' prefixes removed
+  - All errors are prefixed with 'E:' or 'A:'
+  - Changed command output format of: G30,G38,M105,M109,M190,M303
+  - Various fixes to commands output
+- Added auto temp reporting function, managed through M155
+- Added support for wire end check. M805 enable/disable check
+- Added M564 command: set axes limits and restrict movements
+- Fixed laser head initialization
+- Small changes in documentation
+
 Rev: 1.0.0098 (2017-04-12)
 --------------------------
 - Improved homing procedure for partial homing

@@ -1,0 +1,1 @@
+python ${ROOT}/test/py/rpc_reset.py

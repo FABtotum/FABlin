@@ -15,7 +15,7 @@
 // User-specified version info of this build to display in [Pronterface, etc] terminal window during
 // startup. Implementation of an idea by Prof Braino to inform user that any changes made to this
 // build by the user have been successfully uploaded into firmware.
-#define STRING_BUILD_VERSION  "V 1.0.0098"
+#define STRING_BUILD_VERSION  "V 1.1.1.3"
 #define STRING_BUILD_DATE __DATE__ " " __TIME__ // build date and time
 #define STRING_CONFIG_H_AUTHOR "FABteam" // Who made the changes.
 
@@ -85,7 +85,7 @@
 // #define MACHINE_UUID "00000000-0000-0000-0000-000000000000"
 
 // This defines the number of extruders
-#define EXTRUDERS 3
+#define EXTRUDERS 4
 
 // This defines the number of heaters (this can be != EXTRUDERS)
 #define HEATERS 1
@@ -397,6 +397,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 #define E0_ENABLE_ON E_ENABLE_ON
 #define E1_ENABLE_ON E_ENABLE_ON
 #define E2_ENABLE_ON 1
+#define E3_ENABLE_ON 1
 
 // Disables axis when it's not being used.
 #define DISABLE_X false
@@ -410,6 +411,7 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 #define INVERT_E0_DIR true   // for direct drive extruder v9 set to true, for geared extruder set to false
 #define INVERT_E1_DIR false    // for direct drive extruder v9 set to true, for geared extruder set to false
 #define INVERT_E2_DIR true   // for direct drive extruder v9 set to true, for geared extruder set to false
+#define INVERT_E3_DIR true
 
 // ENDSTOP SETTINGS:
 // Sets direction of endstops when homing; 1=MAX, -1=MIN
@@ -417,8 +419,8 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 #define Y_HOME_DIR -1
 #define Z_HOME_DIR -1
 
-#define min_software_endstops false // If true, axis won't move to coordinates less than HOME_POS.
-#define max_software_endstops false  // If true, axis won't move to coordinates greater than the defined lengths below.
+//#define min_software_endstops false // If true, axis won't move to coordinates less than HOME_POS.
+//#define max_software_endstops false  // If true, axis won't move to coordinates greater than the defined lengths below.
 
 // Travel limits after homing
 #define X_MAX_POS 214
@@ -432,15 +434,32 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 #define Y_MAX_LENGTH (Y_MAX_POS - Y_MIN_POS)
 #define Z_MAX_LENGTH (Z_MAX_POS - Z_MIN_POS)
 
+//#define IRSD
+// Configuration for IRSD probe mounted in place of physical probe
+#ifdef IRSD
+  #define IRSD_PIN              6
+  #define IRSD_PIN_INVERTING    0
+  #define IRSD_ENABLE_PIN      25
+  #define IRSD_ENABLE_INVERTING 1
+  #define IRSD_MODE_DIGITAL     1
+#endif
+
 //= Z PROBING via endstop (e.g. electrical continuity between mill and PCB)==
 
 #define EXTERNAL_ENDSTOP_Z_PROBING
-//#undef EXTERNAL_ENDSTOP_Z_PROBING
 
 #ifdef EXTERNAL_ENDSTOP_Z_PROBING
- #define EXTERNAL_ENDSTOP_Z_PROBING_PIN 71
- #define EXTERNAL_Z_ENDSTOP_INVERTING true
+  #ifdef IRSD
+     #define EXTERNAL_ENDSTOP_Z_PROBING_PIN IRSD_PIN
+     #define EXTERNAL_ENDSTOP_Z_INVERTING   IRSD_PIN_INVERTING
+  #else
+     #define EXTERNAL_ENDSTOP_Z_PROBING_PIN 21
+     #define EXTERNAL_ENDSTOP_Z_INVERTING   1
+  #endif
 #endif
+
+#define WIRE_END_INVERTING true
+
 //============================= Bed Auto Leveling ===========================
 
 #define ENABLE_AUTO_BED_LEVELING // Delete the comment to enable (remove // at the start of the line)
@@ -834,6 +853,15 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 #define SERVO_ENDSTOPS {-1, -1, 1} // Servo index for X, Y, Z. Disable with -1
 #define SERVO_ENDSTOP_ANGLES {0,0, 0,0, 127,26} // X,Y,Z Axis Extend and Retract angles
 
+#define HEAD_DRIVE_INDEX 2
+#define BED_DRIVE_INDEX  3
+
+//
+// Tool changer module
+//
+#define TOOLS_FACTORY_SIZE  9
+#define TOOLS_MAGAZINE_SIZE 3
+
 //
 // SmartComm module
 //
@@ -848,4 +876,14 @@ extern bool Z_MAX_ENDSTOP_INVERTING;
 #define ENABLE_LASER_MODE
 #define LASER_MIN_POWER 5
 
+#define DEFAULT_AUTO_TEMP_INTERVAL 5000
+
 #endif //__CONFIGURATION_H
+
+//
+// Scan support
+//
+#define ENABLE_SCAN_MODE
+#define SCAN_BED_ON 1
+
+#define DEFAULT_AUTO_TEMP_INTERVAL 5000

@@ -72,8 +72,7 @@
 #define MSG_MARLIN "Marlin"
 #define MSG_MARLIN_FABTOTUM "Marlin for FABtotum Personal Fabricator"
 
-//#define MSG_WORKING_MODE "Working Mode:"
-PSTRING( PMSG_WORKING_MODE, "Working Mode:" )
+#define MSG_WORKING_MODE "Working Mode:"
 #define MSG_WORKING_MODE_HYBRID "Hybrid"
 #define MSG_WORKING_MODE_FFF    "FFF"
 #define MSG_WORKING_MODE_LASER  "Laser"
@@ -82,10 +81,21 @@ PSTRING( PMSG_WORKING_MODE, "Working Mode:" )
 #define MSG_WORKING_MODE_SLA    "SLA"
 
 #define MSG_WS_E " E"
+#define MSG_WS_S " S"
 #define MSG_WS_T " T"
 #define MSG_WS_X " X"
 #define MSG_WS_Y " Y"
 #define MSG_WS_Z " Z"
+
+// Strings for outputting parameter values in a correctly spaced fashion
+#define MSG_B_OUT " B: "
+#define MSG_E_OUT " E: "
+#define MSG_T_OUT "T: "  // T: and X: shall always appear first in commands output
+#define MSG_X_OUT "X: "
+#define MSG_Y_OUT " Y: "
+#define MSG_Z_OUT " Z: "
+
+#define ERR_OUT_OF_BOUNDS "Value out of bounds"
 
 #if LANGUAGE_CHOICE == 1
 
@@ -200,6 +210,7 @@ PSTRING( PMSG_WORKING_MODE, "Working Mode:" )
 	#define MSG_CNG_SDCARD "Change SD card"
 	#define MSG_ZPROBE_OUT "Z probe out. bed"
 	#define MSG_POSITION_UNKNOWN "Home X/Y before Z"
+	#define MSG_ORIGIN_UNKNOWN "Home all axes first"
 	#define MSG_ZPROBE_ZOFFSET "Z Offset"
 	#define MSG_BABYSTEP_X "Babystep X"
 	#define MSG_BABYSTEP_Y "Babystep Y"
@@ -240,7 +251,9 @@ PSTRING( PMSG_WORKING_MODE, "Working Mode:" )
 	#define MSG_BED_DONE "Bed done."
 	#define MSG_M115_REPORT "FIRMWARE_NAME:" MSG_MARLIN " FIRMWARE_URL:" FIRMWARE_URL " PROTOCOL_VERSION:" PROTOCOL_VERSION " MACHINE_TYPE:" MACHINE_NAME " EXTRUDER_COUNT:" STRINGIFY(EXTRUDERS) " UUID:" MACHINE_UUID "\n"
 	#define MSG_COUNT_X " Count X: "
+	#define MSG_COUNT_A " Count A: "
 	#define MSG_ERR_KILLED "Printer halted. kill() called!"
+	#define MSG_ERR_PROBE_FAILED "Probe failed"
 	#define MSG_ERR_STOPPED "Printer stopped due to errors. Fix the error and use M999 to restart. (Temperature is reset. Set it after restarting)"
 	#define MSG_RESEND "Resend: "
 	#define MSG_UNKNOWN_COMMAND "Unknown command: \""
@@ -256,6 +269,7 @@ PSTRING( PMSG_WORKING_MODE, "Working Mode:" )
 	#define MSG_ENDSTOP_HIT "TRIGGERED"
 	#define MSG_ENDSTOP_OPEN "open"
 	#define MSG_HOTEND_OFFSET "Hotend offsets:"
+	#define MSG_INVALID_PARAMETER "Invalid parameter"
 
 	#define MSG_SD_CANT_OPEN_SUBDIR "Cannot open subdir"
 	#define MSG_SD_INIT_FAIL "SD init fail"
@@ -2697,12 +2711,26 @@ PSTRING( PMSG_WORKING_MODE, "Working Mode:" )
 
 #endif // ifndef LANGUAGE_H
 
+// The following redefinitions are optimized for minimal program space waste
+// please use the P* version of string literals with the relevant *_P output macros
+PSTRING(PMSG_WORKING_MODE, "Working Mode:")
 
 PSTRING(PMSG_WS_E,MSG_WS_E)
+PSTRING(PMSG_WS_S,MSG_WS_S)
 PSTRING(PMSG_WS_T,MSG_WS_T)
 PSTRING(PMSG_WS_X,MSG_WS_X)
 PSTRING(PMSG_WS_Y,MSG_WS_Y)
 PSTRING(PMSG_WS_Z,MSG_WS_Z)
 
-PSTRING(PMSG_ENDSTOP_HIT,MSG_ENDSTOP_HIT)
-PSTRING(PMSG_ENDSTOP_OPEN,MSG_ENDSTOP_HIT)
+PSTRING(PMSG_B_OUT,MSG_B_OUT)
+PSTRING(PMSG_E_OUT,MSG_E_OUT)
+PSTRING(PMSG_T_OUT,MSG_T_OUT)
+PSTRING(PMSG_X_OUT,MSG_X_OUT)
+PSTRING(PMSG_Y_OUT,MSG_Y_OUT)
+PSTRING(PMSG_Z_OUT,MSG_Z_OUT)
+
+PSTRING(PMSG_ENDSTOP_HIT,  MSG_ENDSTOP_HIT)
+PSTRING(PMSG_ENDSTOP_OPEN, MSG_ENDSTOP_HIT)
+
+PSTRING(PERR_OUT_OF_BOUNDS, ERR_OUT_OF_BOUNDS)
+PSTRING(PERR_PROBE_FAILED, MSG_ERR_PROBE_FAILED)

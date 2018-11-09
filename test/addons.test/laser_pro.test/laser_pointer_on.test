@@ -1,0 +1,12 @@
+# Scenario: laser pointer on
+
+from boiler import fabui
+
+# Given the 'laser PRO' head is installed
+
+# When issuing the `M722` command
+fabui.assertOk('M722')
+
+# Then the laser pointer is turned on
+ok = raw_input("Is the laser pointer on? [Y/n]")
+assert ok in ['', 'y', 'Y'], "Laser pointer is not visible"

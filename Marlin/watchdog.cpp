@@ -42,11 +42,11 @@ void watchdog_reset()
 //Watchdog timer interrupt, called if main program blocks >1sec and manual reset is enabled.
 #ifdef WATCHDOG_RESET_MANUAL
 ISR(WDT_vect)
-{ 
+{
     //TODO: This message gets overwritten by the kill() call
     LCD_ALERTMESSAGEPGM("ERR:Please Reset");//16 characters so it fits on a 16x2 display
     lcd_update();
-    SERIAL_ERROR_START;
+    SERIAL_ASYNC_START;
     SERIAL_ERRORLNPGM("Something is wrong, please turn off the printer.");
     kill(); //kill blocks
     while(1); //wait for user or serial reset
