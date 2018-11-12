@@ -5,13 +5,21 @@
 	#include <Arduino.h>
 #endif
 
+#define SW_CAPABLE_PLATFORM defined(__AVR__) || defined(TARGET_LPC1768)
+
 #include <Stream.h>
-//#include "source/TMC2208Stepper_REGDEFS.h"
+#if SW_CAPABLE_PLATFORM
+	#include <SoftwareSerial.h>
+#endif
+
+#define TMC2208STEPPER_VERSION 0x000205 // v0.2.5
 
 class TMC2208Stepper {
 	public:
-		//TMC2208Stepper(HardwareSerial& serial);
-		TMC2208Stepper(Stream * serial, bool has_rx=true);
+		TMC2208Stepper(Stream * SerialPort, bool has_rx=true);
+		#if SW_CAPABLE_PLATFORM
+			TMC2208Stepper(int16_t SW_RX_pin, int16_t SW_TX_pin, bool has_rx=true);
+		#endif
 		void rms_current(uint16_t mA, float multiplier=0.5, float RS=0.11);
 		uint16_t rms_current();
 		void microsteps(uint16_t ms);
@@ -22,6 +30,9 @@ class TMC2208Stepper {
 		bool getOTPW();
 		void clear_otpw();
 		bool isEnabled();
+		void push();
+		uint8_t test_connection();
+		void beginSerial(uint32_t baudrate);
 		// RW: GCONF
 		void GCONF(uint32_t input);
 		void I_scale_analog(bool B);
@@ -113,13 +124,13 @@ class TMC2208Stepper {
 		void CHOPCONF(uint32_t input);
 		void toff(uint8_t B);
 		void hstrt(uint8_t B);
-		void hysterisis_start(uint8_t value);
+		void hysteresis_start(uint8_t value);
 		void hend(uint8_t B);
-		void hysterisis_end(int8_t value);
+		void hysteresis_end(int8_t value);
 		void tbl(uint8_t B);
 		void blank_time(uint8_t B);
 		void vsense(bool B);
-		void mres(uint16_t B);
+		void mres(uint8_t B);
 		void intpol(bool B);
 		void dedge(bool B);
 		void diss2g(bool B);
@@ -127,9 +138,9 @@ class TMC2208Stepper {
 		bool CHOPCONF(uint32_t *data);
 		uint8_t toff();
 		uint8_t hstrt();
-		uint8_t hysterisis_start();
+		uint8_t hysteresis_start();
 		uint8_t hend();
-		int8_t hysterisis_end();
+		int8_t hysteresis_end();
 		uint8_t tbl();
 		uint8_t blank_time();
 		bool vsense();
@@ -182,28 +193,52 @@ class TMC2208Stepper {
 
 		bool isWriteOnly() {return write_only;}
 
+		// Backwards compatibility
+		inline void hysterisis_end(int8_t value) __attribute__((always_inline)) { hysteresis_end(value); }
+		inline int8_t hysterisis_end() __attribute__((always_inline)) { return hysteresis_end(); }
+		inline void hysterisis_start(uint8_t value) __attribute__((always_inline)) { hysteresis_start(value); }
+		inline uint8_t hysterisis_start() __attribute__((always_inline)) { return hysteresis_start(); }
+
+
 		uint16_t bytesWritten = 0;
 		float Rsense = 0.11;
-		uint16_t replyDelay = 10;
+		uint16_t replyDelay = 5;
 		bool flag_otpw = false;
+
+		// Stored settings for Marlin LCD
+		struct {
+			uint16_t I_rms = 0;
+			bool stealthChop_enabled = false;
+			uint8_t hybrid_thrs = 0;
+			int8_t homing_thrs = 0;
+			uint8_t cs_actual = 0;
+			uint16_t sg_result = 0;
+		} stored;
 	private:
-		Stream * TMC_SERIAL;
-		uint8_t* sendDatagram(uint8_t addr, uint32_t regVal, uint8_t len=7);
+		Stream * HWSerial = NULL;
+		#if SW_CAPABLE_PLATFORM
+			SoftwareSerial * SWSerial = NULL;
+			bool uses_sw_serial;
+		#else
+			constexpr static bool uses_sw_serial = false;
+		#endif
+		void sendDatagram(uint8_t addr, uint32_t regVal, uint8_t len=7);
 		bool sendDatagram(uint8_t addr, uint32_t *data, uint8_t len=3);
 		uint8_t calcCRC(uint8_t datagram[], uint8_t len);
 		// Shadow registers
-		uint32_t 	GCONF_sr = 			0x00000000UL,
+		// Default values assume no changes in OTP
+		uint32_t 	GCONF_sr = 			0x00000141UL, // Added default: pdn_disable = 1;
 					GSTAT_sr = 			0x00000000UL,
 					SLAVECONF_sr = 		0x00000000UL,
 					OTP_PROG_sr = 		0x00000000UL,
 					OTP_READ_sr = 		0x00000000UL,
 					FACTORY_CONF_sr = 	0x00000000UL,
-					IHOLD_IRUN_sr = 	0x00000000UL,
-					TPOWERDOWN_sr = 	0x00000000UL,
+					IHOLD_IRUN_sr = 	0x00010000UL, // Reset default would be IRUN=31 IHOLD=16
+					TPOWERDOWN_sr = 	0x00000014UL,
 					TPWMTHRS_sr = 		0x00000000UL,
 					VACTUAL_sr = 		0x00000000UL,
-					CHOPCONF_sr = 		0x00000000UL,
-					PWMCONF_sr = 		0x00000000UL,
+					CHOPCONF_sr = 		0x10000053UL,
+					PWMCONF_sr = 		0xC10D0024UL,
 					tmp_sr = 			0x00000000UL;
 
 		bool write_only;
